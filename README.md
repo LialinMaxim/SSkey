@@ -1,2 +1,2 @@
 # SSkey
-REST aplication 
+REST application 
