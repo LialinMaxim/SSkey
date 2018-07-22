@@ -1,0 +1,6 @@
+# Flask
+Flask==1.0.2
+sqlalchemy==1.2.7
+alembic==?
+
+# PostgreSQL
