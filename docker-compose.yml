@@ -1,0 +1,33 @@
+version: '3'
+
+services:
+  app:
+    build: .  # Ссылка на Dockerfile
+    command: python manage.py runserver
+    links:  # Связывает контейнеры между собой
+      - db
+      - redis
+    volumes:
+      - data-volume:/var/lib/app  # Копирует текущий каталог на хосте в контейнер
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+      - redis
+
+  db:
+    image: postgres:10.4
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: root  # Эта переменная рекомендуется к использованию в Postgres образе
+      POSTGRES_USER: root  # Создает superuser
+    ports:
+      - "8000:8000"
+    volumes:
+      - data-volume:/var/lib/db
+
+  redis:
+    image: "redis"
+
+volumes:
+  data-volume:
