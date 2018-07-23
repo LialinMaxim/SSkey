@@ -3,8 +3,8 @@ All routes are kept here
 """
 
 from flask import render_template, url_for, flash, redirect
-from trunk import app
-from trunk.models import User
+from app import app
+from app.models import User
 
 
 # @app.route("/register", methods=["POST"])
