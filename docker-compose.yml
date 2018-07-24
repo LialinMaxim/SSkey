@@ -3,12 +3,13 @@ version: '3'
 services:
   app:
     build: .  # Ссылка на Dockerfile
-    command: python manage.py runserver
+#    command: python manage.py runserver
+#    command: bash -c python ./manage.py runserver 0.0.0.0:5000
     links:  # Связывает контейнеры между собой
       - db
       - redis
-    volumes:
-      - data-volume:/var/lib/app  # Копирует текущий каталог на хосте в контейнер
+#    volumes:
+#      - ./app/:/home/sskey/app/  # Копирует текущий каталог на хосте в контейнер
     ports:
       - "5000:5000"
     depends_on:
@@ -24,10 +25,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - data-volume:/var/lib/db
+      - /home/sskey/db
 
   redis:
     image: "redis"
-
-volumes:
-  data-volume:
