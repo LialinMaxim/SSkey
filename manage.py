@@ -1,3 +1,4 @@
+
 from flask import Flask, request, Response
 # from flask_sqlalchemy import SQLAlchemy
 
@@ -41,4 +42,3 @@ if __name__ == '__main__':
     #     else:
     #         dbstatus = True
     app.run(debug=True, host='127.0.0.1')
-
