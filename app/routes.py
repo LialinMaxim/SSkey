@@ -3,16 +3,17 @@ import json
 from flask import url_for, flash, redirect, request, Response
 from app.forms import RegistrationForm, LoginForm
 from flask_login import login_user, logout_user, login_required
+from flask_restful import Resource
 from app.models import User
-from app import app
+from app import app, api
 
 
-# class HelloWorld(Resource):
-#     def get(self):
-#         return {'hello': 'world'}
-#
-#
-# api.add_resource(HelloWorld, '/')
+class HelloWorld(Resource):
+    def get(self):
+        return {'hello': 'world'}
+
+
+api.add_resource(HelloWorld, '/hello')
 
 
 @app.route('/user', methods=['GET'])
