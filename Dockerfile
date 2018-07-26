@@ -14,6 +14,4 @@ RUN chmod +x boot.sh
 RUN chown -R sskey:sskey ./
 USER sskey
 
-EXPOSE 5000
-
 ENTRYPOINT ["./boot.sh"]

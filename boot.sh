@@ -1,3 +1,3 @@
 #!/bin/sh
-echo "Starting server"
-exec python manage.py runserver
+echo "STARTING SERVER"
+exec python manage.py runserver -h 0.0.0.0
