@@ -1,4 +1,3 @@
 #!/bin/sh
-source venv/Scripts/activate
-flask db upgrade
-flask translate compile
+echo "STARTING SERVER"
+exec python manage.py runserver -h 0.0.0.0

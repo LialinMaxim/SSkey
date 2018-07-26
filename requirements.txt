@@ -1,21 +1,22 @@
 # Flask
 
 Flask==1.0.2
+Flask-RESTful==0.3.6
 Flask-Script==2.0.6
-Flask-Bcrypt==0.7.1
 Flask-Cors==3.0.4
-Flask-Login==0.4.1
-Flask-SQLAlchemy==2.3.2
-Flask-WTF==0.14.2
 
 # Databases
 
 psycopg2==2.7.5
 SQLAlchemy==1.2.7
 
-click==6.7
-itsdangerous==0.24
-Jinja2==2.10
-MarkupSafe==1.0
+# Validation
+
+marshmallow==2.15.3
+
+# redis
 redis==2.10.6
+
+click==6.7
+MarkupSafe==1.0
 Werkzeug==0.14.1

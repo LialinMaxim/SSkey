@@ -1,7 +1,9 @@
-
 import datetime
 import os
 import hashlib
+
+
+# from app import db
 
 # class User(db.Model):
 class User:
@@ -44,9 +46,8 @@ class User:
         self.last_name = last_name
         self.phone = phone
 
-
     def __str__(self):
-        return "User login - {0}; Email - {1}; First_name - {2}; Last name - {3}; Phone - {4}".\
+        return "User login - {0}; Email - {1}; First_name - {2}; Last name - {3}; Phone - {4}". \
             format(self.login, self.email, self.first_name, self.last_name, self.phone)
 
     @staticmethod
@@ -55,22 +56,3 @@ class User:
             return True
         else:
             return False
-
-# from app import db, login_manager
-# from flask_login import UserMixin
-
-
-# @login_manager.user_loader
-# def load_user(user_id):
-#     return User.query.get(int(user_id))
-
-
-# class User(db.Model, UserMixin):
-#     id = db.Column(db.Integer, primary_key=True)
-#     username = db.Column(db.String(20), unique=True, nullable=False)
-#     email = db.Column(db.String(120), unique=True, nullable=False)
-#     password = db.Column(db.String(60), nullable=False)
-
-#     def __repr__(self):
-#         return f"User('{self.username}', '{self.email}')"
-
