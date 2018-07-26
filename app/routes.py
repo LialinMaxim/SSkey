@@ -1,14 +1,19 @@
 import json
 
 from flask import url_for, flash, redirect, request, Response
-from app import app, db, bcrypt
 from app.forms import RegistrationForm, LoginForm
 from flask_login import login_user, logout_user, login_required
-
 from app.models import User
+from app import app
 
-from manage import app
-from app.models import User
+
+# class HelloWorld(Resource):
+#     def get(self):
+#         return {'hello': 'world'}
+#
+#
+# api.add_resource(HelloWorld, '/')
+
 
 @app.route('/user', methods=['GET'])
 def get_all_users():
@@ -20,9 +25,9 @@ def get_all_users():
     resp.headers['Content-Type'] = 'application/json'
     return resp
 
+
 @app.route('/user', methods=['POST'])
 def create_user():
-
     req_args = request.args
 
     if User.validate_user_create_data(req_args):
@@ -45,12 +50,14 @@ def create_user():
     resp.headers['Content-Type'] = 'application/json'
     return resp
 
+
 @app.route('/smoke', methods=['GET'])
 def smoke():
     resp = Response(json.dumps("OK"), status=200)
     resp.headers['Access-Control-Allow-Origin'] = '*'
     resp.headers['Content-Type'] = 'application/json'
     return resp
+
 
 @app.route("/")
 @app.route("/home")
@@ -94,4 +101,3 @@ def logout():
 @login_required
 def account():
     flash("Here will be your account")
-
