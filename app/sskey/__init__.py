@@ -1,5 +1,5 @@
 from flask import Blueprint
 
-sskey = Blueprint('talks', __name__)
+sskey = Blueprint('sskey', __name__)
 
 from . import routes
