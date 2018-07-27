@@ -5,21 +5,24 @@ from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 def create_db():
     con = None
     cur = None
-    dbname = "db_test2"
+    dbname = "db_sskey"
     SQL_create="CREATE DATABASE {0};".format(dbname)
     try:
-        con = connect(user='postgres3', host = 'localhost', password='postgres')
+        con = connect(user='postgres', host = 'localhost', password='postgres')
         con.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
         cur = con.cursor()
     except:
         print("Can not connect to database: postgres")
-    finally:
-        if con is not None:
-            con.close()
+
     try:
         cur.execute(SQL_create)
     except:
         print("Can not create a database: db_sskey")
+
+    try:
+        cur.execute("CREATE USER sskey2 WITH password 'sskey';")
+    except:
+        print("Can not create a new user: sskey")
     finally:
         if con is not None:
             con.close()
@@ -29,7 +32,7 @@ def create_db():
 
 def create_tables():
     try:
-        con = connect(dbname='db_test2', user='postgres', host = 'localhost', password='postgres')
+        con = connect(dbname='db_sskey', user='sskey', host = 'localhost', password='sskey')
         con.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
         cur = con.cursor()
     except:
