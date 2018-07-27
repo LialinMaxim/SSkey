@@ -5,7 +5,9 @@ from app.models import User
 from abc import ABCMeta, abstractmethod, abstractproperty
 
 from flask_restful import Resource, Api, reqparse
+from base import Session
 
+session = Session()
 
 class Smoke(Resource):
     def get(self):
@@ -52,12 +54,12 @@ class UserResource(EntityResource):
                         args['last_name'], args['phone'])
             status = 200
             msg = "USER {0} REGISTRATION SUCCESSFUL".format(user.login)
-            # try:
-            #     db.session.add(user)
-            #     db.session.commit()
-            # except Exception as e:
-            #     msg = str(e)
-            #     status = 500
+            try:
+                session.add(user)
+                session.commit()
+            except Exception as e:
+                msg = str(e)
+                status = 500
         return {'message': msg}, status, {'Access-Control-Allow-Origin': '*'}
 
     def get(self):

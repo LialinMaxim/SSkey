@@ -1,21 +1,24 @@
 import datetime
 import os
 import hashlib
+from sqlalchemy import Column, String, Integer, Date, LargeBinary
 
-
+from  base import Base
 # from app import db
 
 # class User(db.Model):
-class User:
-    # id = db.Column('id', db.Integer, primary_key=True)
-    # login = db.Column('login', db.String(100), unique=True, nullable=False)
-    # email = db.Column('email', db.String(150), unique=True, nullable=False)
-    # password = db.Column('password', db.LargeBinary, nullable=False)
-    # salt = db.Column('salt', db.LargeBinary, nullable=False)
-    # reg_date = db.Column('reg_date', db.Date, nullable=False)
-    # first_name = db.Column('first_name', db.String(150), nullable=True)
-    # last_name = db.Column('last_name', db.String(150), nullable=True)
-    # phone = db.Column('phone', db.String(100), nullable=True)
+class User(Base):
+    __tablename__ = 'user'
+
+    id = Column('id', Integer, primary_key=True)
+    login = Column('login', String(100), unique=True, nullable=False)
+    email = Column('email', String(150), unique=True, nullable=False)
+    password = Column('password', LargeBinary, nullable=False)
+    salt = Column('salt', LargeBinary, nullable=False)
+    reg_date = Column('reg_date', Date, nullable=False)
+    first_name = Column('first_name', String(150), nullable=True)
+    last_name = Column('last_name', String(150), nullable=True)
+    phone = Column('phone', String(100), nullable=True)
 
     @staticmethod
     def generate_salt(salt_len=16):
