@@ -12,14 +12,12 @@ class Home(Resource):
         return {'message': 'Home Page'}, 200, {'Access-Control-Allow-Origin': '*'}
 
 
-api.add_resource(Home, '/', "/home")
-
-
 class Smoke(Resource):
     def get(self):
         return {'message': 'OK'}, 200, {'Access-Control-Allow-Origin': '*'}
 
 
+api.add_resource(Home, '/', "/home")
 api.add_resource(Smoke, '/smoke')
 
 
