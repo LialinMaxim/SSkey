@@ -19,10 +19,10 @@ services:
     image: postgres:10.4
     restart: always
     environment:
-      POSTGRES_PASSWORD: root  # Эта переменная рекомендуется к использованию в Postgres образе
-      POSTGRES_USER: root  # Создает superuser
+      POSTGRES_PASSWORD: postgres  # Эта переменная рекомендуется к использованию в Postgres образе
+      POSTGRES_USER: postgres  # Создает superuser
     ports:
-      - "8000:8000"
+      - "5432:5432"
     volumes:
       - data-volume:/var/lib/db
 
