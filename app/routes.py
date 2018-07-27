@@ -7,12 +7,12 @@ from app.models import User
 from app import app, api
 
 
-class HelloWorld(Resource):
+class Home(Resource):
     def get(self):
-        return {'hello': 'world'}
+        return {'message': 'Home Page'}, 200, {'Access-Control-Allow-Origin': '*'}
 
 
-api.add_resource(HelloWorld, '/hello')
+api.add_resource(Home, '/', "/home")
 
 
 class Smoke(Resource):
@@ -87,12 +87,6 @@ class UserResource(EntityResource):
 
 
 api.add_resource(UserResource, '/user')
-
-
-@app.route("/")
-@app.route("/home")
-def hello():
-    return "<h1>Home Page</h1>"
 
 
 @app.route("/register", methods=["GET", "POST"])
