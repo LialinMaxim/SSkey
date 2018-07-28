@@ -6,27 +6,20 @@ from abc import ABCMeta, abstractmethod
 from app.models import User
 from app import app, api
 
-
-class HelloWorld(Resource):
-    def get(self):
-        return {'hello': 'world'}
-
-
 from base import Session
 
-
-api.add_resource(HelloWorld, '/hello')
-
-
 session = Session()
+
+
+class HelloWorld(Resource):
+
+    def get(self):
+        return {'hello': 'world'}
 
 
 class Smoke(Resource):
     def get(self):
         return {'message': 'OK'}, 200, {'Access-Control-Allow-Origin': '*'}
-
-
-api.add_resource(Smoke, '/smoke')
 
 
 class EntityResource(Resource):
@@ -91,6 +84,8 @@ class UserResource(EntityResource):
 
 
 api.add_resource(UserResource, '/user')
+api.add_resource(Smoke, '/smoke')
+api.add_resource(HelloWorld, '/hello')
 
 
 # @app.route("/")
