@@ -47,7 +47,7 @@ paths:
         - application/xml
       parameters:
         - in: query
-          name: login
+          name: username
           required: true
           type: string
           description: The user login.
@@ -57,7 +57,7 @@ paths:
           type: string
           description: The user email.
         - in: query
-          name: password
+          name: userpass
           required: true
           type: string
           description: The user password.
@@ -101,11 +101,11 @@ definitions:
       id:
         type: integer
         format: int64
-      login:
+      username:
         type: string
       email:
         type: string
-      password:
+      userpass:
         type: string
       salt:
         type: string
@@ -123,11 +123,11 @@ definitions:
         format: int64
     example:
       reg_date: 6
-      password: password
+      userpass: password
       phone: phone
       last_name: last_name
       id: 0
-      login: login
+      username: login
       last_login_date: 1
       first_name: first_name
       email: email
