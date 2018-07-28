@@ -5,6 +5,7 @@ from flask_restful import Resource, reqparse
 from abc import ABCMeta, abstractmethod
 from app.models import User
 from app import app, api
+from base import Session
 
 
 class HelloWorld(Resource):
@@ -12,10 +13,7 @@ class HelloWorld(Resource):
         return {'hello': 'world'}
 
 
-from base import Session
-
-
-api.add_resource(HelloWorld, '/hello')
+api.add_resource(HelloWorld, '/')
 
 
 session = Session()
