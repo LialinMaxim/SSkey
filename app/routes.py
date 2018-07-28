@@ -71,10 +71,19 @@ class UserResource(EntityResource):
         return {'message': msg}, status, {'Access-Control-Allow-Origin': '*'}
 
     def get(self):
-        users = session.query(User).all()
+        parser = reqparse.RequestParser()
+        parser.add_argument('username', type=str, help='Rate to charge for this resource')
+        parser.add_argument('email', type=str, help='Rate to charge for this resource')
+
+        args = parser.parse_args()
+        if args['username']:
+            users = session.query(User).filter(User.username == args['username']).all()
+        else:
+            users = session.query(User).all()
         status = 200
         users = list(map(lambda x: str(x), users))
         return {'users': users}, status, {'Access-Control-Allow-Origin': '*'}
+
 
     def put(self):
         pass
