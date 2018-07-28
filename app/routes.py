@@ -88,8 +88,12 @@ class UserResource(EntityResource):
             status = 500
             return {'msg': msg}, status, {'Access-Control-Allow-Origin': '*'}
         status = 200
-        users = list(map(lambda x: str(x), users))
-        return {'users': users}, status, {'Access-Control-Allow-Origin': '*'}
+        # users = list(map(lambda x: str(x), users))
+        # users = jsonify(json_list=[user.serialize for user in users])
+        users_resp = []
+        for user in users:
+            users_resp.append(user.serialize)
+        return {'users': users_resp}, status, {'Access-Control-Allow-Origin': '*'}
 
     def put(self):
         pass
