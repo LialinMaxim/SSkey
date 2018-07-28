@@ -76,14 +76,20 @@ class UserResource(EntityResource):
         parser.add_argument('email', type=str, help='Rate to charge for this resource')
 
         args = parser.parse_args()
-        if args['username']:
-            users = session.query(User).filter(User.username == args['username']).all()
-        else:
-            users = session.query(User).all()
+        try:
+            if args['username']:
+                users = session.query(User).filter(User.username == args['username']).all()
+            elif args['email']:
+                users = session.query(User).filter(User.email == args['email']).all()
+            else:
+                users = session.query(User).all()
+        except Exception as e:
+            msg = str(e)
+            status = 500
+            return {'msg': msg}, status, {'Access-Control-Allow-Origin': '*'}
         status = 200
         users = list(map(lambda x: str(x), users))
         return {'users': users}, status, {'Access-Control-Allow-Origin': '*'}
-
 
     def put(self):
         pass
