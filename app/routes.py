@@ -1,17 +1,31 @@
-# import json
-
-# from flask import url_for, flash, redirect, request, Response
+# from flask import url_for, flash, redirect
+# from app.forms import RegistrationForm, LoginForm
+# from flask_login import login_user, logout_user, login_required
+from flask_restful import Resource, reqparse
+from abc import ABCMeta, abstractmethod
 from app.models import User
-from abc import ABCMeta, abstractmethod, abstractproperty
+from app import app, api
 
-from flask_restful import Resource, Api, reqparse
+
+class HelloWorld(Resource):
+    def get(self):
+        return {'hello': 'world'}
+
+
 from base import Session
+
+
+api.add_resource(HelloWorld, '/hello')
+
 
 session = Session()
 
 class Smoke(Resource):
     def get(self):
         return {'message': 'OK'}, 200, {'Access-Control-Allow-Origin': '*'}
+
+
+api.add_resource(Smoke, '/smoke')
 
 
 class EntityResource(Resource):
@@ -76,50 +90,10 @@ class UserResource(EntityResource):
     def delete(self):
         pass
 
-# @app.route('/user', methods=['GET'])
-# def get_all_users():
-#     # users = User.query.all()
-#     # users = list(map(lambda x: str(x), users))
-#     # resp = Response(json.dumps(users), status=200)
-#     resp = Response(json.dumps("USERS"), status=200)
-#     resp.headers['Access-Control-Allow-Origin'] = '*'
-#     resp.headers['Content-Type'] = 'application/json'
-#     return resp
-#
-#
-# @app.route('/user', methods=['POST'])
-# def create_user():
-#     req_args = request.args
-#
-#     if User.validate_user_create_data(req_args):
-#         first_name = req_args['first_name'] if ('first_name' in req_args) else ""
-#         last_name = req_args['last_name'] if ('last_name' in req_args) else ""
-#         phone = req_args['phone'] if ('phone' in req_args) else ""
-#
-#         user = User(req_args['login'], req_args['email'], req_args['password'], first_name, last_name, phone)
-#         msg = "USER {0} REGISTRATION SUCCESSFUL".format(user.login)
-#         # try:
-#         #     db.session.add(user)
-#         #     db.session.commit()
-#         # except Exception as e:
-#         #     msg = str(e)
-#         resp = Response(json.dumps(msg), status=200)
-#     else:
-#         msg = "REQUIRED DATA NOT VALID"
-#         resp = Response(json.dumps(msg), status=400)
-#     resp.headers['Access-Control-Allow-Origin'] = '*'
-#     resp.headers['Content-Type'] = 'application/json'
-#     return resp
-#
-#
-# @app.route('/smoke', methods=['GET'])
-# def smoke():
-#     resp = Response(json.dumps("OK"), status=200)
-#     resp.headers['Access-Control-Allow-Origin'] = '*'
-#     resp.headers['Content-Type'] = 'application/json'
-#     return resp
-#
-#
+
+api.add_resource(UserResource, '/user')
+
+
 # @app.route("/")
 # @app.route("/home")
 # def hello():
