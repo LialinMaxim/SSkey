@@ -7,6 +7,16 @@ from base import Session
 session = Session()
 
 
+class HelloWorld(Resource):
+    def get(self):
+        return {'hello': 'world'}
+
+
+from base import Session
+
+session = Session()
+
+
 class Home(Resource):
     def get(self):
         return {'message': 'Home Page'}, 200, {'Access-Control-Allow-Origin': '*'}
@@ -70,10 +80,27 @@ class UserResource(EntityResource):
         return {'message': msg}, status, {'Access-Control-Allow-Origin': '*'}
 
     def get(self):
-        users = session.query(User).all()
+        parser = reqparse.RequestParser()
+        parser.add_argument('username', type=str, help='Rate to charge for this resource')
+        parser.add_argument('email', type=str, help='Rate to charge for this resource')
+
+        args = parser.parse_args()
+        try:
+            if args['username']:
+                users = session.query(User).filter(User.username == args['username']).all()
+            elif args['email']:
+                users = session.query(User).filter(User.email == args['email']).all()
+            else:
+                users = session.query(User).all()
+        except Exception as e:
+            msg = str(e)
+            status = 500
+            return {'msg': msg}, status, {'Access-Control-Allow-Origin': '*'}
         status = 200
-        users = list(map(lambda x: str(x), users))
-        return {'users': users}, status, {'Access-Control-Allow-Origin': '*'}
+        users_resp = []
+        for user in users:
+            users_resp.append(user.serialize)
+        return {'users': users_resp}, status, {'Access-Control-Allow-Origin': '*'}
 
     def put(self):
         pass
@@ -83,3 +110,5 @@ class UserResource(EntityResource):
 
 
 api.add_resource(UserResource, '/user')
+api.add_resource(Smoke, '/smoke')
+api.add_resource(HelloWorld, '/')
