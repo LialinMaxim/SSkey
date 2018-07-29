@@ -59,14 +59,14 @@ def create_tables():
         cur.execute("CREATE TABLE users ("
                     "id serial NOT NULL,"
                     "username varchar NOT NULL,"
-                    "userpass varchar NOT NULL,"
+                    "userpass bytea NOT NULL,"
                     "email varchar,"
                     "phone varchar,"
                     "first_name varchar,"
                     "last_name varchar,"
                     "reg_date TIMESTAMP NOT NULL,"
-                    "auth_time TIMESTAMP NOT NULL,"
-                    "salt varchar NOT NULL,"
+                    "auth_time TIMESTAMP,"
+                    "salt bytea NOT NULL,"
                     "CONSTRAINT users_pk PRIMARY KEY (id)"
                     ") WITH OIDS;")
 
