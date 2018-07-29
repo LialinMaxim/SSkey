@@ -81,7 +81,7 @@ class Password(Base):
     pass_id = Column('pass_id', Integer, primary_key=True)
     user_id = Column('user_id', Integer, ForeignKey('users.id'))  # ???
 
-    user = relationship("User", backref="contact_details")
+    user = relationship("User", backref="passwords")
 
     url = Column('url', String(250), nullable=True)
     title = Column('title', String(250), nullable=True)
