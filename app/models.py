@@ -1,9 +1,11 @@
 import datetime
 import os
 import hashlib
-from sqlalchemy import Column, String, Integer, Date, LargeBinary
 
-from  base import Base
+from sqlalchemy import Column, String, Integer, Date, LargeBinary, ForeignKey
+from sqlalchemy.orm import relationship
+
+from base import Base
 
 
 class User(Base):
@@ -41,6 +43,7 @@ class User(Base):
     def serialize(self):
         """Return object data in easily serializeable format"""
         return {
+            'id': self.id,
             'username': self.username,
             'email': self.email,
             'register_date': str(self.reg_date),
@@ -70,3 +73,47 @@ class User(Base):
             return True
         else:
             return False
+
+
+class Password(Base):
+    __tablename__ = 'passwords'
+
+    pass_id = Column('pass_id', Integer, primary_key=True)
+    user_id = Column('user_id', Integer, ForeignKey('users.id'))  # ???
+
+    user = relationship("User", backref="contact_details")
+
+    url = Column('url', String(250), nullable=True)
+    title = Column('title', String(250), nullable=True)
+    login = Column('login', String(150), nullable=False)
+    password = Column('pass', String(150), nullable=False)
+    comment = Column('comment', String(450), nullable=True)
+
+    @property
+    def serialize(self):
+        """Return object data in easily serializeable format"""
+        return {
+            'username': self.username,
+            'email': self.email,
+            'register_date': str(self.reg_date),
+            'first_name': self.first_name,
+            'last_name': self.last_name,
+            'phone': self.phone
+        }
+
+    def crypt_and_save_password(self, raw_password):
+        # TO DO - realize crypt password method
+        crypted_password = raw_password
+        self.password = crypted_password
+
+    def decrypt_password(self):
+        # TO DO - decrypt password and return it
+        return self.password
+
+    def __init__(self, login, password, user_id, url, title, comment):
+        self.login = login
+        self.crypt_and_save_password(password)
+        self.user_id = user_id
+        self.url = url
+        self.title = title
+        self.comment = comment
