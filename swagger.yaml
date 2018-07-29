@@ -9,7 +9,6 @@ info:
   license:
     name: 'Flask, Postgresql'
     url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
-# host: '192.168.99.100:5000'
 host: '127.0.0.1:5000'
 basePath: /
 tags:
@@ -82,11 +81,22 @@ paths:
     get:
       tags:
         - user
-      summary: Get all users
+      summary: Get all users or user by username
       description: Get all users for test add users in DATABASE
       operationId: getAllUsers
       produces:
         - application/json
+      parameters:
+        - in: query
+          name: username
+          required: false
+          type: string
+          description: The user login.
+        - in: query
+          name: email
+          required: false
+          type: string
+          description: The user email.
       responses:
         '200':
           description: successful operation

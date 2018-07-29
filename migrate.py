@@ -24,6 +24,7 @@ def create_db():
         if cur is not None:
             cur.close()
 
+
 def create_user():
     con = None
     cur = None
@@ -58,14 +59,14 @@ def create_tables():
         cur.execute("CREATE TABLE users ("
                     "id serial NOT NULL,"
                     "username varchar NOT NULL,"
-                    "userpass varchar NOT NULL,"
+                    "userpass bytea NOT NULL,"
                     "email varchar,"
                     "phone varchar,"
                     "first_name varchar,"
                     "last_name varchar,"
                     "reg_date TIMESTAMP NOT NULL,"
-                    "auth_time TIMESTAMP NOT NULL,"
-                    "salt varchar NOT NULL,"
+                    "auth_time TIMESTAMP,"
+                    "salt bytea NOT NULL,"
                     "CONSTRAINT users_pk PRIMARY KEY (id)"
                     ") WITH OIDS;")
 
@@ -115,7 +116,7 @@ def drop_tables():
         if cur is not None:
             cur.close()
 
-            
+
 def insert_data_in_db():
     con = None
     cur = None
@@ -127,9 +128,11 @@ def insert_data_in_db():
     except:
         print("Can not connect to database: db_sskey")
     try:
-        cur.execute("INSERT INTO users VALUES (101, 'test', 'test', 'test@test.com', '380501234567', 'test', 'test', '2018-01-01 12:00:00', '2018-01-01 12:00:00', 'ffffffff');")
+        cur.execute(
+            "INSERT INTO users VALUES (101, 'test', 'test', 'test@test.com', '380501234567', 'test', 'test', '2018-01-01 12:00:00', '2018-01-01 12:00:00', 'ffffffff');")
         cur.execute("INSERT INTO passwords VALUES (DEFAULT, 101, 'www', 'title', 'login', 'pass', 'comment');")
-        cur.execute("INSERT INTO users VALUES (102, 'test2', 'test2', 'test@test.com', '380501112233', 'test2', 'test2', '2018-02-02 13:00:00', '2018-02-02 13:00:00', 'ff00ff00');")
+        cur.execute(
+            "INSERT INTO users VALUES (102, 'test2', 'test2', 'test@test.com', '380501112233', 'test2', 'test2', '2018-02-02 13:00:00', '2018-02-02 13:00:00', 'ff00ff00');")
         cur.execute("INSERT INTO passwords VALUES (DEFAULT, 102, 'www', 'title', 'login', 'pass', 'comment2');")
         print("Test data inserted successfully")
     except:
@@ -140,9 +143,10 @@ def insert_data_in_db():
         if cur is not None:
             cur.close()
 
+
 if __name__ == "__main__":
     create_user()
     create_db()
     create_tables()
-#    drop_tables()   #Uncomment it if you need delete tables 'user' and 'passwords' in databae 'db_sskey'
+    #    drop_tables()   #Uncomment it if you need delete tables 'user' and 'passwords' in databae 'db_sskey'
     insert_data_in_db()
