@@ -1,6 +1,7 @@
 from flask_restful import Resource, reqparse
 from abc import ABCMeta, abstractmethod
 from app.models import User
+from app.models import Password
 from app import app, api
 from base import Session
 
@@ -41,15 +42,15 @@ class UserResource(EntityResource):
     def post(self):
 
         parser = reqparse.RequestParser()
-        parser.add_argument('email', type=str, help='Rate to charge for this resource')
-        parser.add_argument('username', type=str, help='Rate to charge for this resource')
-        parser.add_argument('userpass', type=str, help='Rate to charge for this resource')
-        parser.add_argument('first_name', type=str, help='Rate to charge for this resource')
-        parser.add_argument('last_name', type=str, help='Rate to charge for this resource')
-        parser.add_argument('phone', type=str, help='Rate to charge for this resource')
+        parser.add_argument('email', type=str, help='')
+        parser.add_argument('username', type=str, help='')
+        parser.add_argument('userpass', type=str, help='')
+        parser.add_argument('first_name', type=str, help='')
+        parser.add_argument('last_name', type=str, help='')
+        parser.add_argument('phone', type=str, help='')
         args = parser.parse_args()
 
-        if not User.validate_user_create_data(args):
+        if not User.validate_user(args):
             msg = "REQUIRED DATA NOT VALID OR BLANK"
             status = 400
         else:
@@ -67,8 +68,8 @@ class UserResource(EntityResource):
 
     def get(self):
         parser = reqparse.RequestParser()
-        parser.add_argument('username', type=str, help='Rate to charge for this resource')
-        parser.add_argument('email', type=str, help='Rate to charge for this resource')
+        parser.add_argument('username', type=str, help='')
+        parser.add_argument('email', type=str, help='')
 
         args = parser.parse_args()
         try:
@@ -92,7 +93,22 @@ class UserResource(EntityResource):
         pass
 
     def delete(self):
-        pass
+        parser = reqparse.RequestParser()
+        parser.add_argument('username', type=str, help='')
+        args = parser.parse_args()
+        if args['username']:
+            try:
+                session.query(User).filter(User.username == args['username']).delete()
+                session.commit()
+                status = 200
+                msg = 'User {0} has been deleted successfully'.format(args['username'])
+            except Exception as e:
+                msg = str(e)
+                status = 500
+        else:
+            msg = "USERNAME not given!"
+            status = 400
+        return {'message': msg}, status, {'Access-Control-Allow-Origin': '*'}
 
 
 api.add_resource(Home, '/', "/home")
