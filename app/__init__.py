@@ -8,4 +8,7 @@ api = Api(app)
 # app.config["SECRET_KEY"] = "5791628bb0b13ce0c676dfde280ba245"
 # db = ...
 
+from app.errors.handlers import errors
+
+app.register_blueprint(errors)
 from app import routes
