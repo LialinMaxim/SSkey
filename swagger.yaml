@@ -9,7 +9,6 @@ info:
   license:
     name: 'Flask, Postgresql'
     url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
-# host: '192.168.99.100:5000'
 host: '127.0.0.1:5000'
 basePath: /
 tags:
@@ -47,7 +46,7 @@ paths:
         - application/xml
       parameters:
         - in: query
-          name: login
+          name: username
           required: true
           type: string
           description: The user login.
@@ -57,7 +56,7 @@ paths:
           type: string
           description: The user email.
         - in: query
-          name: password
+          name: userpass
           required: true
           type: string
           description: The user password.
@@ -82,11 +81,22 @@ paths:
     get:
       tags:
         - user
-      summary: Get all users
+      summary: Get all users or user by username
       description: Get all users for test add users in DATABASE
       operationId: getAllUsers
       produces:
         - application/json
+      parameters:
+        - in: query
+          name: username
+          required: false
+          type: string
+          description: The user login.
+        - in: query
+          name: email
+          required: false
+          type: string
+          description: The user email.
       responses:
         '200':
           description: successful operation
@@ -101,11 +111,11 @@ definitions:
       id:
         type: integer
         format: int64
-      login:
+      username:
         type: string
       email:
         type: string
-      password:
+      userpass:
         type: string
       salt:
         type: string
@@ -123,11 +133,11 @@ definitions:
         format: int64
     example:
       reg_date: 6
-      password: password
+      userpass: password
       phone: phone
       last_name: last_name
       id: 0
-      login: login
+      username: login
       last_login_date: 1
       first_name: first_name
       email: email
