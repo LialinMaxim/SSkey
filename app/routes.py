@@ -1,21 +1,112 @@
-from flask_restful import Resource, reqparse
 from abc import ABCMeta, abstractmethod
 
+from flask import g, jsonify, request, abort
+from flask_restful import Resource, reqparse
+
+from app import app, api, basic_auth
 from app.models import User
-from app import app, api
 from base import Session
 
 session = Session()
 
 
-class Home(Resource):
-    def get(self):
-        return {'message': 'Home Page'}, 200, {'Access-Control-Allow-Origin': '*'}
+# Token endpoint
+@app.route('/token', methods=['GET'])  # test route
+@basic_auth.login_required
+def get_auth_token():
+    token = g.user.generate_auth_token()
+    return jsonify({'token': token.decode('utf-8')})
+
+# curl -u test:test -i -X GET http://127.0.0.1:5000/token
+# curl -u test:test -i -X GET http://127.0.0.1:5000/user
 
 
-class Smoke(Resource):
-    def get(self):
-        return {'message': 'OK'}, 200, {'Access-Control-Allow-Origin': '*'}
+@basic_auth.verify_password
+def verify_password(username_or_token, password):
+    # First try to authenticate by token
+    user = User.verify_auth_token(username_or_token)
+    if not user:
+        print('Cannot verify the token')
+        # Try to authenticate with username/password
+        print('Looking for a user...')
+        user = session.query(User).filter(User.username == username_or_token).first()
+        print(user)
+        if not user or not user.verify_password(password):
+            print("User wasn't found and/or password wasn't verified")
+            return False
+    # Creates user after verification
+    print('User was found and password was verified')
+    g.user = user
+    return True
+
+
+# User registration
+# curl -i -X POST -H "Content-Type: application/json" -d '{"username":"artur","password":"password","email":"artur@email","first_name":"Artur","last_name":"Manukian", "phone":"0123456789"}' http://127.0.0.1:5000/users
+@app.route('/users', methods=['POST'])  # test rout
+def new_user():
+    username = request.json.get('username')
+    password = request.json.get('password')
+    email = request.json.get('email')
+    first_name = request.json.get('first_name')
+    last_name = request.json.get('last_name')
+    phone = request.json.get('phone')
+    if username is None or password is None:
+        abort(400)  # missing arguments
+    if session.query(User).filter(User.username == username).first() is not None:
+        abort(400)  # existing user
+    user = User(username=username, email=email, first_name=first_name,
+                last_name=last_name, phone=phone)
+    user.hash_password(password)
+    try:
+        session.add(user)
+        session.commit()
+    except Exception as e:
+        msg = str(e)
+        status = 500
+        return jsonify({'message': msg}, status, {'Access-Control-Allow-Origin': '*'})
+    return jsonify({'username': user.username}), 201
+
+
+# @basic_auth.verify_password
+# def verify_password(username, password):
+#     """Password verification
+#
+#     Flask-HTTPAuth invokes this callback function whenever it needs
+#     to validate a username and password pair.
+#
+#     :param username: Received username
+#     :param password: Received password
+#     :return:
+#     """
+#     user = session.query(User).filter(User.username == username).first()
+#     if not user or not user.verify_password(password):
+#         return False
+#     # Creates user after verification
+#     g.user = user
+#     return True
+
+
+# @token_auth.verify_token
+# def verify_token(token):
+#     """Token verification
+#
+#     Verifies token based on username
+#
+#     :param token: token from /login POST method
+#     :return: False or True if token exist
+#     """
+#     g.user = None
+#
+#     try:
+#         data = token_serializer.loads(token)
+#     except:
+#         return False
+#
+#     if 'username' in data:
+#         g.user = data['username']
+#         return True
+#
+#     return False
 
 
 class EntityResource(Resource):
@@ -38,7 +129,62 @@ class EntityResource(Resource):
         raise NotImplementedError
 
 
+class Home(EntityResource):
+    method_decorators = {'get': [basic_auth.login_required]}
+
+    # curl -i -X GET http://127.0.0.1:5000/home
+    # 'Unauthorized Access' without login and password
+    def get(self):
+        return {'message': 'Home Page'}, 200, {'Access-Control-Allow-Origin': '*'}
+
+
+class Smoke(EntityResource):
+
+    def get(self):
+        return {'message': 'OK'}, 200, {'Access-Control-Allow-Origin': '*'}
+
+
+class Login(EntityResource):
+    # method_decorators = {'post': [basic_auth.verify_password]}
+
+    def post(self):
+        """Login POST method
+
+        Creates token
+
+        :return: token
+        """
+        # Authentication
+
+        # May be replaced with decorator.
+        # Finds user from DB query.
+        # g.user = session.query(User).filter(User.username == basic_auth.username).first()
+        # if not g.user:
+        #     msg = 'Could not verify. Invalid user.'
+        #     status = 401
+        #     return {'message': msg}, status, {'WWW-Authenticate': 'Basic realm="Login required."'}
+
+        # token = token_serializer.dumps({'username': g.user}).decode('utf-8')
+
+        # return {'user': g.user, 'Authorization': token}
+
+    def get(self):
+        pass
+
+    def put(self):
+        pass
+
+    def delete(self):
+        pass
+
+
 class UserResource(EntityResource):
+    """Decorator gets and checks token, return response
+    'Unauthorized Access' if token is invalid or does not exist.
+
+    """
+    # method_decorators = {'get': [basic_auth.login_required]}
+
     def post(self):
 
         parser = reqparse.RequestParser()
@@ -113,4 +259,5 @@ class UserResource(EntityResource):
 
 api.add_resource(Home, '/', "/home")
 api.add_resource(Smoke, '/smoke')
+api.add_resource(Login, '/login')
 api.add_resource(UserResource, '/user')
