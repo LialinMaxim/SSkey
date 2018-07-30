@@ -148,5 +148,5 @@ if __name__ == "__main__":
     create_user()
     create_db()
     create_tables()
-    #    drop_tables()   #Uncomment it if you need delete tables 'user' and 'passwords' in databae 'db_sskey'
     insert_data_in_db()
+    # drop_tables()  # Uncomment it if you need delete tables 'user' and 'passwords' in databae 'db_sskey'
