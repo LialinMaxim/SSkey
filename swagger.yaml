@@ -43,7 +43,6 @@ paths:
       operationId: createUser
       produces:
         - application/json
-        - application/xml
       parameters:
         - in: query
           name: username
@@ -104,6 +103,24 @@ paths:
             type: array
             items:
               $ref: '#/definitions/User'
+    delete:
+      tags:
+        - user
+      summary: Delete user
+      description: delete user by username.
+      operationId: deleteUser
+      produces:
+        - application/json
+      parameters:
+        - in: query
+          name: username
+          required: false
+          type: string
+          description: The user login.
+      responses:
+        '200':
+          description: OK
+
 definitions:
   User:
     type: object
@@ -126,18 +143,17 @@ definitions:
       phone:
         type: string
       reg_date:
-        type: integer
-        format: int64
-      last_login_date:
-        type: integer
-        format: int64
+        type: string
+      auth_date:
+        type: string
     example:
-      reg_date: 6
-      userpass: password
-      phone: phone
-      last_name: last_name
-      id: 0
-      username: login
-      last_login_date: 1
-      first_name: first_name
-      email: email
+      id: 1
+      username: petr
+      email: petr33@mail.ru
+      first_name: Petr
+      last_name: Petrov
+      phone: 666-777-444
+      register_date: 2018-07-30 14:55:52.525757
+      auth_date: 2018-07-30 14:55:52.525757
+
+
