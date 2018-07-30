@@ -4,6 +4,7 @@ Flask==1.0.2
 Flask-RESTful==0.3.6
 Flask-Script==2.0.6
 Flask-Cors==3.0.4
+Flask-HTTPAuth==3.2.4
 
 # Databases
 
@@ -14,12 +15,13 @@ SQLAlchemy==1.2.7
 
 marshmallow==2.15.3
 
-# redis
-redis==2.10.6
+# Other
 
 click==6.7
 MarkupSafe==1.0
 Werkzeug==0.14.1
+itsdangerous==0.24
+passlib==1.7.1
 
 # requests
-requests
+requests==2.19.1
