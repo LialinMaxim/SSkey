@@ -1,11 +1,12 @@
 from psycopg2 import connect
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
+from base import DBUSER, DBPASS, DBHOST, DBNAME
 
-user = 'postgres'
+user = DBUSER  # 'postgres'
 new_user = 'sskey'
-host = 'localhost'
-password = 'postgres'
-dbname = "db_sskey"
+host = DBHOST  # 'localhost'
+password = DBPASS  # 'postgres'
+dbname = DBNAME  # 'db_sskey'
 SQL_create_db = "CREATE DATABASE {0};".format(dbname)
 SQL_create_user = "CREATE USER sskey WITH password 'sskey';"
 SQL_cteate_table_users = ("CREATE TABLE users ( \n"
@@ -44,9 +45,10 @@ def create_user():
         con.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
         cur = con.cursor()
         cur.execute(SQL_create_user)
-        print('CREATE USER: success!!! User created: {0};".format(new_user)')
+        con.commit()
+        print("CREATE USER: success!!! User created:", new_user)
     except Exception as e:
-        print('CREATE USER. ERROR:', e.pgcode, e)
+        print("CREATE USER. ERROR:", e.pgcode, e)
     finally:
         if cur is not None:
             cur.close()
@@ -62,9 +64,10 @@ def create_db():
         con.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
         cur = con.cursor()
         cur.execute(SQL_create_db)
-        print("CREATE DATABASE: success!!! Database created: {0};".format(dbname))
+        con.commit()
+        print("CREATE DATABASE: success!!! Database created:", dbname)
     except Exception as e:
-        print('CREATE DATABASE. ERROR:', e.pgcode, e)
+        print("CREATE DATABASE. ERROR:", e.pgcode, e)
     finally:
         if cur is not None:
             cur.close()
@@ -82,9 +85,12 @@ def create_tables():
         cur.execute(SQL_cteate_table_users)
         cur.execute(SQL_cteate_table_passwords)
         cur.execute(SQL_alter_table)
-        print("CREATE TABLES: success!!! Tables created in database: {0};".format(dbname))
+        print("CREATE TABLES: success!!! Tables created in database:", dbname)
     except Exception as e:
-        print('CREATE TABLES. ERROR:', e.pgcode, e)
+        print("CREATE TABLES. ERROR:", e.pgcode, e)
+        con.rollback()
+    else:
+        con.commit()
     finally:
         if cur is not None:
             cur.close()
@@ -102,9 +108,12 @@ def drop_tables():
         cur.execute("ALTER TABLE passwords DROP CONSTRAINT IF EXISTS passwords_fk0;")
         cur.execute("DROP TABLE IF EXISTS users;")
         cur.execute("DROP TABLE IF EXISTS passwords;")
-        print("DROP TABLE: success!!! All tables deleted in database: {0};".format(dbname))
+        print("DROP TABLE: success!!! All tables deleted in database:", dbname)
     except Exception as e:
-        print('DROP TABLE. ERROR:', e.pgcode, e)
+        print("DROP TABLE. ERROR:", e.pgcode, e)
+        con.rollback()
+    else:
+        con.commit()
     finally:
         if cur is not None:
             cur.close()
@@ -120,14 +129,18 @@ def insert_data_in_db():
         con.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
         cur = con.cursor()
         cur.execute(
-            "INSERT INTO users VALUES (103, 'test', 'test', 'test@test.com', '380501234567', 'test', 'test', '2018-01-01 12:00:00', '2018-01-01 12:00:00', 'ffffffff');")
-        cur.execute("INSERT INTO passwords VALUES (DEFAULT, 103, 'www', 'title', 'login', 'pass', 'comment');")
+            "INSERT INTO users VALUES (101, 'test', '\xFFFFFFFF', 'test@test.com', '380501234567', 'test', 'test', '2018-01-01 12:00:00', '2018-01-01 12:00:00', '\xFF00FFFF');")
+        cur.execute("INSERT INTO passwords VALUES (DEFAULT, 101, 'www', 'title', 'login', 'pass', 'comment');")
         cur.execute(
-            "INSERT INTO users VALUES (104, 'test2', 'test2', 'test@test.com', '380501112233', 'test2', 'test2', '2018-02-02 13:00:00', '2018-02-02 13:00:00', 'ff00ff00');")
-        cur.execute("INSERT INTO passwords VALUES (DEFAULT, 104, 'www', 'title', 'login', 'pass', 'comment2');")
-        print("INSERT DATA IN DATABASE: success!!! Test data inserted successfully in database: {0};".format(dbname))
+            "INSERT INTO users VALUES (102, 'test2', '\xFFFF00FF', 'test@test.com', '380501112233', 'test2', 'test2', '2018-02-02 13:00:00', '2018-02-02 13:00:00', '\xFFFFFFF00');")
+        cur.execute("INSERT INTO passwords VALUES (DEFAULT, 102, 'www', 'title', 'login', 'pass', 'comment2');")
+        con.commit()
+        print("INSERT DATA IN DATABASE: success!!! Test data inserted in database:", dbname)
     except Exception as e:
-        print("INSERT DATA IN DATABASE. ERROR:", e)
+        print("INSERT DATA IN DATABASE. ERROR:", e.pgcode, e)
+        con.rollback()
+    else:
+        con.commit()
     finally:
         if cur is not None:
             cur.close()
@@ -136,8 +149,8 @@ def insert_data_in_db():
 
 
 if __name__ == "__main__":
-    # drop_tables()  # Uncomment function if you need delete tables 'user' and 'passwords' in databae
+    drop_tables()  # Uncomment function if you need delete tables 'user' and 'passwords' in databae
     create_user()
     create_db()
     create_tables()
-    # insert_data_in_db()  # Uncomment function if you need insert test records in tables 'user' and 'passwords' in databae
+    insert_data_in_db()  # Uncomment function if you need insert test records in tables 'user' and 'passwords' in databae
