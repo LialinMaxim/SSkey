@@ -29,15 +29,14 @@ class TestFlaskApiUsingRequests(unittest.TestCase):
 
     def test_get_user_valid(self):
         response = requests.get('http://localhost:5000/user?username=Seriy')
-        # self.assertEqual(response.json()[0], {'users': []})
-        self.assertEqual(response.status_code, 200)
-
-    def test_delete_user_valid(self):
-        response = requests.delete('http://localhost:5000/user', data={
+        requests.delete('http://localhost:5000/user', data={
             'username': 'Seriy'
         })
-        self.assertEqual(response.json(), {'message': 'User Seriy has been deleted successfully'})
+        self.assertEqual(response.json()['users'][0]['username'], 'Seriy')
+        self.assertEqual(response.json()['users'][0]['email'], 'serg@mail.ru')
+        self.assertEqual(response.json()['users'][0]['last_name'], 'Petrov')
         self.assertEqual(response.status_code, 200)
+
 
 
     # def test_create_user_not_valid(self):
