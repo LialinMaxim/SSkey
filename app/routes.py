@@ -1,7 +1,7 @@
 from flask_restful import Resource, reqparse
 from abc import ABCMeta, abstractmethod
+
 from app.models import User
-from app.models import Password
 from app import app, api
 from base import Session
 

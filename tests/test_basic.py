@@ -37,15 +37,15 @@ class TestFlaskApiUsingRequests(unittest.TestCase):
         self.assertEqual(response.json()['users'][0]['last_name'], 'Petrov')
         self.assertEqual(response.status_code, 200)
 
+    def test_create_user_empty_required(self):
+        response = requests.post('http://localhost:5000/user')
+        self.assertEqual(response.json(), {'message': "REQUIRED DATA NOT VALID OR BLANK"})
+        self.assertEqual(response.status_code, 400)
 
-
-    # def test_create_user_not_valid(self):
-    #     response = requests.post('http://localhost:5000/user', data={
-    #         'username': 'Andrey', 'email': 'serg@mail.ru', 'password': 'password123'
-    #     })
-    #     self.assertEqual(response.json(), {'message': 'USER Seriy REGISTRATION SUCCESSFUL'})
-    #     self.assertEqual(response.status_code, 200)
-
+    def test_get_not_exist_user(self):
+        response = requests.get('http://localhost:5000/user?username=vasiliy_petrovich7872')
+        self.assertEqual(response.json()['users'], [])
+        self.assertEqual(response.status_code, 200)
 
     def tearDown(self):
         pass
