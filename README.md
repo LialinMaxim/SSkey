@@ -19,6 +19,35 @@ python manage.py
 
 Visit [http://localhost:5000](http://localhost:5000)
 
+## Flask Application Structure 
+
+```
+.
+├── app
+│   ├── errors
+│   │   ├── handlers.py
+│   │   ├── __init__.py
+│   ├── __init__.py
+│   ├── models.py
+│   └── routes.py
+├── base.py
+├── boot.sh
+├── config.py
+├── docker-compose.yml
+├── Dockerfile
+├── environment.yaml
+├── load_tests.py
+├── manage.py
+├── migrate.py
+├── README.md
+├── requirements.txt
+├── swagger.yaml
+└── tests
+    ├── __init__.py
+    └── test_basic.py
+
+```
+
 ## Development
 
 Create a new branch off the **develop** branch for features or fixes.
@@ -39,6 +68,7 @@ python load_test.py
 ```
 
 ## Postgresql
+
 Install [postgresql](https://www.postgresql.org/download/) and run:
 ```shell
 python base.py # database config
