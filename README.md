@@ -35,7 +35,6 @@ Visit [http://localhost:5000](http://localhost:5000)
 ├── config.py
 ├── docker-compose.yml
 ├── Dockerfile
-├── environment.yaml
 ├── load_tests.py
 ├── manage.py
 ├── migrate.py

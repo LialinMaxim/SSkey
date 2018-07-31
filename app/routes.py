@@ -113,4 +113,4 @@ class UserResource(EntityResource):
 
 api.add_resource(Home, '/', "/home")
 api.add_resource(Smoke, '/smoke')
-api.add_resource(UserResource, '/user')
+api.add_resource(UserResource, '/users')
