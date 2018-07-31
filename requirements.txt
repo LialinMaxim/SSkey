@@ -23,4 +23,4 @@ MarkupSafe==1.0
 Werkzeug==0.14.1
 
 # requests
-requests
+requests==2.19.1
