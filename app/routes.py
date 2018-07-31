@@ -1,5 +1,6 @@
 from flask_restful import Resource, reqparse
 from abc import ABCMeta, abstractmethod
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.models import User
 from app import app, api
@@ -53,6 +54,12 @@ class UserResource(EntityResource):
         if not User.validate_user(args):
             msg = "REQUIRED DATA NOT VALID OR BLANK"
             status = 400
+        elif session.query(User).filter(User.username == args['username']).first():
+            msg = "User with username = {0} already exists".format(args['username'])
+            status = 200
+        elif session.query(User).filter(User.email == args['email']).first():
+            msg = "Useer with email = {0} already exists".format(args['email'])
+            status = 200
         else:
             user = User(args['username'], args['email'], args['userpass'], args['first_name'],
                         args['last_name'], args['phone'])
@@ -61,52 +68,51 @@ class UserResource(EntityResource):
             try:
                 session.add(user)
                 session.commit()
-            except Exception as e:
-                msg = str(e)
+            except SQLAlchemyError as e:
+                msg = e
                 status = 500
         return {'message': msg}, status, {'Access-Control-Allow-Origin': '*'}
 
     def get(self):
         parser = reqparse.RequestParser()
-        parser.add_argument('username', type=str, help='')
-        parser.add_argument('email', type=str, help='')
+        parser.add_argument('user_id', type=int, help='')
 
+        headers = {'Access-Control-Allow-Origin': '*'}
         args = parser.parse_args()
         try:
-            if args['username']:
-                users = session.query(User).filter(User.username == args['username']).all()
-            elif args['email']:
-                users = session.query(User).filter(User.email == args['email']).all()
+            if args['user_id']:
+                user = session.query(User).filter(User.id == args['user_id']).first()
+                if not user:
+                    return {'user': None}, 200, headers
             else:
-                users = session.query(User).all()
-        except Exception as e:
-            msg = str(e)
-            status = 500
-            return {'msg': msg}, status, {'Access-Control-Allow-Origin': '*'}
-        status = 200
-        users_resp = []
-        for user in users:
-            users_resp.append(user.serialize)
-        return {'users': users_resp}, status, {'Access-Control-Allow-Origin': '*'}
+                return {'msg': 'User id not given'}, 400, headers
+        except SQLAlchemyError as e:
+            return {'msg': e}, 500, headers
+        return {'user': user.serialize}, 200, headers
 
     def put(self):
         pass
 
     def delete(self):
         parser = reqparse.RequestParser()
-        parser.add_argument('username', type=str, help='')
+        parser.add_argument('user_id', type=int, help='')
+
         args = parser.parse_args()
-        if args['username']:
+
+        if args['user_id']:
             try:
-                session.query(User).filter(User.username == args['username']).delete()
-                session.commit()
-                status = 200
-                msg = 'User {0} has been deleted successfully'.format(args['username'])
-            except Exception as e:
-                msg = str(e)
+                if session.query(User).filter(User.id == args['user_id']).first():
+                    session.query(User).filter(User.id == args['user_id']).delete()
+                    session.commit()
+                    status = 200
+                    msg = 'User with id = {0} has been deleted successfully'.format(args['user_id'])
+                else:
+                    msg = 'User with id = {0} not exists!'.format(args['user_id'])
+            except SQLAlchemyError as e:
+                msg = e
                 status = 500
         else:
-            msg = "USERNAME not given!"
+            msg = "User id not given!"
             status = 400
         return {'message': msg}, status, {'Access-Control-Allow-Origin': '*'}
 
