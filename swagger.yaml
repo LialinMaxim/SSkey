@@ -80,22 +80,18 @@ paths:
     get:
       tags:
         - user
-      summary: Get all users or user by username
-      description: Get all users for test add users in DATABASE
-      operationId: getAllUsers
+      summary: User by id
+      description: Get User by id
+      operationId: getUser
       produces:
         - application/json
       parameters:
         - in: query
-          name: username
-          required: false
-          type: string
-          description: The user login.
-        - in: query
-          name: email
-          required: false
-          type: string
-          description: The user email.
+          name: user_id
+          required: true
+          type: integer
+          format: int64
+          description: The user id.
       responses:
         '200':
           description: successful operation
@@ -103,24 +99,28 @@ paths:
             type: array
             items:
               $ref: '#/definitions/User'
+        '400':
+          description: user_id not given
     delete:
       tags:
         - user
       summary: Delete user
-      description: delete user by username.
+      description: delete user by user_id.
       operationId: deleteUser
       produces:
         - application/json
       parameters:
         - in: query
-          name: username
-          required: false
-          type: string
+          name: user_id
+          required: true
+          type: integer
+          format: int64
           description: The user login.
       responses:
         '200':
-          description: OK
-
+          description: User with id=%id% has been deleted
+        '400':
+          description: User id not given
 definitions:
   User:
     type: object
@@ -153,7 +153,5 @@ definitions:
       first_name: Petr
       last_name: Petrov
       phone: 666-777-444
-      register_date: 2018-07-30 14:55:52.525757
-      auth_date: 2018-07-30 14:55:52.525757
-
-
+      register_date: 2018-07-30T14:55:52.525Z
+      auth_date: 2018-07-30T14:55:52.525Z
