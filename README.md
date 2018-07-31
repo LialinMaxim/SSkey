@@ -37,3 +37,10 @@ Standalone unit tests run with:
 ```shell
 python load_test.py
 ```
+
+## Postgresql
+Install [postgresql](https://www.postgresql.org/download/) and run:
+```shell
+python base.py # database config
+python migrate.py # in order to create database
+```
