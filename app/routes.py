@@ -3,6 +3,7 @@ from abc import ABCMeta, abstractmethod
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.models import User
+from app.models import Password
 from app import app, api
 from base import Session
 
@@ -19,27 +20,53 @@ class Smoke(Resource):
         return {'message': 'OK'}, 200, {'Access-Control-Allow-Origin': '*'}
 
 
-class EntityResource(Resource):
+class EntityListResource(Resource):
+    """
+    Abstract class of Entity list contain method POST and GET work with routs type /entities
+    """
     __metaclass__ = ABCMeta
-
-    @abstractmethod
-    def post(self):
-        raise NotImplementedError
 
     @abstractmethod
     def get(self):
         raise NotImplementedError
 
     @abstractmethod
-    def put(self):
+    def post(self):
+        raise NotImplementedError
+
+
+class EntityResource(Resource):
+    """
+    Abstract class of Entity contain method  GET PUT delete work with routs type /entities/<int:entity_id>
+    """
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def get(self, *args, **kwargs):
         raise NotImplementedError
 
     @abstractmethod
-    def delete(self):
+    def put(self, *args, **kwargs):
+        raise NotImplementedError
+
+    @abstractmethod
+    def delete(self, *args, **kwargs):
         raise NotImplementedError
 
 
-class UserResource(EntityResource):
+class UserListResource(Resource):
+
+    def get(self):
+        headers = {'Access-Control-Allow-Origin': '*'}
+        try:
+            users = session.query(User).all()
+        except SQLAlchemyError as e:
+            return {'msg': e}, 500, headers
+        users_serialized = []
+        for user in users:
+            users_serialized.append(user.serialize)
+        return {'users': users_serialized}, 200, headers
+
     def post(self):
 
         parser = reqparse.RequestParser()
@@ -73,50 +100,72 @@ class UserResource(EntityResource):
                 status = 500
         return {'message': msg}, status, {'Access-Control-Allow-Origin': '*'}
 
-    def get(self):
-        parser = reqparse.RequestParser()
-        parser.add_argument('user_id', type=int, help='')
 
+class UserResource(EntityResource):
+
+    def get(self, user_id):
         headers = {'Access-Control-Allow-Origin': '*'}
-        args = parser.parse_args()
         try:
-            if args['user_id']:
-                user = session.query(User).filter(User.id == args['user_id']).first()
-                if not user:
-                    return {'user': None}, 200, headers
-            else:
-                return {'msg': 'User id not given'}, 400, headers
+            user = session.query(User).filter(User.id == user_id).first()
         except SQLAlchemyError as e:
             return {'msg': e}, 500, headers
-        return {'user': user.serialize}, 200, headers
+        if user:
+            return {'user': user.serialize}, 200, headers
+        else:
+            return {'msg': 'User not found'}, 404, headers
 
-    def put(self):
+    def put(self, user_id):
         pass
 
-    def delete(self):
-        parser = reqparse.RequestParser()
-        parser.add_argument('user_id', type=int, help='')
-
-        args = parser.parse_args()
-
-        if args['user_id']:
-            try:
-                if session.query(User).filter(User.id == args['user_id']).first():
-                    session.query(User).filter(User.id == args['user_id']).delete()
-                    session.commit()
-                    status = 200
-                    msg = 'User with id = {0} has been deleted successfully'.format(args['user_id'])
-                else:
-                    msg = 'User with id = {0} not exists!'.format(args['user_id'])
-            except SQLAlchemyError as e:
-                msg = e
-                status = 500
-        else:
-            msg = "User id not given!"
-            status = 400
+    def delete(self, user_id):
+        try:
+            if session.query(User).filter(User.id == user_id).first():
+                session.query(User).filter(User.id == user_id).delete()
+                session.commit()
+                status = 204
+                msg = 'User with id = {0} has been deleted successfully'.format(user_id)
+            else:
+                msg = 'User with id = {0} not exists!'.format(user_id)
+                status = 404
+        except SQLAlchemyError as e:
+            msg = e
+            status = 500
         return {'message': msg}, status, {'Access-Control-Allow-Origin': '*'}
+
+
+class PasswordResource(EntityResource):
+    def get(self, user_id, pass_id):
+        headers = {'Access-Control-Allow-Origin': '*'}
+        try:
+            user = session.query(User).filter(User.id == user_id).first()
+            if not user:
+                return {'msg': 'User not found'}, 404, headers
+            passwords = session.query(Password).filter(Password.user_id == user_id).all()
+            passwords_serialized = []
+            for password in passwords:
+                passwords_serialized.append(password.serialize)
+        except SQLAlchemyError as e:
+            return {'msg': e}, 500, headers
+        return {'passwords': passwords_serialized}, 200, headers
+
+    def put(self, user_id):
+        pass
+
+    def delete(self, user_id):
+        pass
+
+
+class PasswordListResource(EntityListResource):
+    def get(self):
+        pass
+
+    def post(self):
+        pass
 
 
 api.add_resource(Home, '/', "/home")
 api.add_resource(Smoke, '/smoke')
-api.add_resource(UserResource, '/user')
+api.add_resource(UserResource, '/users/<int:user_id>')
+api.add_resource(UserListResource, '/users')
+api.add_resource(PasswordListResource, '/users/<int:user_id>/passwords')
+api.add_resource(PasswordResource, '/users/<int:user_id>/passwords/<int:pass_id>')

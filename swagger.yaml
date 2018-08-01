@@ -34,10 +34,10 @@ paths:
       responses:
         '200':
           description: OK
-  /user:
+  /users:
     post:
       tags:
-        - user
+        - users
       summary: Create user
       description: This can only be done by the logged in user.
       operationId: createUser
@@ -77,16 +77,18 @@ paths:
       responses:
         default:
           description: successful operation
+  /users/{user_id}:
     get:
       tags:
-        - user
+        - users
       summary: User by id
       description: Get User by id
       operationId: getUser
       produces:
         - application/json
+
       parameters:
-        - in: query
+        - in: path
           name: user_id
           required: true
           type: integer
@@ -99,18 +101,18 @@ paths:
             type: array
             items:
               $ref: '#/definitions/User'
-        '400':
-          description: user_id not given
+        '404':
+          description: user not found
     delete:
       tags:
-        - user
+        - users
       summary: Delete user
       description: delete user by user_id.
       operationId: deleteUser
       produces:
         - application/json
       parameters:
-        - in: query
+        - in: path
           name: user_id
           required: true
           type: integer
@@ -121,6 +123,38 @@ paths:
           description: User with id=%id% has been deleted
         '400':
           description: User id not given
+  /users/{user_id}/passwords/{pass_id}:
+    get:
+      tags:
+        - password
+      summary: Password by user_id and password_id
+      description: Get password by user_id and password_id
+      operationId: getPasswords
+      produces:
+        - application/json
+
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          type: integer
+          format: int64
+          description: The user id.
+        - in: path
+          name: pass_id
+          required: true
+          type: integer
+          format: int64
+          description: The password id.
+      responses:
+        '200':
+          description: successful operation
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Password'
+        '404':
+          description: user not found
 definitions:
   User:
     type: object
@@ -155,3 +189,29 @@ definitions:
       phone: 666-777-444
       register_date: 2018-07-30T14:55:52.525Z
       auth_date: 2018-07-30T14:55:52.525Z
+
+  Password:
+    type: object
+    properties:
+      pass_id:
+        type: integer
+        format: int64
+      url:
+        type: string
+      title:
+        type: string
+      login:
+        type: string
+      password:
+        type: string
+      comment:
+        type: string
+
+    example:
+      pass_id: 1
+      url: http://www.google.com.ua
+      title: google account
+      login: Petr
+      password: petr777
+      comment: my google account
+
