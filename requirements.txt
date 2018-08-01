@@ -17,9 +17,10 @@ marshmallow==2.15.3
 # redis
 redis==2.10.6
 
+pytest==3.6.3
 click==6.7
 MarkupSafe==1.0
 Werkzeug==0.14.1
 
 # requests
-requests
+requests==2.19.1
