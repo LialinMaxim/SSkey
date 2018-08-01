@@ -22,28 +22,30 @@ Visit [http://localhost:5000](http://localhost:5000)
 ## Flask Application Structure 
 
 ```
+
 .
 ├── app
-│   ├── errors
-│   │   ├── handlers.py
-│   │   ├── __init__.py
-│   ├── __init__.py
-│   ├── models.py
-│   └── routes.py
-├── base.py
+│   ├── base.py
+│   ├── Dockerfile
+│   ├── errors
+│   │   ├── handlers.py
+│   │   ├── __init__.py
+│   ├── __init__.py
+│   ├── migrate.py
+│   ├── models.py
+│   ├── requirements.txt
+│   ├── resources.py
+│   ├── routes.py
+│   └── swagger.yaml
 ├── boot.sh
 ├── config.py
 ├── docker-compose.yml
-├── Dockerfile
 ├── environment.yaml
-├── load_tests.py
 ├── manage.py
-├── migrate.py
 ├── README.md
-├── requirements.txt
-├── swagger.yaml
 └── tests
     ├── __init__.py
+    ├── load_tests.py
     └── test_basic.py
 
 ```

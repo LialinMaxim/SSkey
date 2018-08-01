@@ -4,7 +4,7 @@ import os
 
 from sqlalchemy import Column, String, Integer, Date, LargeBinary, ForeignKey
 from sqlalchemy.orm import relationship
-from base import Base
+from app.base import Base
 
 
 class User(Base):

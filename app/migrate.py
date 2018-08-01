@@ -136,8 +136,8 @@ def insert_data_in_db():
 
 
 if __name__ == "__main__":
-    # drop_tables()  # Uncomment function if you need delete tables 'user' and 'passwords' in databae
+    drop_tables()  # Uncomment function if you need delete tables 'user' and 'passwords' in databae
     create_user()
     create_db()
     create_tables()
-    # insert_data_in_db()  # Uncomment function if you need insert test records in tables 'user' and 'passwords' in databae
+    insert_data_in_db()  # Uncomment function if you need insert test records in tables 'user' and 'passwords' in databae
