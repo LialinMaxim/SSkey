@@ -4,7 +4,8 @@ import os
 
 from sqlalchemy import Column, String, Integer, Date, LargeBinary, ForeignKey
 from sqlalchemy.orm import relationship
-from app.base import Base
+
+from . import Base
 
 
 class User(Base):
@@ -35,7 +36,8 @@ class User(Base):
         return salt, iterations, hashed_password
 
     def compare_hash(self, input_password):
-        hash_input_password = __class__.hash_password(input_password, self.salt)
+        hash_input_password = __class__.hash_password(input_password,
+                                                      self.salt)
         return hash_input_password == self.userpass
 
     @property
@@ -51,7 +53,8 @@ class User(Base):
             'phone': self.phone
         }
 
-    def __init__(self, username, email, password, first_name, last_name, phone):
+    def __init__(self, username, email, password, first_name, last_name,
+                 phone):
         self.username = username
         hashed_data = __class__.hash_password(password, User.generate_salt())
         self.salt = hashed_data[0]
@@ -64,7 +67,8 @@ class User(Base):
 
     def __str__(self):
         return "Username - {0}; Email - {1}; First_name - {2}; Last name - {3}; Phone - {4}". \
-            format(self.username, self.email, self.first_name, self.last_name, self.phone)
+            format(self.username, self.email, self.first_name, self.last_name,
+                   self.phone)
 
     @staticmethod
     def validate_user(req_args):

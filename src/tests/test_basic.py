@@ -1,6 +1,6 @@
 import unittest
 
-from application.manage import app
+from src.app import app
 
 
 class TestFlaskApiUsingRequests(unittest.TestCase):

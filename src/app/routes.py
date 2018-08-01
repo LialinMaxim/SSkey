@@ -1,5 +1,5 @@
-from app.resources import Home, Smoke, UserResource
-from app import api
+from . import api
+from . import Home, Smoke, UserResource
 
 api.add_resource(Home, '/', "/home")
 api.add_resource(Smoke, '/smoke')
