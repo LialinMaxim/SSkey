@@ -3,4 +3,8 @@ language: python
 python:
   - "3.6"
 
-script: pytest
+install:
+  - pip install -r src/app/requirements.txt
+
+script:
+  - pytest
