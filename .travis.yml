@@ -3,4 +3,16 @@ language: python
 python:
   - "3.6"
 
-script: pytest
+before_install:
+  - pip install pep8
+
+install:
+  - pip install -r requirements.txt
+
+script:
+  - pytest
+  - coverage run -m pytest
+  - coverage report --fail-under=0
+  - find . -name \*.py -exec pep8 --ignore=E402 {} +
+
+after_success: coveralls
