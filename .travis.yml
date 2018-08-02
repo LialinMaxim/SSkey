@@ -7,7 +7,7 @@ before_install:
   - pip install pep8
 
 install:
-  - pip install -r requirements.txt
+  - pip install -r src/app/requirements.txt
 
 script:
   - pytest
