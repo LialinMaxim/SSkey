@@ -1,18 +1,19 @@
-from flask_restful import Resource, reqparse
 from abc import ABCMeta, abstractmethod
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.models import User
-from app.models import Password
-from app import app, api
-from base import Session
+from flask_restful import Resource, reqparse
+
+from . import Session
+from . import User
+from . import Password
 
 session = Session()
 
 
 class Home(Resource):
     def get(self):
-        return {'message': 'Home Page'}, 200, {'Access-Control-Allow-Origin': '*'}
+        return {'message': 'Home Page'}, 200, {
+            'Access-Control-Allow-Origin': '*'}
 
 
 class Smoke(Resource):
@@ -88,8 +89,8 @@ class UserListResource(Resource):
             msg = "Useer with email = {0} already exists".format(args['email'])
             status = 200
         else:
-            user = User(args['username'], args['email'], args['userpass'], args['first_name'],
-                        args['last_name'], args['phone'])
+            user = User(args['username'], args['email'], args['userpass'],
+                        args['first_name'], args['last_name'], args['phone'])
             status = 200
             msg = "USER {0} REGISTRATION SUCCESSFUL".format(user.username)
             try:
@@ -162,10 +163,22 @@ class PasswordListResource(EntityListResource):
     def post(self):
         pass
 
-
-api.add_resource(Home, '/', "/home")
-api.add_resource(Smoke, '/smoke')
-api.add_resource(UserResource, '/users/<int:user_id>')
-api.add_resource(UserListResource, '/users')
-api.add_resource(PasswordListResource, '/users/<int:user_id>/passwords')
-api.add_resource(PasswordResource, '/users/<int:user_id>/passwords/<int:pass_id>')
+    def delete(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument('username', type=str, help='')
+        args = parser.parse_args()
+        if args['username']:
+            try:
+                session.query(User).filter(
+                    User.username == args['username']).delete()
+                session.commit()
+                status = 200
+                msg = 'User {0} has been deleted successfully'.format(
+                    args['username'])
+            except Exception as e:
+                msg = str(e)
+                status = 500
+        else:
+            msg = "USERNAME not given!"
+            status = 400
+        return {'message': msg}, status, {'Access-Control-Allow-Origin': '*'}

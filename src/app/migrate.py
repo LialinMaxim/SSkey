@@ -44,7 +44,7 @@ def create_user():
         con.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
         cur = con.cursor()
         cur.execute(SQL_create_user)
-        print('CREATE USER: success!!! User created: {0};".format(new_user)')
+        print("CREATE USER: success!!! User created: {0};".format(new_user))
     except Exception as e:
         print('CREATE USER. ERROR:', e.pgcode, e)
     finally:
@@ -62,7 +62,8 @@ def create_db():
         con.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
         cur = con.cursor()
         cur.execute(SQL_create_db)
-        print("CREATE DATABASE: success!!! Database created: {0};".format(dbname))
+        print("CREATE DATABASE: success!!! Database created: {0};".format(
+            dbname))
     except Exception as e:
         print('CREATE DATABASE. ERROR:', e.pgcode, e)
     finally:
@@ -82,7 +83,9 @@ def create_tables():
         cur.execute(SQL_cteate_table_users)
         cur.execute(SQL_cteate_table_passwords)
         cur.execute(SQL_alter_table)
-        print("CREATE TABLES: success!!! Tables created in database: {0};".format(dbname))
+        print(
+            "CREATE TABLES: success!!! Tables created in database: {0};".format(
+                dbname))
     except Exception as e:
         print('CREATE TABLES. ERROR:', e.pgcode, e)
     finally:
@@ -99,10 +102,13 @@ def drop_tables():
         con = connect(dbname=dbname, user=user, host=host, password=password)
         con.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
         cur = con.cursor()
-        cur.execute("ALTER TABLE passwords DROP CONSTRAINT IF EXISTS passwords_fk0;")
+        cur.execute(
+            "ALTER TABLE passwords DROP CONSTRAINT IF EXISTS passwords_fk0;")
         cur.execute("DROP TABLE IF EXISTS users;")
         cur.execute("DROP TABLE IF EXISTS passwords;")
-        print("DROP TABLE: success!!! All tables deleted in database: {0};".format(dbname))
+        print(
+            "DROP TABLE: success!!! All tables deleted in database: {0};".format(
+                dbname))
     except Exception as e:
         print('DROP TABLE. ERROR:', e.pgcode, e)
     finally:
@@ -121,11 +127,15 @@ def insert_data_in_db():
         cur = con.cursor()
         cur.execute(
             "INSERT INTO users VALUES (103, 'test', 'test', 'test@test.com', '380501234567', 'test', 'test', '2018-01-01 12:00:00', '2018-01-01 12:00:00', 'ffffffff');")
-        cur.execute("INSERT INTO passwords VALUES (DEFAULT, 103, 'www', 'title', 'login', 'pass', 'comment');")
+        cur.execute(
+            "INSERT INTO passwords VALUES (DEFAULT, 103, 'www', 'title', 'login', 'pass', 'comment');")
         cur.execute(
             "INSERT INTO users VALUES (104, 'test2', 'test2', 'test@test.com', '380501112233', 'test2', 'test2', '2018-02-02 13:00:00', '2018-02-02 13:00:00', 'ff00ff00');")
-        cur.execute("INSERT INTO passwords VALUES (DEFAULT, 104, 'www', 'title', 'login', 'pass', 'comment2');")
-        print("INSERT DATA IN DATABASE: success!!! Test data inserted successfully in database: {0};".format(dbname))
+        cur.execute(
+            "INSERT INTO passwords VALUES (DEFAULT, 104, 'www', 'title', 'login', 'pass', 'comment2');")
+        print(
+            "INSERT DATA IN DATABASE: success!!! Test data inserted successfully in database: {0};".format(
+                dbname))
     except Exception as e:
         print("INSERT DATA IN DATABASE. ERROR:", e)
     finally:
@@ -136,8 +146,8 @@ def insert_data_in_db():
 
 
 if __name__ == "__main__":
-    # drop_tables()  # Uncomment function if you need delete tables 'user' and 'passwords' in databae
+    drop_tables()  # Uncomment function if you need delete tables 'user' and 'passwords' in databae
     create_user()
     create_db()
     create_tables()
-    # insert_data_in_db()  # Uncomment function if you need insert test records in tables 'user' and 'passwords' in databae
+    insert_data_in_db()  # Uncomment function if you need insert test records in tables 'user' and 'passwords' in databae
