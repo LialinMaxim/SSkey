@@ -14,8 +14,7 @@ SQLAlchemy==1.2.7
 
 marshmallow==2.15.3
 
-# redis
-redis==2.10.6
+# Other
 
 pytest==3.6.3
 click==6.7
