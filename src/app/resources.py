@@ -1,14 +1,17 @@
-from flask_restful import Resource, reqparse
 from abc import ABCMeta, abstractmethod
-from app.base import Session
-from app.models import User
+
+from flask_restful import Resource, reqparse
+
+from . import Session
+from . import User
 
 session = Session()
 
 
 class Home(Resource):
     def get(self):
-        return {'message': 'Home Page'}, 200, {'Access-Control-Allow-Origin': '*'}
+        return {'message': 'Home Page'}, 200, {
+            'Access-Control-Allow-Origin': '*'}
 
 
 class Smoke(Resource):
@@ -52,8 +55,8 @@ class UserResource(EntityResource):
             msg = "REQUIRED DATA NOT VALID OR BLANK"
             status = 400
         else:
-            user = User(args['username'], args['email'], args['userpass'], args['first_name'],
-                        args['last_name'], args['phone'])
+            user = User(args['username'], args['email'], args['userpass'],
+                        args['first_name'], args['last_name'], args['phone'])
             status = 200
             msg = "USER {0} REGISTRATION SUCCESSFUL".format(user.username)
             try:
@@ -72,9 +75,11 @@ class UserResource(EntityResource):
         args = parser.parse_args()
         try:
             if args['username']:
-                users = session.query(User).filter(User.username == args['username']).all()
+                users = session.query(User).filter(
+                    User.username == args['username']).all()
             elif args['email']:
-                users = session.query(User).filter(User.email == args['email']).all()
+                users = session.query(User).filter(
+                    User.email == args['email']).all()
             else:
                 users = session.query(User).all()
         except Exception as e:
@@ -85,7 +90,8 @@ class UserResource(EntityResource):
         users_resp = []
         for user in users:
             users_resp.append(user.serialize)
-        return {'users': users_resp}, status, {'Access-Control-Allow-Origin': '*'}
+        return {'users': users_resp}, status, {
+            'Access-Control-Allow-Origin': '*'}
 
     def put(self):
         pass
@@ -96,10 +102,12 @@ class UserResource(EntityResource):
         args = parser.parse_args()
         if args['username']:
             try:
-                session.query(User).filter(User.username == args['username']).delete()
+                session.query(User).filter(
+                    User.username == args['username']).delete()
                 session.commit()
                 status = 200
-                msg = 'User {0} has been deleted successfully'.format(args['username'])
+                msg = 'User {0} has been deleted successfully'.format(
+                    args['username'])
             except Exception as e:
                 msg = str(e)
                 status = 500
