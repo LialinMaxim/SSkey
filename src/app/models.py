@@ -36,9 +36,9 @@ class User(Base):
         return salt, iterations, hashed_password
 
     def compare_hash(self, input_password):
-        hash_input_password = __class__.hash_password(input_password,
+        hash_input_password = User.hash_password(input_password,
                                                       self.salt)
-        return hash_input_password == self.userpass
+        return hash_input_password[2] == self.userpass
 
     @property
     def serialize(self):
