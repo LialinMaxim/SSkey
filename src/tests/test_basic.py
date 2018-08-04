@@ -4,8 +4,6 @@ import tempfile
 from src.app import app
 import pytest
 
-from app import app
-
 
 @pytest.fixture
 def client():

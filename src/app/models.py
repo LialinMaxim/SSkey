@@ -6,6 +6,9 @@ from sqlalchemy import Column, String, Integer, Date, LargeBinary, ForeignKey
 from sqlalchemy.orm import relationship
 
 from . import Base
+from . import Session
+
+session = Session()
 
 
 class User(Base):
@@ -120,3 +123,18 @@ class Password(Base):
         self.url = url
         self.title = title
         self.comment = comment
+
+
+class RevokedTokenModel(Base):
+    __tablename__ = "revoked_tokens"
+    id = Column('id', Integer, primary_key=True)
+    jti = Column('jti', String(120))
+
+    def add(self):
+        session.add(self)
+        session.commit()
+
+    @classmethod
+    def is_jti_blacklisted(cls, jti):
+        query = session.query(cls).filter(jti=jti).first()
+        return bool(query)

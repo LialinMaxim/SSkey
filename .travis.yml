@@ -12,7 +12,7 @@ install:
 script:
   - pytest
   - coverage run -m pytest
-  - coverage report --fail-under=0
+  - coverage report --fail-under=20
   - find . -name \*.py -exec pep8 --ignore=E402 {} +
 
 after_success: coveralls

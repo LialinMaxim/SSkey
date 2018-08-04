@@ -24,29 +24,30 @@ Visit [http://localhost:5000](http://localhost:5000)
 ```
 
 .
-├── app
-│   ├── base.py
-│   ├── Dockerfile
-│   ├── errors
-│   │   ├── handlers.py
-│   │   ├── __init__.py
-│   ├── __init__.py
-│   ├── migrate.py
-│   ├── models.py
-│   ├── requirements.txt
-│   ├── resources.py
-│   ├── routes.py
-│   └── swagger.yaml
-├── boot.sh
-├── config.py
 ├── docker-compose.yml
-├── environment.yaml
-├── manage.py
 ├── README.md
-└── tests
+└── src
+    ├── app
+    │   ├── base.py
+    │   ├── config.py
+    │   ├── errors
+    │   │   ├── handlers.py
+    │   │   └── __init__.py
+    │   ├── __init__.py
+    │   ├── migrate.py
+    │   ├── models.py
+    │   ├── requirements.txt
+    │   ├── resources.py
+    │   ├── routes.py
+    │   ├── shemas.py
+    │   └── swagger.yaml
+    ├── boot.sh
+    ├── Dockerfile
     ├── __init__.py
-    ├── load_tests.py
-    └── test_basic.py
+    ├── manage.py
+    └── tests
+        ├── __init__.py
+        └── test_basic.py
 
 ```
 
