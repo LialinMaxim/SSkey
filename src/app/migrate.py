@@ -32,8 +32,18 @@ SQL_cteate_table_passwords = ("CREATE TABLE passwords ( \n"
                               "                    comment TEXT, \n"
                               "                    CONSTRAINT passwords_pk PRIMARY KEY (pass_id) \n"
                               "                    ) WITH OIDS;")
+SQL_create_table_session_objects = ("CREATE TABLE session_objects ( \n"
+                                    "                    id serial NOT NULL, \n"
+                                    "                    user_id serial NOT NULL, \n"
+                                    "                    token varchar NOT NULL, \n"
+                                    "                    reg_date TIMESTAMP NOT NULL, \n"
+                                    "                    time_out_value integer NOT NULL, \n"
+                                    "                    CONSTRAINT session_objects_pk PRIMARY KEY (id) \n"
+                                    "                    ) WITH OIDS;")
 
-SQL_alter_table = "ALTER TABLE passwords ADD CONSTRAINT passwords_fk0 FOREIGN KEY (user_id) REFERENCES users(id);"
+SQL_alter_table_passwords = "ALTER TABLE passwords ADD CONSTRAINT passwords_fk0 FOREIGN KEY (user_id) REFERENCES users(id);"
+SQL_alter_table_session_obj = "ALTER TABLE session_objects ADD CONSTRAINT " \
+                              "session_objects_fk0 FOREIGN KEY (user_id) REFERENCES users(id);"
 
 
 def create_user():
@@ -82,7 +92,9 @@ def create_tables():
         cur = con.cursor()
         cur.execute(SQL_cteate_table_users)
         cur.execute(SQL_cteate_table_passwords)
-        cur.execute(SQL_alter_table)
+        cur.execute(SQL_create_table_session_objects)
+        cur.execute(SQL_alter_table_passwords)
+        cur.execute(SQL_alter_table_session_obj)
         print(
             "CREATE TABLES: success!!! Tables created in database: {0};".format(
                 dbname))
