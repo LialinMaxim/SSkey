@@ -10,8 +10,8 @@ install:
   - pip install -r src/app/requirements.txt
 
 script:
-  - pytest
-  - py.test --cov=SSkey/src tests/
-  - find . -name \*.py -exec pep8 --ignore=E402 {} +
+  - coverage run -m pytest src/tests/
+  - coverage report --fail-under=20
+  - find . -name \*.py -exec pep8 --ignore=E402{} +
 
 after_success: coveralls
