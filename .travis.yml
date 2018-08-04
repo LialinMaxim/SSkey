@@ -10,7 +10,7 @@ install:
   - pip install -r src/app/requirements.txt
 
 script:
-  - coverage run --source="src/" -m pytest
+  - coverage run --source="src/app" -m pytest
   - coverage report --fail-under=20
   - find . -name \*.py -exec pep8 --ignore={E402, E501} +
 
