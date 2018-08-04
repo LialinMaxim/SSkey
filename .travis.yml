@@ -4,15 +4,16 @@ python:
   - "3.6"
 
 before_install:
-  - pip install pep8
+  - pip install pycodestyle
 
 install:
   - pip install -r src/app/requirements.txt
 
+before_script:
+  - pycodestyle src/
+
 script:
   - coverage run --source="src/app" -m pytest
   - coverage report --fail-under=20
-  - pep8 --ignore=E402
-  - pep8 --ignore=E501
 
 after_success: coveralls
