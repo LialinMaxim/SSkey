@@ -36,9 +36,9 @@ class User(Base):
         return salt, iterations, hashed_password
 
     def compare_hash(self, input_password):
-        hash_input_password = __class__.hash_password(input_password,
+        hash_input_password = User.hash_password(input_password,
                                                       self.salt)
-        return hash_input_password == self.userpass
+        return hash_input_password[2] == self.userpass
 
     @property
     def serialize(self):
@@ -96,12 +96,13 @@ class Password(Base):
     def serialize(self):
         """Return object data in easily serializeable format"""
         return {
-            'username': self.username,
-            'email': self.email,
-            'register_date': str(self.reg_date),
-            'first_name': self.first_name,
-            'last_name': self.last_name,
-            'phone': self.phone
+            'pass_id': self.pass_id,
+            'url': self.url,
+            'title': self.title,
+            'login': str(self.login),
+            'password': self.password,
+            'comment': self.comment,
+
         }
 
     def crypt_and_save_password(self, raw_password):

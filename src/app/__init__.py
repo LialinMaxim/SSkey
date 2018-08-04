@@ -3,7 +3,8 @@ from .config import config
 from .migrate import (create_db, create_tables, create_user, insert_data_in_db,
                       drop_tables)
 from .models import User, Password
-from .resources import Home, Smoke, EntityResource, UserResource
+from .resources import Home, Smoke, EntityResource, UserResource, \
+    UserListResource, PasswordListResource, PasswordResource
 
 from flask import Flask
 from flask_restful import Api
