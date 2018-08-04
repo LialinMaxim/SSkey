@@ -13,6 +13,6 @@ script:
   - pytest
   - coverage run -m pytest
   - coverage report --fail-under=20
-  - find . -name \*.py -exec pep8 --ignore=E402 {} +
+  - find . -name \*.py -exec pep8 --ignore=E402, E501 {} +
 
 after_success: coveralls
