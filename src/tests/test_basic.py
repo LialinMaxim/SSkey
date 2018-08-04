@@ -22,7 +22,7 @@ def client():
 
 def test_smoke(client):
     rv = client.get("/smoke")
-    assert b"OK" in rv.data
+    assert b"Missing Authorization Header" in rv.data
 
 
 def test_home_page(client):
