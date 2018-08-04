@@ -11,7 +11,7 @@ install:
 
 script:
   - pytest
-  - py.test --cov=src tests/
+  - py.test --cov=SSkey/src tests/
   - find . -name \*.py -exec pep8 --ignore=E402 {} +
 
 after_success: coveralls
