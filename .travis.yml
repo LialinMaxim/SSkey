@@ -10,8 +10,8 @@ install:
   - pip install -r src/app/requirements.txt
 
 script:
-  - coverage run -m pytest src/tests/
-  - coverage report --modules src/tests --fail-under=20
+  - coverage run --source="src/tests/" -m pytest
+  - coverage report --fail-under=20
   - find . -name \*.py -exec pep8 --ignore=E402{} +
 
 after_success: coveralls
