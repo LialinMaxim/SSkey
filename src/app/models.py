@@ -124,13 +124,14 @@ class Password(Base):
 
 
 class SessionObject(Base):
-    __tablename__ = 'session_object'
+    __tablename__ = 'session_objects'
 
     id = Column('id', Integer, primary_key=True)
     token = Column('token', String(100), unique=True, nullable=False)
-    user_id = Column('user_id', Integer, ForeignKey('users.id'))
 
-    user = relationship("User", backref="tokens", cascade='all,delete')
+    user_id = Column('user_id', Integer, ForeignKey('users.id'))
+    user = relationship("User", backref="session_objects", cascade='all,delete')
+
     login_time = Column('login_time', Date, nullable=False)
     time_out_value = Column('time_out_value', Integer, nullable=False)
 

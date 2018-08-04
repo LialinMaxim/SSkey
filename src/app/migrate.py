@@ -36,7 +36,7 @@ SQL_create_table_session_objects = ("CREATE TABLE session_objects ( \n"
                                     "                    id serial NOT NULL, \n"
                                     "                    user_id serial NOT NULL, \n"
                                     "                    token varchar NOT NULL, \n"
-                                    "                    reg_date TIMESTAMP NOT NULL, \n"
+                                    "                    login_time TIMESTAMP NOT NULL, \n"
                                     "                    time_out_value integer NOT NULL, \n"
                                     "                    CONSTRAINT session_objects_pk PRIMARY KEY (id) \n"
                                     "                    ) WITH OIDS;")
