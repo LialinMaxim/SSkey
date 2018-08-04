@@ -11,8 +11,7 @@ install:
 
 script:
   - pytest
-  - coverage run -m pytest tests
-  - coverage report --fail-under=20
+  - py.test --cov=src tests/
   - find . -name \*.py -exec pep8 --ignore=E402 {} +
 
 after_success: coveralls

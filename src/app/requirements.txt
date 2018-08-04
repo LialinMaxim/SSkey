@@ -19,7 +19,7 @@ marshmallow==2.15.3
 
 # tests
 pytest==3.6.3
-coverage==4.5.1
+pytest-cov
 
 click==6.7
 MarkupSafe==1.0
