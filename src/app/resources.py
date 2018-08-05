@@ -195,18 +195,17 @@ class Login(Resource):
     def post(self):
 
         parser = reqparse.RequestParser()
-        parser.add_argument('email', type=str, help="This field cannot be blank")
-        parser.add_argument('password', type=str, help="This field cannot be blank")
+        parser.add_argument("email", type=str, help="This field cannot be blank")
+        parser.add_argument("password", type=str, help="This field cannot be blank")
         data = parser.parse_args()
 
-        if session.query(User).filter(User.email == data["email"]).first():
-            access_token = create_access_token(identity=data["email"])
-            refresh_token = create_refresh_token(identity=data["email"])
-            return {"message": "Logged in as {}".format(data["email"]), "access token": access_token,
-                    "refresh_token": refresh_token}
-        # if User.compare_hash(current_user, data["password"]):
-        #     access_token = create_access_token(identity=data["email"])
-        #     refresh_token = create_refresh_token(identity=data["email"])
+        current_user = session.query(User).filter(User.email == data["email"]).first()
+        if current_user:
+            if current_user.compare_hash(data["password"]):
+                access_token = create_access_token(identity=data["email"])
+                refresh_token = create_refresh_token(identity=data["email"])
+                return {"message": "Logged in as {}".format(data["email"]), "access token": access_token,
+                        "refresh_token": refresh_token}
         else:
             return "Wrong credentials"
 
