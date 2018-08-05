@@ -12,6 +12,6 @@ install:
 script:
   - coverage run --source="src/app" -m pytest
   - coverage report --fail-under=20
-  - pycodestyle src/ --ignore=(E402, 501)
+  - pycodestyle src/ --ignore=(E501, E402)
 
 after_success: coveralls
