@@ -102,8 +102,6 @@ class UserListResource(Resource):
                 session.commit()
                 access_token = create_access_token(identity=args["email"])
                 refresh_token = create_refresh_token(identity=args["email"])
-            except Exception as e:
-                msg = str(e)
             except SQLAlchemyError as e:
                 msg = e
                 status = 500

@@ -1,6 +1,6 @@
 from . import api
-from . import Home, Smoke, UserResource, PasswordResource, UserListResource, PasswordListResource
-from . import Home, Smoke, UserResource, Login, LogoutRefresh, TokenRefresh, Logout
+from . import Home, Smoke, UserResource, PasswordResource, UserListResource, PasswordListResource, Login, \
+    LogoutRefresh, TokenRefresh, Logout
 
 api.add_resource(Home, '/', "/home")
 api.add_resource(Smoke, '/smoke')
