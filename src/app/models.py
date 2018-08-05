@@ -40,7 +40,7 @@ class User(Base):
 
     def compare_hash(self, input_password):
         hash_input_password = User.hash_password(input_password,
-                                                      self.salt)
+                                                 self.salt)
         return hash_input_password[2] == self.userpass
 
     @property
