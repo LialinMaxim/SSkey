@@ -9,11 +9,9 @@ before_install:
 install:
   - pip install -r src/app/requirements.txt
 
-before_script:
-  - pycodestyle src/
-
 script:
   - coverage run --source="src/app" -m pytest
   - coverage report --fail-under=20
+  - pycodestyle src/ --ignore=E402, 501
 
 after_success: coveralls
