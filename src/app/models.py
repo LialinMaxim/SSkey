@@ -132,7 +132,7 @@ class SessionObject(Base):
     user_id = Column('user_id', Integer, ForeignKey('users.id'))
     user = relationship("User", backref="session_objects", cascade='all,delete')
 
-    login_time = Column('login_time', Date, nullable=False)
+    login_time = Column('login_time', DateTime, nullable=False)
     time_out_value = Column('time_out_value', Integer, nullable=False)
 
 
