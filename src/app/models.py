@@ -163,7 +163,6 @@ class SessionObject(Base):
     login_time = Column('login_time', DateTime, nullable=False)
     time_out_value = Column('time_out_value', Integer, nullable=False)
 
-
     @property
     def serialize(self):
         """Return object data in easily serializeable format"""
@@ -187,4 +186,3 @@ class SessionObject(Base):
 
     def update_login_time(self):
         self.login_time = datetime.datetime.now()
-
