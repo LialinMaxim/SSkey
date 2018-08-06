@@ -147,3 +147,5 @@ class FilterUserBy:
     @staticmethod
     def filter_by_id(id):
         id = session.query(User).filter(User.id == id).first()
+
+        return id
