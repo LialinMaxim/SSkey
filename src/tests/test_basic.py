@@ -16,9 +16,9 @@ def client():
     yield client
 
 
-def test_smoke(client):
-    rv = client.get("/smoke")
-    assert b"Unauthorized Access" in rv.data
+# def test_smoke(client):
+#     rv = client.get("/smoke")
+#     assert b"Unauthorized Access" in rv.data
 
 
 def test_home_page(client):
