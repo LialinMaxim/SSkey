@@ -1,12 +1,16 @@
 import datetime
 import hashlib
 import os
+import base64
 
 from sqlalchemy import Column, String, Integer, Date, DateTime, LargeBinary, ForeignKey
 from sqlalchemy.orm import relationship
+from sqlalchemy.exc import SQLAlchemyError
+from cryptography.fernet import Fernet
 
 from . import Base
-
+from . import Session
+session = Session()
 
 class User(Base):
     __tablename__ = 'users'
@@ -79,6 +83,8 @@ class User(Base):
 
 
 class Password(Base):
+    SECRET_KEY = b'hQaS02VVLD4P_eedMd1tmi2w2PVFgJutLwV-6W-MBq4='
+
     __tablename__ = 'passwords'
 
     pass_id = Column('pass_id', Integer, primary_key=True)
@@ -100,27 +106,37 @@ class Password(Base):
             'url': self.url,
             'title': self.title,
             'login': str(self.login),
-            'password': self.password,
+            'password': self.decrypt_password(),
             'comment': self.comment,
 
         }
 
+    def get_cipher(self):
+        try:
+            user = session.query(User).filter(User.id == self.user_id).first()
+        except SQLAlchemyError as e:
+            # TO DO add error into logs
+            raise SQLAlchemyError(str(e))
+        cipher_key = base64.urlsafe_b64encode(user.userpass) + Password.SECRET_KEY
+        return Fernet(cipher_key)
+
     def crypt_and_save_password(self, raw_password):
-        # TO DO - realize crypt password method
-        crypted_password = raw_password
-        self.password = crypted_password
+        cipher = self.get_cipher()
+        encrypted_password = cipher.encrypt(bytes(raw_password, encoding="utf-8"))
+        self.password = encrypted_password
 
     def decrypt_password(self):
-        # TO DO - decrypt password and return it
-        return self.password
+        cipher = self.get_cipher()
+        decrypted_password = cipher.decrypt(self.password)
+        return decrypted_password.decode('utf-8')
 
     def __init__(self, login, password, user_id, url, title, comment):
         self.login = login
-        self.crypt_and_save_password(password)
         self.user_id = user_id
         self.url = url
         self.title = title
         self.comment = comment
+        self.crypt_and_save_password(password)
 
 
 class SessionObject(Base):
