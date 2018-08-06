@@ -15,7 +15,6 @@ session = Session()
 
 class Home(Resource):
     def get(self):
-
         return {'message': 'Home Page'}, 200, {
             'Access-Control-Allow-Origin': '*'}
 
