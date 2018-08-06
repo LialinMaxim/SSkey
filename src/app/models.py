@@ -126,16 +126,24 @@ class Password(Base):
         self.comment = comment
 
 
-class RevokedTokenModel(Base):
-    __tablename__ = "revoked_tokens"
-    id = Column('id', Integer, primary_key=True)
-    jti = Column('jti', String(120))
+class FilterUserBy:
+    def __init__(self, email, id, password):
+        self.email = email
+        self.id = id
+        self.password = password
 
-    def add(self):
-        session.add(self)
-        session.commit()
+    @staticmethod
+    def filter_by_email(email):
+        email = session.query(User).filter(User.email == email).first()
 
-    @classmethod
-    def is_jti_blacklisted(cls, jti):
-        query = session.query(cls).filter(jti=jti).first()
-        return bool(query)
+        return email
+
+    @staticmethod
+    def filter_by_username(username):
+        username = session.query(User).filter(User.username == username).first()
+
+        return username
+
+    @staticmethod
+    def filter_by_id(id):
+        id = session.query(User).filter(User.id == id).first()
