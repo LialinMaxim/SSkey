@@ -2,13 +2,12 @@ from abc import ABCMeta, abstractmethod
 from sqlalchemy.exc import SQLAlchemyError
 
 from flask_restful import Resource, reqparse
-from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_required, jwt_refresh_token_required,
-                                get_jwt_identity, get_raw_jwt)
 
+from . import auth
 from . import Session
 from . import User
 from . import Password
-from . import RevokedTokenModel
+from . import FilterUserBy
 
 session = Session()
 
@@ -20,7 +19,7 @@ class Home(Resource):
 
 
 class Smoke(Resource):
-    @jwt_required
+    @auth.login_required
     def get(self):
         return {'message': 'OK'}, 200, {'Access-Control-Allow-Origin': '*'}
 
@@ -61,6 +60,7 @@ class EntityResource(Resource):
 
 class UserListResource(Resource):
 
+    @auth.login_required
     def get(self):
         headers = {'Access-Control-Allow-Origin': '*'}
         try:
@@ -100,17 +100,15 @@ class UserListResource(Resource):
             try:
                 session.add(user)
                 session.commit()
-                access_token = create_access_token(identity=args["email"])
-                refresh_token = create_refresh_token(identity=args["email"])
             except SQLAlchemyError as e:
                 msg = e
                 status = 500
-        return {'message': msg, "access token": access_token, "refresh token": refresh_token}, status, {
-            'Access-Control-Allow-Origin': '*'}
+        return {'message': msg}, status, {'Access-Control-Allow-Origin': '*'}
 
 
 class UserResource(EntityResource):
 
+    @auth.login_required
     def get(self, user_id):
         headers = {'Access-Control-Allow-Origin': '*'}
         try:
@@ -125,6 +123,7 @@ class UserResource(EntityResource):
     def put(self, user_id):
         pass
 
+    @auth.login_required
     def delete(self, user_id):
         try:
             if session.query(User).filter(User.id == user_id).first():
@@ -191,52 +190,9 @@ class PasswordListResource(EntityListResource):
         return {'message': msg}, status, {'Access-Control-Allow-Origin': '*'}
 
 
-class Login(Resource):
-    def post(self):
-
-        parser = reqparse.RequestParser()
-        parser.add_argument("email", type=str, help="This field cannot be blank")
-        parser.add_argument("password", type=str, help="This field cannot be blank")
-        data = parser.parse_args()
-
-        current_user = session.query(User).filter(User.email == data["email"]).first()
-        if current_user:
-            if current_user.compare_hash(data["password"]):
-                access_token = create_access_token(identity=data["email"])
-                refresh_token = create_refresh_token(identity=data["email"])
-                return {"message": "Logged in as {}".format(data["email"]), "access token": access_token,
-                        "refresh_token": refresh_token}
-        else:
-            return "Wrong credentials"
-
-
-class Logout(Resource):
-    @jwt_required
-    def post(self):
-        jti = get_raw_jwt()["jti"]
-        try:
-            revoked_token = RevokedTokenModel(jti=jti)
-            revoked_token.add()
-            return {"message": "Access token has been revoked"}
-        except Exception as err:
-            return {"message": "Something went wrong"}, 500, err
-
-
-class LogoutRefresh(Resource):
-    @jwt_refresh_token_required
-    def post(self):
-        jti = get_raw_jwt()["jti"]
-        try:
-            revoked_token = RevokedTokenModel(jti=jti)
-            revoked_token.add()
-            return {"message": "Refresh token has been revoked"}
-        except Exception as err:
-            return {"message": "Something went wrong"}, 500, err
-
-
-class TokenRefresh(Resource):
-    @jwt_refresh_token_required
-    def post(self):
-        current_user = get_jwt_identity()
-        access_token = create_refresh_token(identity=current_user)
-        return {"access token": access_token}
+@auth.verify_password
+def verify_password(email, password):
+    # current_user = session.query(User).filter(User.email == email).first()
+    current_user = FilterUserBy.filter_by_email(email)
+    if current_user:
+        return current_user.compare_hash(password)
