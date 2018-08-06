@@ -2,7 +2,7 @@ import datetime
 import hashlib
 import os
 
-from sqlalchemy import Column, String, Integer, Date, LargeBinary, ForeignKey
+from sqlalchemy import Column, String, Integer, Date, DateTime, LargeBinary, ForeignKey
 from sqlalchemy.orm import relationship
 
 from . import Base
