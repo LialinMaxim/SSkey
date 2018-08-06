@@ -7,6 +7,7 @@ from . import auth
 from . import Session
 from . import User
 from . import Password
+from . import SessionObject
 from . import FilterUserBy
 
 session = Session()
@@ -14,6 +15,7 @@ session = Session()
 
 class Home(Resource):
     def get(self):
+
         return {'message': 'Home Page'}, 200, {
             'Access-Control-Allow-Origin': '*'}
 

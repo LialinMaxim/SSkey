@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker
 
 DBUSER = 'postgres'
 DBPASS = 'postgres'
-DBHOST = '127.0.0.1'
+DBHOST = '172.19.0.2'  # sskey_db container's ip address
 DBPORT = '5432'
 DBNAME = 'db_sskey'
 engine = create_engine(
