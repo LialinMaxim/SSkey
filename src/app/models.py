@@ -104,21 +104,21 @@ class User(Base):
         else:
             return False
 
-    @staticmethod
-    def filter_by_email(email):
-        email = session.query(User).filter(User.email == email).first()
+    @classmethod
+    def filter_by_email(cls, email):
+        email = session.query(cls).filter(cls.email == email).first()
 
         return email
 
-    @staticmethod
-    def filter_by_username(username):
-        username = session.query(User).filter(User.username == username).first()
+    @classmethod
+    def filter_by_username(cls, username):
+        username = session.query(cls).filter(cls.username == username).first()
 
         return username
 
-    @staticmethod
-    def filter_by_id(id):
-        id = session.query(User).filter(User.id == id).first()
+    @classmethod
+    def filter_by_id(cls, id):
+        id = session.query(cls).filter(cls.id == id).first()
 
         return id
 
