@@ -2,95 +2,144 @@ import datetime
 import hashlib
 import os
 
-from sqlalchemy import Column, String, Integer, Date, DateTime, LargeBinary, ForeignKey
-from sqlalchemy.orm import relationship
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
 
-from . import Base
+# from base import Base
+
+from flask_script import Manager
+from flask_migrate import Migrate, MigrateCommand
+
+app = Flask(__name__)
+"""
+Flask app for migration database PostgresSQL
+Use in console:
+# python models.py db init
+# python models.py db init
+# python models.py db upgrade
+or
+# python models.py db downgrade
+"""
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
+app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://postgres:postgres@localhost:5432/db_sskey"
+db = SQLAlchemy(app)
+
+migrate = Migrate(app, db)
+manager = Manager(app)
+
+manager.add_command('db', MigrateCommand)
 
 
-class User(Base):
+class User(db.Model):
     __tablename__ = 'users'
 
-    id = Column('id', Integer, primary_key=True)
-    username = Column('username', String(100), unique=True, nullable=False)
-    email = Column('email', String(150), unique=True, nullable=False)
-    userpass = Column('userpass', LargeBinary, nullable=False)
-    salt = Column('salt', LargeBinary, nullable=False)
-    reg_date = Column('reg_date', Date, nullable=False)
-    first_name = Column('first_name', String(150), nullable=True)
-    last_name = Column('last_name', String(150), nullable=True)
-    phone = Column('phone', String(100), nullable=True)
+    id = db.Column('id', db.Integer, primary_key=True)
+    username = db.Column('username', db.String(100), unique=True, nullable=False)
+    email = db.Column('email', db.String(150), unique=True, nullable=False)
+    userpass = db.Column('userpass', db.LargeBinary, nullable=False)
+    salt = db.Column('salt', db.LargeBinary, nullable=False)
+    reg_date = db.Column('reg_date', db.Date, nullable=False)
+    first_name = db.Column('first_name', db.String(150), nullable=True)
+    last_name = db.Column('last_name', db.String(150), nullable=True)
+    phone = db.Column('phone', db.String(100), nullable=True)
 
-    @staticmethod
-    def generate_salt(salt_len=16):
-        return os.urandom(salt_len)
-
-    @staticmethod
-    def hash_password(userpass, salt, iterations=100001, encoding='utf-8'):
-        hashed_password = hashlib.pbkdf2_hmac(
-            hash_name='sha256',
-            password=bytes(userpass, encoding),
-            salt=salt,
-            iterations=iterations
-        )
-        return salt, iterations, hashed_password
-
-    def compare_hash(self, input_password):
-        hash_input_password = User.hash_password(input_password,
-                                                      self.salt)
-        return hash_input_password[2] == self.userpass
-
-    @property
-    def serialize(self):
-        """Return object data in easily serializeable format"""
-        return {
-            'id': self.id,
-            'username': self.username,
-            'email': self.email,
-            'register_date': str(self.reg_date),
-            'first_name': self.first_name,
-            'last_name': self.last_name,
-            'phone': self.phone
-        }
-
-    def __init__(self, username, email, password, first_name, last_name,
-                 phone):
+    def __init__(self, id, username, email, userpass, salt, reg_date, first_name, last_name, phone):
+        self.id = id
         self.username = username
-        hashed_data = __class__.hash_password(password, User.generate_salt())
-        self.salt = hashed_data[0]
-        self.userpass = hashed_data[2]
         self.email = email
-        self.reg_date = datetime.datetime.now()
+        self.userpass = userpass
+        self.salt = salt
+        self.reg_date = reg_date
         self.first_name = first_name
         self.last_name = last_name
         self.phone = phone
 
-    def __str__(self):
-        return "Username - {0}; Email - {1}; First_name - {2}; Last name - {3}; Phone - {4}". \
-            format(self.username, self.email, self.first_name, self.last_name,
-                   self.phone)
 
-    @staticmethod
-    def validate_user(req_args):
-        if req_args['userpass'] and req_args['username'] and req_args['email']:
-            return True
-        else:
-            return False
+@staticmethod
+def generate_salt(salt_len=16):
+    return os.urandom(salt_len)
 
 
-class Password(Base):
+@staticmethod
+def hash_password(userpass, salt, iterations=100001, encoding='utf-8'):
+    hashed_password = hashlib.pbkdf2_hmac(
+        hash_name='sha256',
+        password=bytes(userpass, encoding),
+        salt=salt,
+        iterations=iterations
+    )
+    return salt, iterations, hashed_password
+
+
+def compare_hash(self, input_password):
+    hash_input_password = User.hash_password(input_password,
+                                             self.salt)
+    return hash_input_password[2] == self.userpass
+
+
+@property
+def serialize(self):
+    """Return object data in easily serializeable format"""
+    return {
+        'id': self.id,
+        'username': self.username,
+        'email': self.email,
+        'register_date': str(self.reg_date),
+        'first_name': self.first_name,
+        'last_name': self.last_name,
+        'phone': self.phone
+    }
+
+
+def __init__(self, username, email, password, first_name, last_name,
+             phone):
+    self.username = username
+    hashed_data = __class__.hash_password(password, User.generate_salt())
+    self.salt = hashed_data[0]
+    self.userpass = hashed_data[2]
+    self.email = email
+    self.reg_date = datetime.datetime.now()
+    self.first_name = first_name
+    self.last_name = last_name
+    self.phone = phone
+
+
+def __str__(self):
+    return "Username - {0}; Email - {1}; First_name - {2}; Last name - {3}; Phone - {4}". \
+        format(self.username, self.email, self.first_name, self.last_name,
+               self.phone)
+
+
+@staticmethod
+def validate_user(req_args):
+    if req_args['userpass'] and req_args['username'] and req_args['email']:
+        return True
+    else:
+        return False
+
+
+class Password(db.Model):
     __tablename__ = 'passwords'
 
-    pass_id = Column('pass_id', Integer, primary_key=True)
-    user_id = Column('user_id', Integer, ForeignKey('users.id'))
+    pass_id = db.Column('pass_id', db.Integer, primary_key=True)
+    user_id = db.Column('user_id', db.Integer, db.ForeignKey('users.id'))
 
-    user = relationship("User", backref="passwords", cascade='all,delete')
+    user = db.relationship("User", backref="passwords", cascade='all,delete')
 
-    url = Column('url', String(250), nullable=True)
-    title = Column('title', String(250), nullable=True)
-    login = Column('login', String(150), nullable=False)
-    password = Column('pass', String(150), nullable=False)
-    comment = Column('comment', String(450), nullable=True)
+    url = db.Column('url', db.String(250), nullable=True)
+    title = db.Column('title', db.String(250), nullable=True)
+    login = db.Column('login', db.String(150), nullable=False)
+    password = db.Column('pass', db.String(150), nullable=False)
+    comment = db.Column('comment', db.String(450), nullable=True)
+
+    def __init__(self, pass_id, user_id, url, title, login, password, comment):
+        self.pass_id = pass_id
+        self.user_id = user_id
+        self.url = url
+        self.title = title
+        self.login = login
+        self.password = password
+        self.comment = comment
 
     @property
     def serialize(self):
@@ -123,18 +172,17 @@ class Password(Base):
         self.comment = comment
 
 
-class SessionObject(Base):
+class SessionObject(db.Model):
     __tablename__ = 'session_objects'
 
-    id = Column('id', Integer, primary_key=True)
-    token = Column('token', String(100), unique=True, nullable=False)
+    id = db.Column('id', db.Integer, primary_key=True)
+    token = db.Column('token', db.String(100), unique=True, nullable=False)
 
-    user_id = Column('user_id', Integer, ForeignKey('users.id'))
-    user = relationship("User", backref="session_objects", cascade='all,delete')
+    user_id = db.Column('user_id', db.Integer, db.ForeignKey('users.id'))
+    user = db.relationship("User", backref="session_objects", cascade='all,delete')
 
-    login_time = Column('login_time', DateTime, nullable=False)
-    time_out_value = Column('time_out_value', Integer, nullable=False)
-
+    login_time = db.Column('login_time', db.DateTime, nullable=False)
+    time_out_value = db.Column('time_out_value', db.Integer, nullable=False)
 
     @property
     def serialize(self):
@@ -160,3 +208,6 @@ class SessionObject(Base):
     def update_login_time(self):
         self.login_time = datetime.datetime.now()
 
+
+if __name__ == '__main__':
+    manager.run()
