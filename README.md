@@ -5,45 +5,47 @@ REST application
 
 ## Getting started
 
-Install [docker](https://docs.docker.com/engine/installation/) and run the docker-machine:
+1. Install [Docker](https://docs.docker.com/engine/installation/) and run the docker-machine:
 
-```shell
-docker-machine start
-```
+    ```
+    docker-machine start
+    ```
 
-Deploy the project:
+2. Deploy the project:
 
-```
-docker-deploy.sh
-```
+    ```
+    docker-deploy.sh
+    ```
 
-Check a list containers:
+3. Check a list containers:
 
-```
-docker ps
-```
+    ```
+    docker ps
+    ```
 
-Wait a minute until the server starts and check app service logs:
+4. Wait a minute until the server starts and check app service logs:
 
-```
-docker-compose logs app
-```
+    ```
+    docker-compose logs app
+    ```
 
-If the application was started open web-browser and visit docker-machine IP address:
+5. If the application was started visit a default docker-machine IP address:
 
-[http://192.168.99.100:5000](http://192.168.99.100:5000)
+    [http://192.168.99.100:5000](http://192.168.99.100:5000)
 
-Check your docker-machine IP address:
+If you need to check your docker-machine IP address use:
 
 ```
 docker-machine ip
 ```
 
-if you need to make some changes to the project without affecting the server and rebuild it use:
+If you need to make some changes to the project without affecting the server and rebuild it use:
 
 ```
 docker-app.sh
 ```
+
+##
 
 Otherwise, for the standalone web service:
 
