@@ -28,7 +28,7 @@ SQL_cteate_table_passwords = ("CREATE TABLE passwords ( \n"
                               "                    url varchar, \n"
                               "                    title varchar,\n"
                               "                    login varchar NOT NULL, \n"
-                              "                    pass varchar NOT NULL, \n"
+                              "                    pass bytea NOT NULL, \n"
                               "                    comment TEXT, \n"
                               "                    CONSTRAINT passwords_pk PRIMARY KEY (pass_id) \n"
                               "                    ) WITH OIDS;")
