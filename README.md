@@ -51,7 +51,7 @@ Otherwise, for the standalone web service:
 
 ```shell
 pip install -r requirements.txt
-python manage.py
+python src/manage.py runserver
 ```
 
 Visit [http://localhost:5000](http://localhost:5000)
