@@ -1,12 +1,10 @@
 from abc import ABCMeta, abstractmethod
-from sqlalchemy.exc import SQLAlchemyError
 
 from flask_restful import Resource, reqparse
+from sqlalchemy.exc import SQLAlchemyError
 
-from . import Session
-from . import User
-from . import Password
-from . import SessionObject
+from .base import Session
+from .models import User, Password, SessionObject
 
 session = Session()
 
