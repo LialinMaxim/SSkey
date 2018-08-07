@@ -64,9 +64,7 @@ class User(Base):
         :return: boolean
         """
         hash_input_password = User.get_hash_password(input_password,
-                                                     self
-        hash_input_password = User.hash_password(input_password,
-                                                 self.salt)
+                                                     self.salt)
         return hash_input_password[2] == self.userpass
 
     @property
@@ -105,6 +103,24 @@ class User(Base):
             return True
         else:
             return False
+
+    @staticmethod
+    def filter_by_email(email):
+        email = session.query(User).filter(User.email == email).first()
+
+        return email
+
+    @staticmethod
+    def filter_by_username(username):
+        username = session.query(User).filter(User.username == username).first()
+
+        return username
+
+    @staticmethod
+    def filter_by_id(id):
+        id = session.query(User).filter(User.id == id).first()
+
+        return id
 
 
 class Password(Base):
@@ -173,31 +189,6 @@ class Password(Base):
         self.title = title
         self.comment = comment
         self.crypt_and_save_password(password)
-
-
-class FilterUserBy:
-    def __init__(self, email, id, password):
-        self.email = email
-        self.id = id
-        self.password = password
-
-    @staticmethod
-    def filter_by_email(email):
-        email = session.query(User).filter(User.email == email).first()
-
-        return email
-
-    @staticmethod
-    def filter_by_username(username):
-        username = session.query(User).filter(User.username == username).first()
-
-        return username
-
-    @staticmethod
-    def filter_by_id(id):
-        id = session.query(User).filter(User.id == id).first()
-
-        return id
 
 
 class SessionObject(Base):

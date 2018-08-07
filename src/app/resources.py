@@ -8,7 +8,6 @@ from . import Session
 from . import User
 from . import Password
 from . import SessionObject
-from . import FilterUserBy
 
 session = Session()
 
@@ -194,6 +193,6 @@ class PasswordListResource(EntityListResource):
 @auth.verify_password
 def verify_password(email, password):
     # current_user = session.query(User).filter(User.email == email).first()
-    current_user = FilterUserBy.filter_by_email(email)
+    current_user = User.filter_by_email(email)
     if current_user:
         return current_user.compare_hash(password)

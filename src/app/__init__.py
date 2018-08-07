@@ -16,7 +16,7 @@ auth = HTTPBasicAuth()
 # from src.app.errors import handlers
 #
 # app.register_blueprint(errors)
-from .models import User, Password, FilterUserBy, SessionObject
+from .models import User, Password, SessionObject
 from .resources import Home, Smoke, EntityResource, UserResource, UserListResource, PasswordListResource, \
     PasswordResource
 from . import routes
