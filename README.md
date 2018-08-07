@@ -1,6 +1,8 @@
 # SSkey
 REST application 
 
+[![Build Status](https://travis-ci.org/LialinMaxim/SSkey.svg?branch=Development)](https://travis-ci.org/LialinMaxim/SSkey)
+
 ## Getting started
 
 Install [docker](https://docs.docker.com/engine/installation/) and run the docker-machine:
