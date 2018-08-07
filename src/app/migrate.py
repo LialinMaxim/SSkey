@@ -1,11 +1,13 @@
+import os
+
 from psycopg2 import connect
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
-user = 'postgres'
 new_user = 'sskey'
-host = 'localhost'
-password = 'postgres'
-dbname = "db_sskey"
+user = os.environ.get('POSTGRES_USER')
+host = os.environ.get('POSTGRES_HOST')
+password = os.environ.get('POSTGRES_PASS')
+dbname = os.environ.get('POSTGRES_NAME')
 SQL_create_db = "CREATE DATABASE {0};".format(dbname)
 SQL_create_user = "CREATE USER sskey WITH password 'sskey';"
 SQL_cteate_table_users = ("CREATE TABLE users ( \n"
