@@ -7,25 +7,25 @@ REST application
 
 1. Install [Docker](https://docs.docker.com/engine/installation/) and run the docker-machine:
 
-    ```
+    ```shell
     docker-machine start
     ```
 
 2. Deploy the project:
 
-    ```
+    ```shell
     docker-deploy.sh
     ```
 
 3. Check a list containers:
 
-    ```
+    ```shell
     docker ps
     ```
 
 4. Wait a minute until the server starts and check app service logs:
 
-    ```
+    ```shell
     docker-compose logs app
     ```
 
@@ -35,13 +35,13 @@ REST application
 
 If you need to check your docker-machine IP address use:
 
-```
+```shell
 docker-machine ip
 ```
 
 If you need to make some changes to the project without affecting the server and rebuild it use:
 
-```
+```shell
 docker-app.sh
 ```
 
@@ -103,7 +103,7 @@ docker-compose run -p 5000:5000 web python manage.py
 Standalone unit tests run with:
 
 ```shell
-python load_test.py
+pytest
 ```
 
 ## Postgresql
