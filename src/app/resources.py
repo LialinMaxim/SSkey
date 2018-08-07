@@ -6,12 +6,14 @@ from flask_restful import Resource, reqparse
 from . import Session
 from . import User
 from . import Password
+from . import SessionObject
 
 session = Session()
 
 
 class Home(Resource):
     def get(self):
+
         return {'message': 'Home Page'}, 200, {
             'Access-Control-Allow-Origin': '*'}
 

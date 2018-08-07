@@ -20,6 +20,8 @@ pytest==3.6.3
 click==6.7
 MarkupSafe==1.0
 Werkzeug==0.14.1
+cryptography==2.3
 
 # requests
 requests==2.19.1
+
