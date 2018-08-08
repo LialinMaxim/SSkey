@@ -6,9 +6,8 @@ from marshmallow import ValidationError
 
 from . import api
 from .base import Session
-from .models import User, Password
+from .models import User, Password, SessionObject
 from .shemas import UserSchema, PasswordSchema
-from . import SessionObject
 
 session = Session()
 
@@ -134,7 +133,7 @@ class UserResource(EntityResource):
                 session.query(User).filter(User.id == user_id).delete()
                 session.commit()
                 msg = 'User ID:{0} has been DELETED.'.format(user_id)
-                return {'message': msg}, 204  # No Content
+                return {'message': msg}, 200  # OK
             else:
                 msg = 'User ID:{0} NOT EXISTS!'.format(user_id)
                 return {'message': msg}, 404  # Not Found

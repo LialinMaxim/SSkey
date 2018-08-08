@@ -4,7 +4,7 @@ from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 user = 'postgres'
 new_user = 'sskey'
 host = 'localhost'
-password = '1'
+password = 'postgres'
 dbname = "db_sskey"
 SQL_create_db = "CREATE DATABASE {0};".format(dbname)
 SQL_create_user = "CREATE USER sskey WITH password 'sskey';"
@@ -158,8 +158,8 @@ def insert_data_in_db():
 
 
 if __name__ == "__main__":
-    # drop_tables()  # Uncomment function if you need delete tables 'user' and 'passwords' in databae
-    # create_user()
-    # create_db()
-    # create_tables()
+    drop_tables()  # Uncomment function if you need delete tables 'user' and 'passwords' in databae
+    create_user()
+    create_db()
+    create_tables()
     insert_data_in_db()  # Uncomment function if you need insert test records in tables 'user' and 'passwords' in databae
