@@ -4,7 +4,7 @@ from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 user = 'postgres'
 new_user = 'sskey'
 host = 'localhost'
-password = 'postgres'
+password = '1'
 dbname = "db_sskey"
 SQL_create_db = "CREATE DATABASE {0};".format(dbname)
 SQL_create_user = "CREATE USER sskey WITH password 'sskey';"
@@ -138,13 +138,13 @@ def insert_data_in_db():
         con.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
         cur = con.cursor()
         cur.execute(
-            "INSERT INTO users VALUES (103, 'test', 'test', 'test@test.com', '380501234567', 'test', 'test', '2018-01-01 12:00:00', '2018-01-01 12:00:00', 'ffffffff');")
+            "INSERT INTO users VALUES (34, 'test', 'test', 'test@test.com', '380501234567', 'test', 'test', '2018-01-01 12:00:00', '2018-01-01 12:00:00', 'ffffffff');")
         cur.execute(
-            "INSERT INTO passwords VALUES (DEFAULT, 103, 'www', 'title', 'login', 'pass', 'comment');")
+            "INSERT INTO passwords VALUES (DEFAULT, 34, 'www', 'title', 'login', 'pass', 'comment');")
         cur.execute(
-            "INSERT INTO users VALUES (104, 'test2', 'test2', 'test@test.com', '380501112233', 'test2', 'test2', '2018-02-02 13:00:00', '2018-02-02 13:00:00', 'ff00ff00');")
+            "INSERT INTO users VALUES (35, 'test2', 'test2', 'test@test.com', '380501112233', 'test2', 'test2', '2018-02-02 13:00:00', '2018-02-02 13:00:00', 'ff00ff00');")
         cur.execute(
-            "INSERT INTO passwords VALUES (DEFAULT, 104, 'www', 'title', 'login', 'pass', 'comment2');")
+            "INSERT INTO passwords VALUES (DEFAULT, 35, 'www', 'title', 'login', 'pass', 'comment2');")
         print(
             "INSERT DATA IN DATABASE: success!!! Test data inserted successfully in database: {0};".format(
                 dbname))
@@ -158,8 +158,8 @@ def insert_data_in_db():
 
 
 if __name__ == "__main__":
-    drop_tables()  # Uncomment function if you need delete tables 'user' and 'passwords' in databae
-    create_user()
-    create_db()
-    create_tables()
+    # drop_tables()  # Uncomment function if you need delete tables 'user' and 'passwords' in databae
+    # create_user()
+    # create_db()
+    # create_tables()
     insert_data_in_db()  # Uncomment function if you need insert test records in tables 'user' and 'passwords' in databae

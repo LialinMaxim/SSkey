@@ -12,7 +12,7 @@ SQLAlchemy==1.2.7
 
 # Validation
 
-marshmallow==2.15.3
+marshmallow==.15.3
 
 # Other
 
