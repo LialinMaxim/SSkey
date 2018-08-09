@@ -22,7 +22,7 @@ def client():
 
 
 def test_home_page(client):
-    rv = client.get("/")
+    rv = client.get("/home")
     assert b"Home Page" in rv.data
 
 # def test_valid_login(client):
