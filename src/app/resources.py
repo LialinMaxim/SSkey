@@ -1,7 +1,8 @@
 from abc import ABCMeta, abstractmethod
 
 from flask import jsonify, request
-from flask_restful import Resource, reqparse
+from flask_restplus import Resource, reqparse, fields	
+from marshmallow import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 
 from . import api
