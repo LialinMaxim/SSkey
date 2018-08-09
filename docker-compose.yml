@@ -6,6 +6,8 @@ services:
     container_name: sskey_app
     links:
       - db
+    env_file:
+      - sskey.env
     ports:
       - "5000:5000"
     depends_on:
@@ -15,9 +17,7 @@ services:
     image: postgres:10.4
     container_name: sskey_db
     restart: always
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: db_sskey
+    env_file:
+      - sskey.env
     ports:
       - "5432:5432"

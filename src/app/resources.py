@@ -1,13 +1,13 @@
-from flask import jsonify, request
 from abc import ABCMeta, abstractmethod
-from sqlalchemy.exc import SQLAlchemyError
-from flask_restplus import Resource, reqparse, fields
+
+from flask import jsonify, request
+from flask_restplus import Resource, reqparse, fields	
 from marshmallow import ValidationError
+from sqlalchemy.exc import SQLAlchemyError
 
 from . import api
 from .base import Session
 from .models import User, Password, SessionObject
-from .shemas import UserSchema, PasswordSchema
 
 session = Session()
 

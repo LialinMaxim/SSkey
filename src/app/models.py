@@ -1,16 +1,18 @@
+import base64
 import datetime
 import hashlib
 import os
-import base64
 
-from sqlalchemy import Column, String, Integer, Date, DateTime, LargeBinary, ForeignKey
-from sqlalchemy.orm import relationship
-from sqlalchemy.exc import SQLAlchemyError
 from cryptography.fernet import Fernet
+from sqlalchemy import (Column, String, Integer, Date, DateTime, LargeBinary,
+                        ForeignKey)
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import relationship
 
-from . import Base
-from . import Session
+from .base import Base, Session
+
 session = Session()
+
 
 class User(Base):
     """
@@ -178,7 +180,6 @@ class SessionObject(Base):
 
     login_time = Column('login_time', DateTime, nullable=False)
     time_out_value = Column('time_out_value', Integer, nullable=False)
-
 
     @property
     def serialize(self):
