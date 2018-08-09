@@ -1,3 +1,6 @@
+from . import api
+from .resources import (Home, Smoke, UserResource, PasswordResource,
+                        UserListResource, PasswordListResource)
 from flask import g
 
 from . import api, Session

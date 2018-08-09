@@ -1,7 +1,8 @@
 # Flask
 
 Flask==1.0.2
-Flask-RESTful==0.3.6
+flask-restplus==0.11.0
+
 Flask-Script==2.0.6
 Flask-Cors==3.0.4
 
@@ -11,8 +12,8 @@ psycopg2==2.7.5
 SQLAlchemy==1.2.7
 
 # Validation
+marshmallow==3.0.0b9
 
-marshmallow==2.15.3
 
 # Other
 
