@@ -1,8 +1,10 @@
 from abc import ABCMeta, abstractmethod
 
+from flask import jsonify, request
 from flask_restful import Resource, reqparse
 from sqlalchemy.exc import SQLAlchemyError
 
+from . import api
 from .base import Session
 from .models import User, Password, SessionObject
 
@@ -11,7 +13,6 @@ session = Session()
 
 class Home(Resource):
     def get(self):
-
         return {'message': 'Home Page'}, 200, {
             'Access-Control-Allow-Origin': '*'}
 
@@ -55,65 +56,72 @@ class EntityResource(Resource):
         raise NotImplementedError
 
 
-class UserListResource(Resource):
+user_post = api.model('Crate New User', {
+    'email': fields.String,
+    'username': fields.String,
+    'userpass': fields.String,
+    'first_name': fields.String,
+    'last_name': fields.String,
+    'phone': fields.Integer,
+})
 
+
+class UserListResource(Resource):
     def get(self):
-        headers = {'Access-Control-Allow-Origin': '*'}
         try:
             users = session.query(User).all()
-        except SQLAlchemyError as e:
-            return {'msg': e}, 500, headers
+        except SQLAlchemyError:
+            return {'msg': SQLAlchemyError}, 500,  # headers
         users_serialized = []
         for user in users:
             users_serialized.append(user.serialize)
-        return {'users': users_serialized}, 200, headers
+        return {'users': users_serialized}, 200,  # headers
 
+    @api.expect(user_post)
     def post(self):
+        json_data = request.get_json()
+        if not json_data or not isinstance(json_data, dict):
+            return {'message': 'No input data provided'}, 400  # Bad Request
 
-        parser = reqparse.RequestParser()
-        parser.add_argument('email', type=str, help='')
-        parser.add_argument('username', type=str, help='')
-        parser.add_argument('userpass', type=str, help='')
-        parser.add_argument('first_name', type=str, help='')
-        parser.add_argument('last_name', type=str, help='')
-        parser.add_argument('phone', type=str, help='')
-        args = parser.parse_args()
+        # Validate and deserialize input
+        try:
+            data = UserSchema().load(json_data)
+        except ValidationError as err:
+            return {'message': str(err)}, 422  # Unprocessable Entity
 
-        if not User.validate_user(args):
-            msg = "REQUIRED DATA NOT VALID OR BLANK"
-            status = 400
-        elif session.query(User).filter(User.username == args['username']).first():
-            msg = "User with username = {0} already exists".format(args['username'])
-            status = 200
-        elif session.query(User).filter(User.email == args['email']).first():
-            msg = "Useer with email = {0} already exists".format(args['email'])
-            status = 200
+        # Check if a new user is not exist in data base
+        if session.query(User).filter(User.username == data['username']).first():
+            msg = "User with username: '{0}' is ALREADY EXISTS.".format(data['username'])
+            return {'message': msg}, 200  # OK
+        elif session.query(User).filter(User.email == data['email']).first():
+            msg = "User with email: '{0}' is ALREADY EXISTS".format(data['email'])
+            return {'message': msg}, 200  # OK
         else:
-            user = User(args['username'], args['email'], args['userpass'],
-                        args['first_name'], args['last_name'], args['phone'])
-            status = 200
-            msg = "USER {0} REGISTRATION SUCCESSFUL".format(user.username)
+            # TODO optimization USER CLASS
+            # user = User(data)
+            user = User(data['username'], data['email'], data['userpass'],
+                        data['first_name'], data['last_name'], data['phone'])
+
+            # crate a new user
             try:
                 session.add(user)
                 session.commit()
-            except SQLAlchemyError as e:
-                msg = e
-                status = 500
-        return {'message': msg}, status, {'Access-Control-Allow-Origin': '*'}
+                msg = "New user: '{0}' is SUCCESSFUL ADDED".format(user.username)
+                return {'message': msg}, 200  # OK
+            except SQLAlchemyError:
+                return {'message': SQLAlchemyError}, 500  # Internal Server Error
 
 
 class UserResource(EntityResource):
-
     def get(self, user_id):
-        headers = {'Access-Control-Allow-Origin': '*'}
         try:
-            user = session.query(User).filter(User.id == user_id).first()
-        except SQLAlchemyError as e:
-            return {'msg': e}, 500, headers
-        if user:
-            return {'user': user.serialize}, 200, headers
+            user_data = session.query(User).filter(User.id == user_id).first()
+        except SQLAlchemyError:
+            return {'message': SQLAlchemyError}, 500  # Internal Server Error
+        if user_data:
+            return {'user': UserSchema().dump(user_data)}, 200  # OK
         else:
-            return {'msg': 'User not found'}, 404, headers
+            return {'message': 'User not found'}, 404  # Not Found
 
     def put(self, user_id):
         pass
@@ -123,15 +131,13 @@ class UserResource(EntityResource):
             if session.query(User).filter(User.id == user_id).first():
                 session.query(User).filter(User.id == user_id).delete()
                 session.commit()
-                status = 204
-                msg = 'User with id = {0} has been deleted successfully'.format(user_id)
+                msg = 'User ID:{0} has been DELETED.'.format(user_id)
+                return {'message': msg}, 200  # OK
             else:
-                msg = 'User with id = {0} not exists!'.format(user_id)
-                status = 404
-        except SQLAlchemyError as e:
-            msg = e
-            status = 500
-        return {'message': msg}, status, {'Access-Control-Allow-Origin': '*'}
+                msg = 'User ID:{0} NOT EXISTS!'.format(user_id)
+                return {'message': msg}, 404  # Not Found
+        except SQLAlchemyError:
+            return {'message': SQLAlchemyError}, 500  # Internal Server Error
 
 
 class PasswordResource(EntityResource):

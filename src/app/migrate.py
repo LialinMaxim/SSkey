@@ -140,13 +140,13 @@ def insert_data_in_db():
         con.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
         cur = con.cursor()
         cur.execute(
-            "INSERT INTO users VALUES (103, 'test', 'test', 'test@test.com', '380501234567', 'test', 'test', '2018-01-01 12:00:00', '2018-01-01 12:00:00', 'ffffffff');")
+            "INSERT INTO users VALUES (34, 'test', 'test', 'test@test.com', '380501234567', 'test', 'test', '2018-01-01 12:00:00', '2018-01-01 12:00:00', 'ffffffff');")
         cur.execute(
-            "INSERT INTO passwords VALUES (DEFAULT, 103, 'www', 'title', 'login', 'pass', 'comment');")
+            "INSERT INTO passwords VALUES (DEFAULT, 34, 'www', 'title', 'login', 'pass', 'comment');")
         cur.execute(
-            "INSERT INTO users VALUES (104, 'test2', 'test2', 'test@test.com', '380501112233', 'test2', 'test2', '2018-02-02 13:00:00', '2018-02-02 13:00:00', 'ff00ff00');")
+            "INSERT INTO users VALUES (35, 'test2', 'test2', 'test@test.com', '380501112233', 'test2', 'test2', '2018-02-02 13:00:00', '2018-02-02 13:00:00', 'ff00ff00');")
         cur.execute(
-            "INSERT INTO passwords VALUES (DEFAULT, 104, 'www', 'title', 'login', 'pass', 'comment2');")
+            "INSERT INTO passwords VALUES (DEFAULT, 35, 'www', 'title', 'login', 'pass', 'comment2');")
         print(
             "INSERT DATA IN DATABASE: success!!! Test data inserted successfully in database: {0};".format(
                 dbname))

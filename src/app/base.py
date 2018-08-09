@@ -13,6 +13,7 @@ engine = create_engine('postgresql://%s:%s@%s/%s' % (POSTGRES_USER,
                                                      POSTGRES_HOST,
                                                      POSTGRES_NAME
                                                      ))
+
 Session = sessionmaker(bind=engine)
 
 Base = declarative_base()
