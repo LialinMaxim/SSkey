@@ -105,19 +105,19 @@ class User(Base):
             return False
 
     @classmethod
-    def filter_by_email(cls, email):
+    def filter_by_email(cls, email, session):
         email = session.query(cls).filter(cls.email == email).first()
 
         return email
 
     @classmethod
-    def filter_by_username(cls, username):
+    def filter_by_username(cls, username, session):
         username = session.query(cls).filter(cls.username == username).first()
 
         return username
 
     @classmethod
-    def filter_by_id(cls, id):
+    def filter_by_id(cls, id, session):
         id = session.query(cls).filter(cls.id == id).first()
 
         return id
@@ -163,7 +163,7 @@ class Password(Base):
         :return: Fernet
         """
         try:
-            user = session.query(User).filter(User.id == self.user_id).first()
+            user = User.filter_by_id(self.user_id, session)
         except SQLAlchemyError as e:
             # TO DO add error into logs
             raise SQLAlchemyError(str(e))

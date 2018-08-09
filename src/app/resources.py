@@ -225,7 +225,7 @@ class Login(Resource):
         parser.add_argument('password', type=str, help='')
         args = parser.parse_args()
 
-        current_user = User.filter_by_email(args["email"])
+        current_user = User.filter_by_email(args["email"], session)
         if current_user and current_user.compare_hash(args["password"]):
             sess["email"] = args["email"]
             sess.permanent = True
