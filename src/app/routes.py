@@ -1,13 +1,11 @@
-from . import api
-from .resources import (Home, Smoke, UserResource, PasswordResource,
-                        UserListResource, PasswordListResource)
 from flask import g
 
-from . import api, Session
-from . import Home, Smoke, UserResource, PasswordResource, UserListResource, PasswordListResource, Login, Logout, \
-    Register
+from . import api
+from .resources import (Home, Smoke, UserResource, PasswordResource,
+                        UserListResource, PasswordListResource, Register, Login, Logout)
+from .base import Session
 
-api.add_resource(Home, '/', "/home")
+api.add_resource(Home, "/home")
 api.add_resource(Smoke, '/smoke')
 api.add_resource(UserListResource, '/users')
 api.add_resource(UserResource, '/users/<int:user_id>')

@@ -3,7 +3,7 @@ import hashlib
 import os
 import base64
 
-from sqlalchemy import Column, String, Integer, Date, DateTime, LargeBinary, ForeignKey
+from sqlalchemy import Column, String, Integer, Date, LargeBinary, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.exc import SQLAlchemyError
 from cryptography.fernet import Fernet
