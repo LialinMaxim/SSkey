@@ -6,6 +6,10 @@ from .config import config
 app = Flask(__name__)
 
 app.config.from_object(config['default'])
-api = Api(app, version='0.1.1', title='SSkey', description='A simple application to safe yours passwords')
+api = Api(app,
+          # doc='/swagger',
+          version='0.1.2',
+          title='SSkey',
+          description='A simple application to safe yours passwords')
 
 from . import routes
