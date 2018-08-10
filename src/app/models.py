@@ -1,13 +1,12 @@
-import base64
 import datetime
 import hashlib
 import os
+import base64
 
-from cryptography.fernet import Fernet
-from sqlalchemy import (Column, String, Integer, Date, DateTime, LargeBinary,
-                        ForeignKey)
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import Column, String, Integer, Date, LargeBinary, ForeignKey
 from sqlalchemy.orm import relationship
+from sqlalchemy.exc import SQLAlchemyError
+from cryptography.fernet import Fernet
 
 from .base import Base, Session
 
@@ -97,6 +96,24 @@ class User(Base):
             format(self.username, self.email, self.first_name, self.last_name,
                    self.phone)
 
+    @classmethod
+    def filter_by_email(cls, email, session):
+        email = session.query(cls).filter(cls.email == email).first()
+
+        return email
+
+    @classmethod
+    def filter_by_username(cls, username, session):
+        username = session.query(cls).filter(cls.username == username).first()
+
+        return username
+
+    @classmethod
+    def filter_by_id(cls, id, session):
+        id = session.query(cls).filter(cls.id == id).first()
+
+        return id
+
 
 class Password(Base):
     """
@@ -138,7 +155,7 @@ class Password(Base):
         :return: Fernet
         """
         try:
-            user = session.query(User).filter(User.id == self.user_id).first()
+            user = User.filter_by_id(self.user_id, session)
         except SQLAlchemyError as e:
             # TO DO add error into logs
             raise SQLAlchemyError(str(e))
@@ -164,46 +181,3 @@ class Password(Base):
         self.title = title
         self.comment = comment
         self.crypt_and_save_password(password)
-
-
-class SessionObject(Base):
-    """
-    Class describe objects to save state of user login session
-    """
-    __tablename__ = 'session_objects'
-
-    id = Column('id', Integer, primary_key=True)
-    token = Column('token', String(100), unique=True, nullable=False)
-
-    user_id = Column('user_id', Integer, ForeignKey('users.id'))
-    user = relationship("User", backref="session_objects", cascade='all,delete')
-
-    login_time = Column('login_time', DateTime, nullable=False)
-    time_out_value = Column('time_out_value', Integer, nullable=False)
-
-    @property
-    def serialize(self):
-        """Return object data in easily serializeable format"""
-        return {
-            'id': self.id,
-            'token': self.token,
-            'user_id': self.user_id,
-            'login_time': str(self.login_time),
-            'time_out_value': self.time_out_value,
-        }
-
-    def __init__(self, user_id, time_out_value=1800, token_len=16):
-        self.token = SessionObject.generate_token(token_len)
-        self.user_id = user_id
-        self.login_time = datetime.datetime.now()
-        self.time_out_value = time_out_value
-
-    @staticmethod
-    def generate_token(token_len):
-        """Generate random bytes of particular length convert into string and return it"""
-        return str(os.urandom(token_len))
-
-    def update_login_time(self):
-        """Method set current time into login time of session object"""
-        self.login_time = datetime.datetime.now()
-

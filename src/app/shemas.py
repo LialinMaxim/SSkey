@@ -1,4 +1,6 @@
 from marshmallow import Schema, fields, ValidationError, pre_load
+
+
 # from . import api
 
 
@@ -33,7 +35,6 @@ class PasswordSchema(Schema):
     login = fields.String(required=True)
     password = fields.String(required=True)
     comment = fields.String()
-
 
 # password_post = api.model('Crate New Password', {
 #     'url': fields.Url,
