@@ -184,13 +184,22 @@ class Register(Resource):
 
     @api.expect(user_post)
     def post(self):
-        json_data = request.get_json()
-        if not json_data or not isinstance(json_data, dict):
-            return {'message': 'No input data provided'}, 400  # Bad Request
+        parser = reqparse.RequestParser()
+        parser.add_argument('email', type=str, help='')
+        parser.add_argument('username', type=str, help='')
+        parser.add_argument('userpass', type=str, help='')
+        parser.add_argument('first_name', type=str, help='')
+        parser.add_argument('last_name', type=str, help='')
+        parser.add_argument('phone', type=str, help='')
+        args = parser.parse_args()
+        # json_data = request.get_json()
+        # if not json_data or not isinstance(json_data, dict):
+        #     return {'message': 'No input data provided'}, 400  # Bad Request
 
         # Validate and deserialize input
         try:
-            data = UserSchema().load(json_data)
+            # data = UserSchema().load(json_data)
+            data = UserSchema().load(args)
         except ValidationError as err:
             return {'message': str(err)}, 422  # Unprocessable Entity
 
