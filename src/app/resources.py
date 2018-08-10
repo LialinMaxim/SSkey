@@ -1,15 +1,32 @@
-from abc import ABCMeta, abstractmethod
+import datetime
 
-from flask import jsonify, request
-from flask_restplus import Resource, reqparse, fields	
+from abc import ABCMeta, abstractmethod
+from flask import make_response, request, session as sess
+from flask_restplus import Resource, reqparse, fields
 from marshmallow import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 
-from . import api
+from . import app, api
 from .base import Session
-from .models import User, Password, SessionObject
+from .models import User, Password
+from .shemas import UserSchema
 
 session = Session()
+
+
+@app.before_request
+def require_login():
+    """
+    Require login function will be run before each request
+
+    The function will be called without any arguments. This function checks whether requested route is allowed to
+    unregistered user or not in allowed routes. Also, checks if session isn't empty. Otherwise, it will return 403 error
+
+    """
+    allowed_routes = ["login", "register", "home"]
+    print(sess)
+    if request.endpoint not in allowed_routes and "email" not in sess:
+        return make_response("You are not allowed to use this resource without logging in!", 403)
 
 
 class Home(Resource):
@@ -57,16 +74,6 @@ class EntityResource(Resource):
         raise NotImplementedError
 
 
-user_post = api.model('Crate New User', {
-    'email': fields.String,
-    'username': fields.String,
-    'userpass': fields.String,
-    'first_name': fields.String,
-    'last_name': fields.String,
-    'phone': fields.Integer,
-})
-
-
 class UserListResource(Resource):
     def get(self):
         try:
@@ -77,40 +84,6 @@ class UserListResource(Resource):
         for user in users:
             users_serialized.append(user.serialize)
         return {'users': users_serialized}, 200,  # headers
-
-    @api.expect(user_post)
-    def post(self):
-        json_data = request.get_json()
-        if not json_data or not isinstance(json_data, dict):
-            return {'message': 'No input data provided'}, 400  # Bad Request
-
-        # Validate and deserialize input
-        try:
-            data = UserSchema().load(json_data)
-        except ValidationError as err:
-            return {'message': str(err)}, 422  # Unprocessable Entity
-
-        # Check if a new user is not exist in data base
-        if session.query(User).filter(User.username == data['username']).first():
-            msg = "User with username: '{0}' is ALREADY EXISTS.".format(data['username'])
-            return {'message': msg}, 200  # OK
-        elif session.query(User).filter(User.email == data['email']).first():
-            msg = "User with email: '{0}' is ALREADY EXISTS".format(data['email'])
-            return {'message': msg}, 200  # OK
-        else:
-            # TODO optimization USER CLASS
-            # user = User(data)
-            user = User(data['username'], data['email'], data['userpass'],
-                        data['first_name'], data['last_name'], data['phone'])
-
-            # crate a new user
-            try:
-                session.add(user)
-                session.commit()
-                msg = "New user: '{0}' is SUCCESSFUL ADDED".format(user.username)
-                return {'message': msg}, 200  # OK
-            except SQLAlchemyError:
-                return {'message': SQLAlchemyError}, 500  # Internal Server Error
 
 
 class UserResource(EntityResource):
@@ -189,3 +162,99 @@ class PasswordListResource(EntityListResource):
             msg = "USERNAME not given!"
             status = 400
         return {'message': msg}, status, {'Access-Control-Allow-Origin': '*'}
+
+
+user_post = api.model('Create New User', {
+    'email': fields.String,
+    'username': fields.String,
+    'userpass': fields.String,
+    'first_name': fields.String,
+    'last_name': fields.String,
+    'phone': fields.Integer,
+})
+
+
+class Register(Resource):
+    """
+    Register resource.
+
+    Parsing requested data, checks if username or email doesn't exit in DB, then create user in DB. 200 OK
+    Otherwise, return 500 or 400 error
+    """
+
+    @api.expect(user_post)
+    def post(self):
+        json_data = request.get_json()
+        if not json_data or not isinstance(json_data, dict):
+            return {'message': 'No input data provided'}, 400  # Bad Request
+
+        # Validate and deserialize input
+        try:
+            data = UserSchema().load(json_data)
+        except ValidationError as err:
+            return {'message': str(err)}, 422  # Unprocessable Entity
+
+        # Check if a new user is not exist in data base
+        if session.query(User).filter(User.username == data['username']).first():
+            msg = "User with username: '{0}' is ALREADY EXISTS.".format(data['username'])
+            return {'message': msg}, 200  # OK
+        elif session.query(User).filter(User.email == data['email']).first():
+            msg = "User with email: '{0}' is ALREADY EXISTS".format(data['email'])
+            return {'message': msg}, 200  # OK
+        else:
+            # TODO optimization USER CLASS
+            # user = User(data)
+            user = User(data['username'], data['email'], data['userpass'],
+                        data['first_name'], data['last_name'], data['phone'])
+
+            # crate a new user
+            try:
+                session.add(user)
+                session.commit()
+                msg = "New user: '{0}' is SUCCESSFUL ADDED".format(user.username)
+                return {'message': msg}, 200  # OK
+            except SQLAlchemyError:
+                return {'message': SQLAlchemyError}, 500  # Internal Server Error
+
+
+user_login = api.model('Logging in', {
+    'email': fields.String,
+    'password': fields.String
+})
+
+
+class Login(Resource):
+    """
+    Login resource.
+
+    Checks whether entered data is in DB. Create user session based on its id and then sets session lifetime.
+    Otherwise, it will return 401 error
+    """
+
+    @api.expect(user_login)
+    def post(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument('email', type=str, help='')
+        parser.add_argument('password', type=str, help='')
+        args = parser.parse_args()
+
+        current_user = User.filter_by_email(args["email"], session)
+        if current_user and current_user.compare_hash(args["password"]):
+            sess["email"] = args["email"]
+            sess.permanent = True
+            app.permanent_session_lifetime = datetime.timedelta(minutes=60)
+            return make_response("Logged in as {}".format(current_user.email))
+
+        return make_response("Could not verify your login!", 401, {"WWW-Authenticate": 'Basic realm="Login Required"'})
+
+
+class Logout(Resource):
+    """
+    Logout resource
+
+    Remove the username from the session
+    """
+
+    def get(self):
+        sess.pop("email", None)
+        return "Dropped!"
