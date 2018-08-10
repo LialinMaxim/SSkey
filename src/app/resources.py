@@ -242,7 +242,7 @@ class Login(Resource):
         if current_user and current_user.compare_hash(args["password"]):
             sess["email"] = args["email"]
             sess.permanent = True
-            app.permanent_session_lifetime = datetime.timedelta(minutes=1)
+            app.permanent_session_lifetime = datetime.timedelta(minutes=60)
             return make_response("Logged in as {}".format(current_user.email))
 
         return make_response("Could not verify your login!", 401, {"WWW-Authenticate": 'Basic realm="Login Required"'})
