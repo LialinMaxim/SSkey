@@ -1,23 +1,24 @@
+import base64
 import datetime
 import hashlib
 import os
-import base64
 
-from sqlalchemy import Column, String, Integer, Date, DateTime, LargeBinary, ForeignKey
-from sqlalchemy.orm import relationship
-from sqlalchemy.exc import SQLAlchemyError
 from cryptography.fernet import Fernet
+from sqlalchemy import (Column, String, Integer, Date, DateTime, LargeBinary,
+                        ForeignKey)
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import relationship
 
-from . import Base
-from . import Session
+from .base import Base, Session
+
 session = Session()
+
 
 class User(Base):
     """
     Class describe User in application
     """
     __tablename__ = 'users'
-
     id = Column('id', Integer, primary_key=True)
     username = Column('username', String(100), unique=True, nullable=False)
     email = Column('email', String(150), unique=True, nullable=False)
@@ -65,6 +66,7 @@ class User(Base):
                                                      self.salt)
         return hash_input_password[2] == self.userpass
 
+    # TODO with Marshmallow
     @property
     def serialize(self):
         """Return object data in easily serializeable format"""
@@ -94,13 +96,6 @@ class User(Base):
         return "Username - {0}; Email - {1}; First_name - {2}; Last name - {3}; Phone - {4}". \
             format(self.username, self.email, self.first_name, self.last_name,
                    self.phone)
-
-    @staticmethod
-    def validate_user(req_args):
-        if req_args['userpass'] and req_args['username'] and req_args['email']:
-            return True
-        else:
-            return False
 
 
 class Password(Base):
@@ -185,7 +180,6 @@ class SessionObject(Base):
 
     login_time = Column('login_time', DateTime, nullable=False)
     time_out_value = Column('time_out_value', Integer, nullable=False)
-
 
     @property
     def serialize(self):

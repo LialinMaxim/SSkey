@@ -1,5 +1,6 @@
 from . import api
-from . import Home, Smoke, UserResource, PasswordResource, UserListResource, PasswordListResource
+from .resources import (Home, Smoke, UserResource, PasswordResource,
+                        UserListResource, PasswordListResource)
 
 api.add_resource(Home, '/', "/home")
 api.add_resource(Smoke, '/smoke')
