@@ -1,6 +1,6 @@
 from flask import g
 
-from . import api
+from .api import api
 from .resources import (Home, Smoke, UserResource, PasswordResource,
                         UserListResource, PasswordListResource, Register, Login, Logout)
 from .base import Session
