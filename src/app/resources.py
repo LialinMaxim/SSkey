@@ -79,11 +79,8 @@ class UserListResource(Resource):
         try:
             users = session.query(User).all()
         except SQLAlchemyError:
-            return {'msg': SQLAlchemyError}, 500,  # headers
-        users_serialized = []
-        for user in users:
-            users_serialized.append(user.serialize)
-        return {'users': users_serialized}, 200,  # headers
+            return {'msg': SQLAlchemyError}, 500,  # Internal Server Error
+        return {'users': UserSchema(many=True).dump(users)}, 200,  # OK
 
 
 class UserResource(EntityResource):
@@ -94,6 +91,7 @@ class UserResource(EntityResource):
             return {'message': SQLAlchemyError}, 500  # Internal Server Error
         if user_data:
             return {'user': UserSchema().dump(user_data)}, 200  # OK
+
         else:
             return {'message': 'User not found'}, 404  # Not Found
 
@@ -164,7 +162,7 @@ class PasswordListResource(EntityListResource):
         return {'message': msg}, status, {'Access-Control-Allow-Origin': '*'}
 
 
-user_post = api.model('Create New User', {
+user_model = api.model('Create New User', {
     'email': fields.String,
     'username': fields.String,
     'userpass': fields.String,
@@ -182,7 +180,7 @@ class Register(Resource):
     Otherwise, return 500 or 400 error
     """
 
-    @api.expect(user_post)
+    @api.expect(user_model)
     def post(self):
         json_data = request.get_json()
         if not json_data or not isinstance(json_data, dict):
