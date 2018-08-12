@@ -23,7 +23,7 @@ def require_login():
     unregistered user or not in allowed routes. Also, checks if session isn't empty. Otherwise, it will return 403 error
 
     """
-    allowed_routes = ["login", "register", "home"]
+    allowed_routes = ["login", "register", "home", "doc", "restplus_doc.static", "specs"]
     print(sess)
     if request.endpoint not in allowed_routes and "email" not in sess:
         return make_response("You are not allowed to use this resource without logging in!", 403)
