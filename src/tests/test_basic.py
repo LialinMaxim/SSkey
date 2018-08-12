@@ -53,7 +53,8 @@ def test_register(client):
     """Make sure register works."""
     rv = register(client, app.config["EMAIL"], app.config["USERNAME"], app.config["PASSWORD"], app.config["FIRST_NAME"],
                   app.config["LAST_NAME"], app.config["PHONE"])
-    assert b"New user: 'testuser' is SUCCESSFUL ADDED" in rv.data
+    assert b"New user: 'testuser' is SUCCESSFUL ADDED" in rv.data \
+           or b"User with username: testuser is ALREADY EXISTS."
 
 
 def test_login_logout(client):
