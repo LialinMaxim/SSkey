@@ -15,6 +15,13 @@ install:
 before_script:
   - psql -c "CREATE DATABASE db_sskey;" -U postgres
 
+postgres:
+  adapter: postgresql
+  database: db_sskey
+  username: postgres
+  password: postgres
+  host: db
+
 script:
   - coverage run --source="src/app" -m pytest
   - coverage report --fail-under=20
