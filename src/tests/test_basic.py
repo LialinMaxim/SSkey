@@ -1,31 +1,82 @@
-import os
-import tempfile
+import pytest
 
 from src.app import app
-import pytest
+from src.app import config
+from src.app.base import Base, engine
 
 
 @pytest.fixture
 def client():
-    app.config["TESTING"] = True
+    # app.config["TESTING"] = True
+    app.config.from_object(config['testing'])
     client = app.test_client()
 
-    # with app.app_context():
-    #     app.init_db()
+    Base.metadata.create_all(engine)
 
     yield client
 
-#
-# def test_smoke(client):
-#     rv = client.get("/smoke")
-#     assert b"Unauthorized Access" in rv.data
+
+def register(client, email, username, password, first_name, last_name, phone):
+    return client.post("/register", data=dict(
+        email=email,
+        username=username,
+        password=password,
+        first_name=first_name,
+        last_name=last_name,
+        phone=phone
+    ), follow_redirects=True)
+
+
+def login(client, email, password):
+    return client.post("/login", data=dict(
+        email=email,
+        password=password
+    ), follow_redirects=True)
+
+
+def smoke(client):
+    return client.get("/smoke", follow_redirects=True)
+
+
+def logout(client):
+    return client.get("/logout", follow_redirects=True)
 
 
 def test_home_page(client):
     rv = client.get("/home")
     assert b"Home Page" in rv.data
 
-# def test_valid_login(client):
-#     rv = client.post("/login", data=dict(email="vlad@gmail.com", password="vlad"))
-#     assert rv.status_code == 200
-#     assert b"Logged in as vlad@gmail.com" in rv.data
+
+def test_smoke_page(client):
+    rv = smoke(client)
+    assert b"You are not allowed to use this resource without logging in!" in rv.data
+
+
+def test_register(client):
+    """Make sure register works."""
+    rv = register(client, app.config["EMAIL"], app.config["USERNAME"], app.config["PASSWORD"], app.config["FIRST_NAME"],
+                  app.config["LAST_NAME"], app.config["PHONE"])
+    assert b"New user: 'testuser' is SUCCESSFUL ADDED" in rv.data
+
+
+def test_login_logout(client):
+    """Make sure login and logout works."""
+
+    rv = login(client, app.config["EMAIL"], app.config["PASSWORD"])
+
+    assert b"Logged in as testuser@gmail.com" in rv.data
+
+    rv = smoke(client)
+    assert b"OK" in rv.data
+
+    rv = logout(client)
+    assert b"Dropped" in rv.data
+
+    rv = smoke(client)
+    assert b"You are not allowed to use this resource without logging in!" in rv.data
+
+    rv = login(client, app.config["EMAIL"] + "x", app.config["PASSWORD"])
+    assert b"Could not verify your login!" in rv.data
+
+    rv = login(client, app.config["EMAIL"], app.config["PASSWORD"] + "x")
+    assert b"Could not verify your login!" in rv.data
