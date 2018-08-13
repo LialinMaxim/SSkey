@@ -65,20 +65,6 @@ class User(Base):
                                                      self.salt)
         return hash_input_password[2] == self.userpass
 
-    # TODO with Marshmallow
-    @property
-    def serialize(self):
-        """Return object data in easily serializeable format"""
-        return {
-            'id': self.id,
-            'username': self.username,
-            'email': self.email,
-            'register_date': str(self.reg_date),
-            'first_name': self.first_name,
-            'last_name': self.last_name,
-            'phone': self.phone
-        }
-
     def __init__(self, username, email, password, first_name, last_name,
                  phone):
         self.username = username
