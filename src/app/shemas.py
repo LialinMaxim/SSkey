@@ -10,15 +10,13 @@ class UserSchema(Schema):
     id = fields.Integer(dump_only=True)
     email = fields.Email(required=True)
     username = fields.String(required=True)
-    userpass = fields.String(required=True)
+    userpass = fields.String(required=True, load_only=True)
     first_name = fields.String()
     last_name = fields.String()
     phone = fields.Integer()
-    # reg_date = fields.DateTime()
-    # salt = fields.String()
 
 
-# user_post = api.model('Crate New User', {
+# user_model = api.model('Crate New User', {
 #     'email': fields.Email,
 #     'username': fields.String,
 #     'userpass': fields.String,
