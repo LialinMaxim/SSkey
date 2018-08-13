@@ -13,11 +13,11 @@ def client():
     yield client
 
 
-def register(client, email, username, userpass, first_name, last_name, phone):
+def register(client, email, username, password, first_name, last_name, phone):
     return client.post("/register", data=dict(
         email=email,
         username=username,
-        userpass=userpass,
+        password=password,
         first_name=first_name,
         last_name=last_name,
         phone=phone
@@ -53,8 +53,7 @@ def test_register(client):
     """Make sure register works."""
     rv = register(client, app.config["EMAIL"], app.config["USERNAME"], app.config["PASSWORD"], app.config["FIRST_NAME"],
                   app.config["LAST_NAME"], app.config["PHONE"])
-    assert b"New user: 'testuser' is SUCCESSFUL ADDED" in rv.data \
-           or b"User with username: testuser is ALREADY EXISTS."
+    assert b"New user: 'testuser' is SUCCESSFUL ADDED" in rv.data
 
 
 def test_login_logout(client):

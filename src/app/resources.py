@@ -165,7 +165,7 @@ class PasswordListResource(EntityListResource):
 user_model = api.model('Create New User', {
     'email': fields.String,
     'username': fields.String,
-    'userpass': fields.String,
+    'password': fields.String,
     'first_name': fields.String,
     'last_name': fields.String,
     'phone': fields.Integer,
@@ -185,7 +185,7 @@ class Register(Resource):
         parser = reqparse.RequestParser()
         parser.add_argument('email', type=str, help='')
         parser.add_argument('username', type=str, help='')
-        parser.add_argument('userpass', type=str, help='')
+        parser.add_argument('password', type=str, help='')
         parser.add_argument('first_name', type=str, help='')
         parser.add_argument('last_name', type=str, help='')
         parser.add_argument('phone', type=str, help='')
@@ -211,7 +211,7 @@ class Register(Resource):
         else:
             # TODO optimization USER CLASS
             # user = User(data)
-            user = User(data['username'], data['email'], data['userpass'],
+            user = User(data['username'], data['email'], data['password'],
                         data['first_name'], data['last_name'], data['phone'])
 
             # crate a new user
