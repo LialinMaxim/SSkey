@@ -6,10 +6,6 @@ python:
 sercives:
   - postgresql
 
-postgres:
-  - database: db_sskey
-  - dbname: db_sskey
-
 before_install:
   - pip install pycodestyle
 
