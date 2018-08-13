@@ -3,11 +3,21 @@ language: python
 python:
   - "3.6"
 
+sercives:
+  - postgresql
+
+postgres:
+  - database: testing_db
+  - host: db
+
 before_install:
   - pip install pycodestyle
 
 install:
   - pip install -r src/app/requirements.txt
+
+before_script:
+  - psql -c "CREATE DATABASE testing_db;" -U postgres
 
 script:
   - coverage run --source="src/app" -m pytest
