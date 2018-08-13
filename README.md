@@ -113,4 +113,7 @@ Install [postgresql](https://www.postgresql.org/download/) and run:
 ```shell
 python base.py # database config
 python migrate.py # in order to create database
+python src/manage.py initdb # create database from models
+python src/manage.py dropdb # delete database
+python src/manage.py recreatedb # delete and create database
 ```
