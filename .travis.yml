@@ -8,7 +8,7 @@ sercives:
 
 postgres:
   - database: testing_db
-  - dbname: db_sskey
+  - dbname: localhost:5432/db_sskey
 
 before_install:
   - pip install pycodestyle
