@@ -5,6 +5,9 @@ python:
 
 services:
   - postgresql
+env:
+  - POSTGRES_HOST=db
+  - POSTGRES_NAME=db_sskey
 
 before_install:
   - pip install pycodestyle
