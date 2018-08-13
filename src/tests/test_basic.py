@@ -2,7 +2,7 @@ import pytest
 
 from src.app import app
 from src.app import config
-# from src.app.base import Base, engine
+from src.app.base import Base, engine
 
 
 @pytest.fixture
@@ -11,7 +11,7 @@ def client():
     app.config.from_object(config['testing'])
     client = app.test_client()
 
-    # Base.metadata.create_all(engine)
+    Base.metadata.create_all(engine)
 
     yield client
 
