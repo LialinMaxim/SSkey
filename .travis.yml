@@ -13,14 +13,7 @@ install:
   - pip install -r src/app/requirements.txt
 
 before_script:
-  - psql -c "CREATE DATABASE db_sskey;" -U postgres
-
-postgres:
-  adapter: postgresql
-  database: db_sskey
-  username: postgres
-  password: postgres
-  host: db
+  - psql -c "CREATE DATABASE db_sskey;" -U db_sskey
 
 script:
   - coverage run --source="src/app" -m pytest
