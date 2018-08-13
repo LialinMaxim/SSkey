@@ -12,6 +12,7 @@ from .models import User, Password
 from .shemas import UserSchema
 
 session = Session()
+headers = {'Access-Control-Allow-Origin': '*'}
 
 
 @app.before_request
@@ -29,15 +30,16 @@ def require_login():
         return make_response("You are not allowed to use this resource without logging in!", 403)
 
 
+@api.representation('/json')
 class Home(Resource):
     def get(self):
-        return {'message': 'Home Page'}, 200, {
-            'Access-Control-Allow-Origin': '*'}
+        return 'Representation Home Page', 200, headers
 
 
+@api.representation('/json')
 class Smoke(Resource):
     def get(self):
-        return {'message': 'OK'}, 200, {'Access-Control-Allow-Origin': '*'}
+        return 'OK', 200, headers
 
 
 class EntityListResource(Resource):
@@ -74,26 +76,27 @@ class EntityResource(Resource):
         raise NotImplementedError
 
 
+@api.representation('/json')
 class UserListResource(Resource):
     def get(self):
         try:
             users = session.query(User).all()
         except SQLAlchemyError:
-            return {'msg': SQLAlchemyError}, 500,  # Internal Server Error
-        return {'users': UserSchema(many=True).dump(users)}, 200,  # OK
+            return SQLAlchemyError, 500  # Internal Server Error
+        return UserSchema(many=True).dump(users), 200  # OK
 
 
+@api.representation('/json')
 class UserResource(EntityResource):
     def get(self, user_id):
         try:
             user_data = session.query(User).filter(User.id == user_id).first()
         except SQLAlchemyError:
-            return {'message': SQLAlchemyError}, 500  # Internal Server Error
+            return SQLAlchemyError, 500  # Internal Server Error
         if user_data:
-            return {'user': UserSchema().dump(user_data)}, 200  # OK
-
+            return UserSchema().dump(user_data), 200  # OK
         else:
-            return {'message': 'User not found'}, 404  # Not Found
+            return 'User not found', 404  # Not Found
 
     def put(self, user_id):
         pass
@@ -104,28 +107,28 @@ class UserResource(EntityResource):
                 session.query(User).filter(User.id == user_id).delete()
                 session.commit()
                 msg = 'User ID:{0} has been DELETED.'.format(user_id)
-                return {'message': msg}, 200  # OK
+                return msg, 200  # OK
             else:
                 msg = 'User ID:{0} NOT EXISTS!'.format(user_id)
-                return {'message': msg}, 404  # Not Found
+                return msg, 404  # Not Found
         except SQLAlchemyError:
-            return {'message': SQLAlchemyError}, 500  # Internal Server Error
+            return SQLAlchemyError, 500  # Internal Server Error
 
 
+@api.representation('/json')
 class PasswordResource(EntityResource):
     def get(self, user_id, pass_id):
-        headers = {'Access-Control-Allow-Origin': '*'}
         try:
             user = session.query(User).filter(User.id == user_id).first()
             if not user:
-                return {'msg': 'User not found'}, 404, headers
+                return 'User not found', 404, headers
             passwords = session.query(Password).filter(Password.user_id == user_id).all()
             passwords_serialized = []
             for password in passwords:
                 passwords_serialized.append(password.serialize)
         except SQLAlchemyError as e:
-            return {'msg': e}, 500, headers
-        return {'passwords': passwords_serialized}, 200, headers
+            return e, 500, headers
+        return passwords_serialized, 200, headers
 
     def put(self, user_id):
         pass
@@ -134,6 +137,7 @@ class PasswordResource(EntityResource):
         pass
 
 
+@api.representation('/json')
 class PasswordListResource(EntityListResource):
     def get(self):
         pass
@@ -159,7 +163,7 @@ class PasswordListResource(EntityListResource):
         else:
             msg = "USERNAME not given!"
             status = 400
-        return {'message': msg}, status, {'Access-Control-Allow-Origin': '*'}
+        return msg, status, headers
 
 
 user_model = api.model('Create New User', {
@@ -172,6 +176,7 @@ user_model = api.model('Create New User', {
 })
 
 
+@api.representation('/json')
 class Register(Resource):
     """
     Register resource.
@@ -184,21 +189,21 @@ class Register(Resource):
     def post(self):
         json_data = request.get_json()
         if not json_data or not isinstance(json_data, dict):
-            return {'message': 'No input data provided'}, 400  # Bad Request
+            return 'No input data provided', 400  # Bad Request
 
         # Validate and deserialize input
         try:
             data = UserSchema().load(json_data)
         except ValidationError as err:
-            return {'message': str(err)}, 422  # Unprocessable Entity
+            return str(err), 422  # Unprocessable Entity
 
         # Check if a new user is not exist in data base
         if session.query(User).filter(User.username == data['username']).first():
             msg = "User with username: '{0}' is ALREADY EXISTS.".format(data['username'])
-            return {'message': msg}, 200  # OK
+            return msg, 200  # OK
         elif session.query(User).filter(User.email == data['email']).first():
             msg = "User with email: '{0}' is ALREADY EXISTS".format(data['email'])
-            return {'message': msg}, 200  # OK
+            return msg, 200  # OK
         else:
             # TODO optimization USER CLASS
             # user = User(data)
@@ -210,9 +215,9 @@ class Register(Resource):
                 session.add(user)
                 session.commit()
                 msg = "New user: '{0}' is SUCCESSFUL ADDED".format(user.username)
-                return {'message': msg}, 200  # OK
+                return msg, 200  # OK
             except SQLAlchemyError:
-                return {'message': SQLAlchemyError}, 500  # Internal Server Error
+                return SQLAlchemyError, 500  # Internal Server Error
 
 
 user_login = api.model('Logging in', {
@@ -221,6 +226,7 @@ user_login = api.model('Logging in', {
 })
 
 
+@api.representation('/json')
 class Login(Resource):
     """
     Login resource.
@@ -241,11 +247,12 @@ class Login(Resource):
             sess["email"] = args["email"]
             sess.permanent = True
             app.permanent_session_lifetime = datetime.timedelta(minutes=60)
-            return make_response("Logged in as {}".format(current_user.email))
+            return "Logged in as {}".format(current_user.email)
 
-        return make_response("Could not verify your login!", 401, {"WWW-Authenticate": 'Basic realm="Login Required"'})
+        return "Could not verify your login!", 401, {"WWW-Authenticate": 'Basic realm="Login Required"'}
 
 
+@api.representation('/json')
 class Logout(Resource):
     """
     Logout resource
