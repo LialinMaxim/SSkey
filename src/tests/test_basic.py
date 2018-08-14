@@ -17,7 +17,7 @@ def client():
 
 
 def register(client, email, username, password, first_name, last_name, phone):
-    return client.post("/register", data=dict(
+    return client.post("/register", json=dict(
         email=email,
         username=username,
         password=password,
@@ -28,7 +28,7 @@ def register(client, email, username, password, first_name, last_name, phone):
 
 
 def login(client, email, password):
-    return client.post("/login", data=dict(
+    return client.post("/login", json=dict(
         email=email,
         password=password
     ), follow_redirects=True)

@@ -108,10 +108,7 @@ class Login(Resource):
     @api.expect(user_login)
     def post(self):
         # TODO optimization and validation
-        parser = reqparse.RequestParser()
-        parser.add_argument('email', type=str, help='')
-        parser.add_argument('password', type=str, help='')
-        args = parser.parse_args()
+        args = request.get_json()
         current_user = User.filter_by_email(args['email'], session)
         if current_user and current_user.compare_hash(args['password']):
             sess['email'] = args['email']
@@ -143,16 +140,7 @@ class Register(Resource):
 
     @api.expect(user_post)
     def post(self):
-        parser = reqparse.RequestParser()
-        parser.add_argument('email', type=str, help='')
-        parser.add_argument('username', type=str, help='')
-        parser.add_argument('password', type=str, help='')
-        parser.add_argument('first_name', type=str, help='')
-        parser.add_argument('last_name', type=str, help='')
-        parser.add_argument('phone', type=str, help='')
-        json_data = parser.parse_args()
-
-        # json_data = request.get_json()
+        json_data = request.get_json()
 
         if not json_data or not isinstance(json_data, dict):
             return 'No input data provided', 400  # Bad Request
