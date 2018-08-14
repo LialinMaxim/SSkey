@@ -2,7 +2,7 @@ import datetime
 
 from abc import ABCMeta, abstractmethod
 from flask import make_response, request, session as sess
-from flask_restplus import Resource, reqparse, fields
+from flask_restplus import Resource, reqparse
 from marshmallow import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -10,6 +10,7 @@ from . import app, api
 from .base import Session
 from .models import User, Password
 from .shemas import UserSchema
+from .swagger_models import user_model, user__put_model, user_login
 
 session = Session()
 headers = {'Access-Control-Allow-Origin': '*'}
@@ -98,8 +99,27 @@ class UserResource(EntityResource):
         else:
             return 'User not found', 404  # Not Found
 
+
+    @api.expect(user__put_model)
+    @api.representation('/json')
     def put(self, user_id):
-        pass
+        parser = reqparse.RequestParser()
+        parser.add_argument('email', type=str, help='')
+        parser.add_argument('first_name', type=str, help='')
+        parser.add_argument('last_name', type=str, help='')
+        parser.add_argument('phone', type=str, help='')
+        args = parser.parse_args()
+
+        try:
+            user = session.query(User).filter(User.id == user_id).first()
+            user.email = args['email']
+            user.first_name = args['first_name']
+            user.last_name = args['last_name']
+            user.phone = args['phone']
+            session.add(user)
+            session.commit()
+        except SQLAlchemyError as err:
+            return err, 500  # Internal Server Error
 
     def delete(self, user_id):
         try:
@@ -111,8 +131,8 @@ class UserResource(EntityResource):
             else:
                 msg = 'User ID:{0} NOT EXISTS!'.format(user_id)
                 return msg, 404  # Not Found
-        except SQLAlchemyError:
-            return SQLAlchemyError, 500  # Internal Server Error
+        except SQLAlchemyError as err:
+            return err, 500  # Internal Server Error
 
 
 @api.representation('/json')
@@ -166,16 +186,6 @@ class PasswordListResource(EntityListResource):
         return msg, status, headers
 
 
-user_model = api.model('Create New User', {
-    'email': fields.String,
-    'username': fields.String,
-    'password': fields.String,
-    'first_name': fields.String,
-    'last_name': fields.String,
-    'phone': fields.Integer,
-})
-
-
 @api.representation('/json')
 class Register(Resource):
     """
@@ -227,12 +237,6 @@ class Register(Resource):
                 return msg, 200  # OK
             except SQLAlchemyError:
                 return SQLAlchemyError, 500  # Internal Server Error
-
-
-user_login = api.model('Logging in', {
-    'email': fields.String,
-    'password': fields.String
-})
 
 
 @api.representation('/json')

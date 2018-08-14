@@ -29,11 +29,21 @@ class User(Base):
     phone = Column('phone', String(100), nullable=True)
 
     @staticmethod
+    def is_user_exists(user_id):
+        """
+        Method check is user exists in the database
+        :param user_id:
+        :return: boolean or Exception SQLAlchemy error if dont have connect to db
+        """
+        user = session.query(User).filter(User.id == user_id).first()
+        return bool(user)
+
+    @staticmethod
     def generate_salt(salt_len=16):
         """
         Method generate salt of needed length. Salt use in process of get password hash
         :param salt_len:
-        :return:
+        :return: bytes
         """
         return os.urandom(salt_len)
 
@@ -148,7 +158,7 @@ class Password(Base):
         cipher_key = base64.urlsafe_b64encode(user.password) + Password.SECRET_KEY
         return Fernet(cipher_key)
 
-    def crypt_and_save_password(self, raw_password):
+    def crypt_password(self, raw_password):
         """Encrypt password and set it into self.password"""
         cipher = self.get_cipher()
         encrypted_password = cipher.encrypt(bytes(raw_password, encoding="utf-8"))
@@ -166,4 +176,4 @@ class Password(Base):
         self.url = url
         self.title = title
         self.comment = comment
-        self.crypt_and_save_password(password)
+        self.crypt_password(password)
