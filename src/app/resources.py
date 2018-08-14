@@ -88,9 +88,9 @@ class UserListResource(Resource):
 
 @api.representation('/json')
 class UserResource(EntityResource):
-    def get(self, username):
+    def get(self, user_id):
         try:
-            user_data = session.query(User).filter(User.username == username).first()
+            user_data = session.query(User).filter(User.id == user_id).first()
         except SQLAlchemyError:
             return SQLAlchemyError, 500  # Internal Server Error
         if user_data:
@@ -103,20 +103,16 @@ class UserResource(EntityResource):
     @api.representation('/json')
     def put(self, user_id):
         parser = reqparse.RequestParser()
-        parser.add_argument('email', type=str, help='')
-        parser.add_argument('username', type=str, help='')
-        parser.add_argument('first_name', type=str, help='')
-        parser.add_argument('last_name', type=str, help='')
-        parser.add_argument('phone', type=str, help='')
+        for arg in ['email', 'username', 'first_name', 'last_name', 'phone']:
+            parser.add_argument(arg, type=str, help='')
         args = parser.parse_args()
-
         try:
+            if not User.is_user_exists(user_id):
+                return 'User not found', 404  # Not Found
             user = session.query(User).filter(User.id == user_id).first()
-            user.email = args['email']
-            user.username = args['username']
-            user.first_name = args['first_name']
-            user.last_name = args['last_name']
-            user.phone = args['phone']
+            for arg_key in args.keys():
+                if arg_key != 'password':
+                    user.__setattr__(arg_key, args[arg_key])
             session.add(user)
             session.commit()
             msg = f'User {user.username} with id {user_id} has been successfully updated.'
@@ -157,11 +153,8 @@ class PasswordResource(EntityResource):
     @api.representation('/json')
     def put(self, user_id, pass_id):
         parser = reqparse.RequestParser()
-        parser.add_argument('url', type=str, help='')
-        parser.add_argument('title', type=str, help='')
-        parser.add_argument('login', type=str, help='')
-        parser.add_argument('pass', type=str, help='')
-        parser.add_argument('comment', type=str, help='')
+        for arg in ['url', 'title', 'login', 'pass', 'comment']:
+            parser.add_argument(arg, type=str, help='')
         args = parser.parse_args()
         try:
             if not User.is_user_exists(user_id):
@@ -169,19 +162,18 @@ class PasswordResource(EntityResource):
             if not Password.is_password_exists(pass_id):
                 return 'Password not found', 404
             password = session.query(Password).filter(Password.pass_id == pass_id). first()
-            for key, arg_value in args:
-                if key != 'password':
-                    password.__setattr__(key, arg_value)
+
+            for arg_key in args.keys():
+                if arg_key != 'password':
+                    password.__setattr__(arg_key, args[arg_key])
                 else:
-                    password.crypt_password(arg_value)
+                    password.crypt_password(args[arg_key])
+            session.add(password)
+            session.commit()
             return f'Data of password with id{pass_id} has been updated successfully', 200
         except SQLAlchemyError as err:
             return str(err), 500
 
-
-
-        except SQLAlchemyError as err:
-            return str(err), 500
 
 
     def delete(self, user_id):
