@@ -1,6 +1,7 @@
 
 import os
 import tempfile
+import json
 import pytest
 
 from ..app.models import Password
@@ -36,6 +37,18 @@ def register(client, email, username, password, first_name, last_name, phone):
         phone=phone
     ), follow_redirects=True)
 
+def put_user(client, email, username, first_name, last_name, phone, user_id):
+    return client.put("/users/" + str(user_id), data=dict(
+        email=email,
+        username=username,
+        first_name=first_name,
+        last_name=last_name,
+        phone=phone
+    ), follow_redirects=True)
+
+def get_user_by_username(client, username):
+        return client.get("/users/" + username,
+                        follow_redirects = True)
 
 def login(client, email, password):
     return client.post("/login", data=dict(
@@ -68,6 +81,25 @@ def test_register(client):
                   app.config["LAST_NAME"], app.config["PHONE"])
     assert b"New user: 'testuser' is SUCCESSFUL ADDED" in rv.data
 
+def test_get_user_by_username(client):
+    login(client, app.config["EMAIL"], app.config["PASSWORD"])
+    rv = get_user_by_username(client, app.config["USERNAME"])
+    assert bytes(app.config["EMAIL"], encoding='utf-8') in rv.data
+    assert bytes(app.config["FIRST_NAME"], encoding='utf-8') in rv.data
+    logout(client)
+
+def test_put_user(client):
+    """Try to update user data for existant user"""
+    login(client, app.config["EMAIL"], app.config["PASSWORD"])
+    rv = get_user_by_username(client, app.config["USERNAME"])
+
+    user = json.loads(str(rv.data, encoding='utf-8'))
+    username = user['username']
+    user_id = user['id']
+    rv = put_user(client, user['email'], username, 'Ali', 'Alhazred', '666-666-666', user_id)
+    assert bytes(f'User {username} with id {user_id} has been successfully updated.', encoding='utf-8') in rv.data
+    logout(client)
+# (client, email, username, first_name, last_name, phone, user_id)
 
 def test_login_logout(client):
     """Make sure login and logout works."""
