@@ -21,7 +21,7 @@ class User(Base):
     id = Column('id', Integer, primary_key=True)
     username = Column('username', String(100), unique=True, nullable=False)
     email = Column('email', String(150), unique=True, nullable=False)
-    userpass = Column('userpass', LargeBinary, nullable=False)
+    password = Column('userpass', LargeBinary, nullable=False)
     salt = Column('salt', LargeBinary, nullable=False)
     reg_date = Column('reg_date', Date, nullable=False)
     first_name = Column('first_name', String(150), nullable=True)
@@ -38,10 +38,10 @@ class User(Base):
         return os.urandom(salt_len)
 
     @staticmethod
-    def get_hash_password(userpass, salt, iterations=100001, encoding='utf-8'):
+    def get_hash_password(password, salt, iterations=100001, encoding='utf-8'):
         """
         Method create salted password hash
-        :param userpass:
+        :param password:
         :param salt:
         :param iterations:
         :param encoding:
@@ -49,7 +49,7 @@ class User(Base):
         """
         hashed_password = hashlib.pbkdf2_hmac(
             hash_name='sha256',
-            password=bytes(userpass, encoding),
+            password=bytes(password, encoding),
             salt=salt,
             iterations=iterations
         )
@@ -63,14 +63,14 @@ class User(Base):
         """
         hash_input_password = User.get_hash_password(input_password,
                                                      self.salt)
-        return hash_input_password[2] == self.userpass
+        return hash_input_password[2] == self.password
 
     def __init__(self, username, email, password, first_name, last_name,
                  phone):
         self.username = username
         hashed_data = __class__.get_hash_password(password, User.generate_salt())
         self.salt = hashed_data[0]
-        self.userpass = hashed_data[2]
+        self.password = hashed_data[2]
         self.email = email
         self.reg_date = datetime.datetime.now()
         self.first_name = first_name
@@ -145,7 +145,7 @@ class Password(Base):
         except SQLAlchemyError as e:
             # TO DO add error into logs
             raise SQLAlchemyError(str(e))
-        cipher_key = base64.urlsafe_b64encode(user.userpass) + Password.SECRET_KEY
+        cipher_key = base64.urlsafe_b64encode(user.password) + Password.SECRET_KEY
         return Fernet(cipher_key)
 
     def crypt_and_save_password(self, raw_password):

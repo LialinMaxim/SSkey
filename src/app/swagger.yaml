@@ -55,7 +55,7 @@ paths:
           type: string
           description: The user email.
         - in: query
-          name: userpass
+          name: password
           required: true
           type: string
           description: The user password.
@@ -166,7 +166,7 @@ definitions:
         type: string
       email:
         type: string
-      userpass:
+      password:
         type: string
       salt:
         type: string

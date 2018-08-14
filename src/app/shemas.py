@@ -10,10 +10,10 @@ class UserSchema(Schema):
     id = fields.Integer(dump_only=True)
     email = fields.Email(required=True)
     username = fields.String(required=True)
-    userpass = fields.String(required=True, load_only=True)
+    password = fields.String(required=True, load_only=True)
     first_name = fields.String()
     last_name = fields.String()
-    phone = fields.Integer()
+    phone = fields.String()
 
 
 # user_model = api.model('Crate New User', {
