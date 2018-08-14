@@ -104,7 +104,7 @@ docker-compose run -p 5000:5000 web python manage.py
 Standalone unit tests run with:
 
 ```shell
-python -m pytest tests/
+python -m pytest src/tests
 ```
 
 ## Postgresql

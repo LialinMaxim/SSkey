@@ -24,7 +24,7 @@ def require_login():
     unregistered user or not in allowed routes. Also, checks if session isn't empty. Otherwise, it will return 403 error
 
     """
-    allowed_routes = ["login", "register", "home"]
+    allowed_routes = ["login", "register", "home", "doc", "restplus_doc.static", "specs"]
     print(sess)
     if request.endpoint not in allowed_routes and "email" not in sess:
         return make_response("You are not allowed to use this resource without logging in!", 403)
@@ -169,7 +169,7 @@ class PasswordListResource(EntityListResource):
 user_model = api.model('Create New User', {
     'email': fields.String,
     'username': fields.String,
-    'userpass': fields.String,
+    'password': fields.String,
     'first_name': fields.String,
     'last_name': fields.String,
     'phone': fields.Integer,
@@ -187,13 +187,22 @@ class Register(Resource):
 
     @api.expect(user_model)
     def post(self):
-        json_data = request.get_json()
-        if not json_data or not isinstance(json_data, dict):
-            return 'No input data provided', 400  # Bad Request
+        parser = reqparse.RequestParser()
+        parser.add_argument('email', type=str, help='')
+        parser.add_argument('username', type=str, help='')
+        parser.add_argument('password', type=str, help='')
+        parser.add_argument('first_name', type=str, help='')
+        parser.add_argument('last_name', type=str, help='')
+        parser.add_argument('phone', type=str, help='')
+        args = parser.parse_args()
+        # json_data = request.get_json()
+        # if not json_data or not isinstance(json_data, dict):
+        #     return {'message': 'No input data provided'}, 400  # Bad Request
 
         # Validate and deserialize input
         try:
-            data = UserSchema().load(json_data)
+            # data = UserSchema().load(json_data)
+            data = UserSchema().load(args)
         except ValidationError as err:
             return str(err), 422  # Unprocessable Entity
 
@@ -207,7 +216,7 @@ class Register(Resource):
         else:
             # TODO optimization USER CLASS
             # user = User(data)
-            user = User(data['username'], data['email'], data['userpass'],
+            user = User(data['username'], data['email'], data['password'],
                         data['first_name'], data['last_name'], data['phone'])
 
             # crate a new user
