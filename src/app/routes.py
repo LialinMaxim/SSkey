@@ -16,6 +16,7 @@ api.add_resource(Login, '/login')
 api.add_resource(Logout, '/logout')
 api.add_resource(UserSearch, '/users/<string:username>')
 
+
 def get_session():
     session = getattr(g, Session, None)
     if session is None:
