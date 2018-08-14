@@ -160,7 +160,6 @@ class Register(Resource):
         # Validate and deserialize input
         try:
             data = UserSchema().load(json_data)
-            print(data)
         except ValidationError as err:
             return str(err), 422  # Unprocessable Entity
 
