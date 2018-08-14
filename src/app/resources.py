@@ -144,14 +144,12 @@ class Register(Resource):
     @api.expect(user_post)
     def post(self):
         json_data = request.get_json()
-        print(json_data)
         if not json_data or not isinstance(json_data, dict):
             return 'No input data provided', 400  # Bad Request
 
         # Validate and deserialize input
         try:
             data = UserSchema().load(json_data)
-            print(data)
         except ValidationError as err:
             return str(err), 422  # Unprocessable Entity
 
