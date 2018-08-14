@@ -3,14 +3,25 @@ language: python
 python:
   - "3.6"
 
+services:
+  - postgresql
+
+env:
+  - SECRET_KEY=m8t6u7i18s463t6lrd9eutf2
+  - POSTGRES_USER=postgres
+  - POSTGRES_HOST=localhost
+  - POSTGRES_NAME=db_sskey
+
 before_install:
   - pip install pycodestyle
 
 install:
   - pip install -r src/app/requirements.txt
 
+before_script:
+  - psql -c "CREATE DATABASE db_sskey;" -U postgres
+
 script:
   - coverage run --source="src/app" -m pytest
   - coverage report --fail-under=20
   - pycodestyle src/ --ignore=E501,E402
-
