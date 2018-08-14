@@ -2,6 +2,10 @@ import os
 
 from psycopg2 import connect
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
+from dotenv import load_dotenv
+
+basedir = os.path.abspath(os.path.dirname(__file__))
+load_dotenv(os.path.join(basedir, '.env'))
 
 new_user = 'sskey'
 user = os.environ.get('POSTGRES_USER')
@@ -140,11 +144,11 @@ def insert_data_in_db():
         con.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
         cur = con.cursor()
         cur.execute(
-            "INSERT INTO users VALUES (34, 'test', 'test', 'test@test.com', '380501234567', 'test', 'test', '2018-01-01 12:00:00', '2018-01-01 12:00:00', 'ffffffff');")
+            "INSERT INTO users VALUES (150 'test', 'test', 'test@test.com', '380501234567', 'test', 'test', '2018-01-01 12:00:00', '2018-01-01 12:00:00', 'ffffffff');")
         cur.execute(
             "INSERT INTO passwords VALUES (DEFAULT, 34, 'www', 'title', 'login', 'pass', 'comment');")
         cur.execute(
-            "INSERT INTO users VALUES (35, 'test2', 'test2', 'test@test.com', '380501112233', 'test2', 'test2', '2018-02-02 13:00:00', '2018-02-02 13:00:00', 'ff00ff00');")
+            "INSERT INTO users VALUES (151, 'test2', 'test2', 'test@test.com', '380501112233', 'test2', 'test2', '2018-02-02 13:00:00', '2018-02-02 13:00:00', 'ff00ff00');")
         cur.execute(
             "INSERT INTO passwords VALUES (DEFAULT, 35, 'www', 'title', 'login', 'pass', 'comment2');")
         print(
@@ -164,4 +168,4 @@ if __name__ == "__main__":
     create_user()
     create_db()
     create_tables()
-    insert_data_in_db()  # Uncomment function if you need insert test records in tables 'user' and 'passwords' in databae
+    # insert_data_in_db()  # Uncomment function if you need insert test records in tables 'user' and 'passwords' in databae
