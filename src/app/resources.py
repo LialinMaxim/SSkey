@@ -98,7 +98,6 @@ class UserResource(EntityResource):
         else:
             return 'User not found', 404  # Not Found
 
-
     @api.expect(user_put_model)
     @api.representation('/json')
     def put(self, user_id):
@@ -161,7 +160,7 @@ class PasswordResource(EntityResource):
                 return 'User not found', 404
             if not Password.is_password_exists(pass_id):
                 return 'Password not found', 404
-            password = session.query(Password).filter(Password.pass_id == pass_id). first()
+            password = session.query(Password).filter(Password.pass_id == pass_id).first()
 
             for arg_key in args.keys():
                 if arg_key != 'password':
@@ -173,8 +172,6 @@ class PasswordResource(EntityResource):
             return f'Data of password with id{pass_id} has been updated successfully', 200
         except SQLAlchemyError as err:
             return str(err), 500
-
-
 
     def delete(self, user_id):
         pass

@@ -28,9 +28,9 @@ user_login = api.model('Logging in', {
 })
 
 password_put_model = api.model('Update Password Data', {
-            'url': fields.String,
-            'title': fields.String,
-            'login': fields.String,
-            'password': fields.String,
-            'comment': fields.String,
+    'url': fields.String,
+    'title': fields.String,
+    'login': fields.String,
+    'password': fields.String,
+    'comment': fields.String,
 })
