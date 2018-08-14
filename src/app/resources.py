@@ -26,7 +26,6 @@ def require_login():
 
     """
     allowed_routes = ["login", "register", "home", "doc", "restplus_doc.static", "specs"]
-    print(sess)
     if request.endpoint not in allowed_routes and "email" not in sess:
         return make_response("You are not allowed to use this resource without logging in!", 403)
 
@@ -150,14 +149,40 @@ class PasswordResource(EntityResource):
             passwords_serialized = []
             for password in passwords:
                 passwords_serialized.append(password.serialize)
-        except SQLAlchemyError as e:
-            return e, 500, headers
-        return passwords_serialized, 200, headers
+        except SQLAlchemyError as err:
+            return str(err), 500
+        return passwords_serialized, 200
 
     @api.expect(password_put_model)
     @api.representation('/json')
     def put(self, user_id, pass_id):
-        pass
+        parser = reqparse.RequestParser()
+        parser.add_argument('url', type=str, help='')
+        parser.add_argument('title', type=str, help='')
+        parser.add_argument('login', type=str, help='')
+        parser.add_argument('pass', type=str, help='')
+        parser.add_argument('comment', type=str, help='')
+        args = parser.parse_args()
+        try:
+            if not User.is_user_exists(user_id):
+                return 'User not found', 404
+            if not Password.is_password_exists(pass_id):
+                return 'Password not found', 404
+            password = session.query(Password).filter(Password.pass_id == pass_id). first()
+            for key, arg_value in args:
+                if key != 'password':
+                    password.__setattr__(key, arg_value)
+                else:
+                    password.crypt_password(arg_value)
+            return f'Data of password with id{pass_id} has been updated successfully', 200
+        except SQLAlchemyError as err:
+            return str(err), 500
+
+
+
+        except SQLAlchemyError as err:
+            return str(err), 500
+
 
     def delete(self, user_id):
         pass

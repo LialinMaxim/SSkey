@@ -130,6 +130,16 @@ class Password(Base):
     password = Column('pass', LargeBinary, nullable=False)
     comment = Column('comment', String(450), nullable=True)
 
+    @staticmethod
+    def is_password_exists(pass_id):
+        """
+        Method check is password exists in the database
+        :param pass_id:
+        :return: boolean or Exception SQLAlchemy error if dont have connect to db
+        """
+        password = session.query(Password).filter(Password.pass_id == pass_id).first()
+        return bool(password)
+
     @property
     def serialize(self):
         """Return object data in easily serializeable format"""
