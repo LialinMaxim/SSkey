@@ -91,8 +91,8 @@ class UserResource(EntityResource):
     def get(self, user_id):
         try:
             user_data = session.query(User).filter(User.id == user_id).first()
-        except SQLAlchemyError:
-            return SQLAlchemyError, 500  # Internal Server Error
+        except SQLAlchemyError as err:
+            return str(err), 500  # Internal Server Error
         if user_data:
             return UserSchema().dump(user_data), 200  # OK
         else:
@@ -298,4 +298,17 @@ class Logout(Resource):
 
     def get(self):
         sess.pop("email", None)
-        return "Dropped!"
+        return "Dropped!", 200
+
+
+@api.representation('/json')
+class UserSearch(Resource):
+    def get(self, username):
+        try:
+            user_data = session.query(User).filter(User.username == username).first()
+        except SQLAlchemyError as err:
+            return str(err), 500  # Internal Server Error
+        if user_data:
+            return UserSchema().dump(user_data), 200  # OK
+        else:
+            return 'User not found', 404  # Not Found
