@@ -10,7 +10,7 @@ from . import app, api
 from .base import Session
 from .models import User, Password
 from .shemas import UserSchema
-from .swagger_models import user_model, user__put_model, user_login
+from .swagger_models import user_model, user_put_model, user_login, password_put_model
 
 session = Session()
 headers = {'Access-Control-Allow-Origin': '*'}
@@ -89,9 +89,9 @@ class UserListResource(Resource):
 
 @api.representation('/json')
 class UserResource(EntityResource):
-    def get(self, user_id):
+    def get(self, username):
         try:
-            user_data = session.query(User).filter(User.id == user_id).first()
+            user_data = session.query(User).filter(User.username == username).first()
         except SQLAlchemyError:
             return SQLAlchemyError, 500  # Internal Server Error
         if user_data:
@@ -100,11 +100,12 @@ class UserResource(EntityResource):
             return 'User not found', 404  # Not Found
 
 
-    @api.expect(user__put_model)
+    @api.expect(user_put_model)
     @api.representation('/json')
     def put(self, user_id):
         parser = reqparse.RequestParser()
         parser.add_argument('email', type=str, help='')
+        parser.add_argument('username', type=str, help='')
         parser.add_argument('first_name', type=str, help='')
         parser.add_argument('last_name', type=str, help='')
         parser.add_argument('phone', type=str, help='')
@@ -113,11 +114,14 @@ class UserResource(EntityResource):
         try:
             user = session.query(User).filter(User.id == user_id).first()
             user.email = args['email']
+            user.username = args['username']
             user.first_name = args['first_name']
             user.last_name = args['last_name']
             user.phone = args['phone']
             session.add(user)
             session.commit()
+            msg = f'User {user.username} with id {user_id} has been successfully updated.'
+            return msg, 200  # OK
         except SQLAlchemyError as err:
             return err, 500  # Internal Server Error
 
@@ -150,7 +154,9 @@ class PasswordResource(EntityResource):
             return e, 500, headers
         return passwords_serialized, 200, headers
 
-    def put(self, user_id):
+    @api.expect(password_put_model)
+    @api.representation('/json')
+    def put(self, user_id, pass_id):
         pass
 
     def delete(self, user_id):
