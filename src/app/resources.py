@@ -143,7 +143,6 @@ class Register(Resource):
 
     @api.expect(user_post)
     def post(self):
-
         json_data = request.get_json()
         if not json_data or not isinstance(json_data, dict):
             return 'No input data provided', 400  # Bad Request
@@ -152,16 +151,14 @@ class Register(Resource):
         try:
             data = UserSchema().load(json_data)
         except ValidationError as err:
-            return err, 422  # Unprocessable Entity
+            return str(err), 422  # Unprocessable Entity
 
         # TODO One function for all
         # Check if a new user is not exist in data base
         if session.query(User).filter(User.username == data['username']).first():
-            msg = f"User with username: {data['username']} is ALREADY EXISTS."
-            return msg, 200  # OK
+            return f"User with username: {data['username']} is ALREADY EXISTS.", 200  # OK
         elif session.query(User).filter(User.email == data['email']).first():
-            msg = f"User with email: {data['email']} is ALREADY EXISTS"
-            return msg, 200  # OK
+            return f"User with email: {data['email']} is ALREADY EXISTS.", 200  # OK
         else:
             # crate a new user
             try:
@@ -169,7 +166,7 @@ class Register(Resource):
                 session.commit()
                 return 'NEW USER ADDED', 200  # OK
             except SQLAlchemyError as err:
-                return err, 500  # Internal Server Error
+                return str(err), 500  # Internal Server Error
 
 
 @api.representation('/json')
@@ -178,7 +175,7 @@ class UserListResource(Resource):
         try:
             users = session.query(User).all()
         except SQLAlchemyError as err:
-            return err, 500  # Internal Server Error
+            return str(err), 500  # Internal Server Error
         return UserSchema(many=True).dump(users), 200  # OK
 
 
@@ -188,7 +185,7 @@ class UserResource(EntityResource):
         try:
             user_data = session.query(User).filter(User.id == user_id).first()
         except SQLAlchemyError as err:
-            return err, 500  # Internal Server Error
+            return str(err), 500  # Internal Server Error
         if user_data:
             return UserSchema().dump(user_data), 200  # OK
         else:
@@ -205,7 +202,7 @@ class UserResource(EntityResource):
             else:
                 return f'User ID {user_id} - Not Found', 404  # Not Found
         except SQLAlchemyError as err:
-            return err, 500  # Internal Server Error
+            return str(err), 500  # Internal Server Error
 
 
 @api.representation('/json')
@@ -220,7 +217,7 @@ class PasswordListResource(EntityListResource):
         try:
             data = PasswordSchema().load(json_data)
         except ValidationError as err:
-            return err, 422  # Unprocessable Entity
+            return str(err), 422  # Unprocessable Entity
 
         if not session.query(User).filter(User.id == user_id).first():
             return f'User ID {user_id} - Not Found', 404  # Not Found
@@ -231,7 +228,7 @@ class PasswordListResource(EntityListResource):
             session.commit()
             return 'PASSWORD ADDED', 200  # OK
         except SQLAlchemyError as err:
-            return err, 500  # Internal Server Error
+            return str(err), 500  # Internal Server Error
 
     def get(self, user_id):
         try:
@@ -243,7 +240,7 @@ class PasswordListResource(EntityListResource):
                 passwords_serialized.append(password.serialize)
             return {'all user passwords': passwords_serialized}, 200  # OK
         except SQLAlchemyError as err:
-            return err, 500  # Internal Server Error
+            return str(err), 500  # Internal Server Error
 
 
 @api.representation('/json')
@@ -260,7 +257,7 @@ class PasswordResource(EntityResource):
                 return 'Password Not Found', 404  # Not Found
             return {'password': password.serialize}, 200  # OK
         except SQLAlchemyError as err:
-            return err, 500  # Internal Server Error
+            return str(err), 500  # Internal Server Error
 
     # TODO password update
 
@@ -282,4 +279,4 @@ class PasswordResource(EntityResource):
             else:
                 return 'Password Not Found', 404  # Not Found
         except SQLAlchemyError as err:
-            return err, 500  # Internal Server Error
+            return str(err), 500  # Internal Server Error
