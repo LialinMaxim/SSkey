@@ -88,7 +88,7 @@ class EntityResource(Resource):
 @api.representation('/json')
 class Home(Resource):
     def get(self):
-        return 'This is Home Page', 200  # OK
+        return 'This is a Home Page', 200  # OK
 
 
 @api.representation('/json')
@@ -143,8 +143,17 @@ class Register(Resource):
 
     @api.expect(user_post)
     def post(self):
-        json_data = request.get_json()
-        print(json_data)
+        parser = reqparse.RequestParser()
+        parser.add_argument('email', type=str, help='')
+        parser.add_argument('username', type=str, help='')
+        parser.add_argument('password', type=str, help='')
+        parser.add_argument('first_name', type=str, help='')
+        parser.add_argument('last_name', type=str, help='')
+        parser.add_argument('phone', type=str, help='')
+        json_data = parser.parse_args()
+
+        # json_data = request.get_json()
+
         if not json_data or not isinstance(json_data, dict):
             return 'No input data provided', 400  # Bad Request
 
@@ -166,7 +175,7 @@ class Register(Resource):
             try:
                 session.add(User(data))
                 session.commit()
-                return 'NEW USER ADDED', 200  # OK
+                return f"USER {data['username']} ADDED", 200  # OK
             except SQLAlchemyError as err:
                 return str(err), 500  # Internal Server Error
 

@@ -44,7 +44,7 @@ def logout(client):
 
 def test_home_page(client):
     rv = client.get("/home")
-    assert b"Home Page" in rv.data
+    assert b"This is a Home Page" in rv.data
 
 
 def test_smoke_page(client):
@@ -56,15 +56,14 @@ def test_register(client):
     """Make sure register works."""
     rv = register(client, app.config["EMAIL"], app.config["USERNAME"], app.config["PASSWORD"], app.config["FIRST_NAME"],
                   app.config["LAST_NAME"], app.config["PHONE"])
-    assert b"New user: 'testuser' is SUCCESSFUL ADDED" in rv.data
+    assert b"testuser" in rv.data
+
 
 
 def test_login_logout(client):
     """Make sure login and logout works."""
-
     rv = login(client, app.config["EMAIL"], app.config["PASSWORD"])
-
-    assert b"Logged in as testuser@gmail.com" in rv.data
+    assert b"You are LOGGED IN as testuser@gmail.com" in rv.data
 
     rv = smoke(client)
     assert b"OK" in rv.data
