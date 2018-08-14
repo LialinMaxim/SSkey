@@ -15,25 +15,25 @@ session = Session()
 
 # TODO move swagger models into scheme.py
 user_post = api.model('Create New User', {
-    'email': fields.String,
-    'username': fields.String,
-    'password': fields.String,
-    'first_name': fields.String,
-    'last_name': fields.String,
-    'phone': fields.String,
+    'email': fields.String(example='admin@gmail.com'),
+    'username': fields.String(example='admin'),
+    'password': fields.String(example='admin'),
+    'first_name': fields.String(example='Nicola'),
+    'last_name': fields.String(example='Tesla'),
+    'phone': fields.String(example='068-409-69-36'),
 })
 
-password_post = api.model('Crate New Password', {
-    'url': fields.Url,
-    'title': fields.String,
-    'login': fields.String,
-    'password': fields.String,
-    'comment': fields.String,
+password_post = api.model('Create New Password', {
+    'url': fields.Url(example='https://www.youtube.com'),
+    'title': fields.String(example='youtube.com'),
+    'login': fields.String(example='admin'),
+    'password': fields.String(example='admin'),
+    'comment': fields.String(example=''),
 })
 
 user_login = api.model('Logging in', {
-    'email': fields.String,
-    'password': fields.String
+    'email': fields.String(example='admin@gmail.com'),
+    'password': fields.String(example='admin'),
 })
 
 
@@ -144,12 +144,14 @@ class Register(Resource):
     @api.expect(user_post)
     def post(self):
         json_data = request.get_json()
+        print(json_data)
         if not json_data or not isinstance(json_data, dict):
             return 'No input data provided', 400  # Bad Request
 
         # Validate and deserialize input
         try:
             data = UserSchema().load(json_data)
+            print(data)
         except ValidationError as err:
             return str(err), 422  # Unprocessable Entity
 
