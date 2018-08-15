@@ -29,11 +29,21 @@ class User(Base):
     phone = Column('phone', String(100), nullable=True)
 
     @staticmethod
+    def is_user_exists(user_id):
+        """
+        Method check is user exists in the database
+        :param user_id:
+        :return: boolean or Exception SQLAlchemy error if dont have connect to db
+        """
+        user = session.query(User).filter(User.id == user_id).first()
+        return bool(user)
+
+    @staticmethod
     def generate_salt(salt_len=16):
         """
         Method generate salt of needed length. Salt use in process of get password hash
         :param salt_len:
-        :return:
+        :return: bytes
         """
         return os.urandom(salt_len)
 
@@ -65,16 +75,17 @@ class User(Base):
                                                      self.salt)
         return hash_input_password[2] == self.password
 
-    def __init__(self, data):
-        self.reg_date = datetime.datetime.now()
-        self.username = data['username']
-        self.email = data['email']
-        self.first_name = data['first_name']
-        self.last_name = data['last_name']
-        self.phone = data['phone']
-        hashed_data = __class__.get_hash_password(data['password'], User.generate_salt())
+    def __init__(self, username, email, password, first_name, last_name,
+                 phone):
+        self.username = username
+        hashed_data = __class__.get_hash_password(password, User.generate_salt())
         self.salt = hashed_data[0]
         self.password = hashed_data[2]
+        self.email = email
+        self.reg_date = datetime.datetime.now()
+        self.first_name = first_name
+        self.last_name = last_name
+        self.phone = phone
 
     def __str__(self):
         return "Username - {0}; Email - {1}; First_name - {2}; Last name - {3}; Phone - {4}". \
@@ -119,6 +130,16 @@ class Password(Base):
     password = Column('pass', LargeBinary, nullable=False)
     comment = Column('comment', String(450), nullable=True)
 
+    @staticmethod
+    def is_password_exists(pass_id):
+        """
+        Method check is password exists in the database
+        :param pass_id:
+        :return: boolean or Exception SQLAlchemy error if dont have connect to db
+        """
+        password = session.query(Password).filter(Password.pass_id == pass_id).first()
+        return bool(password)
+
     @property
     def serialize(self):
         """Return object data in easily serializeable format"""
@@ -129,6 +150,7 @@ class Password(Base):
             'login': str(self.login),
             'password': self.decrypt_password(),
             'comment': self.comment,
+
         }
 
     def get_cipher(self):
@@ -146,7 +168,7 @@ class Password(Base):
         cipher_key = base64.urlsafe_b64encode(user.password) + Password.SECRET_KEY
         return Fernet(cipher_key)
 
-    def crypt_and_save_password(self, raw_password):
+    def crypt_password(self, raw_password):
         """Encrypt password and set it into self.password"""
         cipher = self.get_cipher()
         encrypted_password = cipher.encrypt(bytes(raw_password, encoding="utf-8"))
@@ -158,10 +180,10 @@ class Password(Base):
         decrypted_password = cipher.decrypt(self.password)
         return decrypted_password.decode('utf-8')
 
-    def __init__(self, user_id, data):
+    def __init__(self, login, password, user_id, url, title, comment):
+        self.login = login
         self.user_id = user_id
-        self.login = data['login']
-        self.url = data['url']
-        self.title = data['title']
-        self.comment = data['comment']
-        self.crypt_and_save_password(data['password'])
+        self.url = url
+        self.title = title
+        self.comment = comment
+        self.crypt_password(password)

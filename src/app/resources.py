@@ -2,7 +2,7 @@ import datetime
 
 from abc import ABCMeta, abstractmethod
 from flask import make_response, request, session as sess
-from flask_restplus import Resource, reqparse, fields
+from flask_restplus import Resource, reqparse
 from marshmallow import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -10,38 +10,15 @@ from . import app, api
 from .base import Session
 from .models import User, Password
 from .scheme import UserSchema, PasswordSchema
+from .swagger_models import user_post, password_api_model, user_login, user_put
 
 session = Session()
-
-# TODO move swagger models into scheme.py
-user_post = api.model('Create New User', {
-    'email': fields.String(example='admin@gmail.com'),
-    'username': fields.String(example='admin'),
-    'password': fields.String(example='admin'),
-    'first_name': fields.String(example='Nicola'),
-    'last_name': fields.String(example='Tesla'),
-    'phone': fields.String(example='068-409-69-36'),
-})
-
-password_post = api.model('Create New Password', {
-    'url': fields.Url(example='https://www.youtube.com'),
-    'title': fields.String(example='youtube.com'),
-    'login': fields.String(example='admin'),
-    'password': fields.String(example='admin'),
-    'comment': fields.String(example=''),
-})
-
-user_login = api.model('Logging in', {
-    'email': fields.String(example='admin@gmail.com'),
-    'password': fields.String(example='admin'),
-})
 
 
 @app.before_request
 def require_login():
     """
-    Require login function will be run before each request
-
+    Require login function will be run before each request.
     The function will be called without any arguments. This function checks whether requested route is allowed to
     unregistered user or not in allowed routes. Also, checks if session isn't empty. Otherwise, it will return 403 error
 
@@ -107,14 +84,13 @@ class Login(Resource):
 
     @api.expect(user_login)
     def post(self):
-        # TODO optimization and validation
-        args = request.get_json()
-        current_user = User.filter_by_email(args['email'], session)
-        if current_user and current_user.compare_hash(args['password']):
-            sess['email'] = args['email']
+        data = request.get_json()
+        user = User.filter_by_email(data['email'], session)
+        if user and user.compare_hash(data['password']):
+            sess['email'] = data['email']
             sess.permanent = True
             app.permanent_session_lifetime = datetime.timedelta(minutes=60)
-            return f'You are LOGGED IN as {current_user.email}'
+            return f'You are LOGGED IN as {user.email}'
         return 'Could not verify your login!', 401, {"WWW-Authenticate": 'Basic realm="Login Required"'}
 
 
@@ -141,7 +117,6 @@ class Register(Resource):
     @api.expect(user_post)
     def post(self):
         json_data = request.get_json()
-
         if not json_data or not isinstance(json_data, dict):
             return 'No input data provided', 400  # Bad Request
 
@@ -189,7 +164,26 @@ class UserResource(EntityResource):
         else:
             return f'User ID {user_id} - Not Found', 404  # Not Found
 
-    # TODO user update
+    @api.expect(user_put)
+    def put(self, user_id):
+        args = request.get_json()
+        # TODO validation
+        # if not json_data or not isinstance(json_data, dict):
+        #     return 'No input data provided', 400  # Bad Request
+
+        try:
+            if not User.is_user_exists(user_id):
+                return 'User not found', 404  # Not Found
+            user = session.query(User).filter(User.id == user_id).first()
+            for arg_key in args.keys():
+                if arg_key != 'password':
+                    user.__setattr__(arg_key, args[arg_key])
+            session.add(user)
+            session.commit()
+            msg = f'User {user.username} with id {user_id} has been successfully updated.'
+            return msg, 200  # OK
+        except SQLAlchemyError as err:
+            return err, 500  # Internal Server Error
 
     def delete(self, user_id):
         try:
@@ -205,7 +199,7 @@ class UserResource(EntityResource):
 
 @api.representation('/json')
 class PasswordListResource(EntityListResource):
-    @api.expect(password_post)
+    @api.expect(password_api_model)
     def post(self, user_id):
         json_data = request.get_json()
         if not json_data or not isinstance(json_data, dict):
@@ -257,7 +251,32 @@ class PasswordResource(EntityResource):
         except SQLAlchemyError as err:
             return str(err), 500  # Internal Server Error
 
-    # TODO password update
+    @api.expect(password_api_model)
+    def put(self, user_id, pass_id):
+        # parser = reqparse.RequestParser()
+        # for arg in ['url', 'title', 'login', 'pass', 'comment']:
+        #     parser.add_argument(arg, type=str, help='')
+        # args = parser.parse_args()
+
+        args = request.get_json()
+        # TODO validation
+        try:
+            if not User.is_user_exists(user_id):
+                return 'User not found', 404
+            if not Password.is_password_exists(pass_id):
+                return 'Password not found', 404
+            password = session.query(Password).filter(Password.pass_id == pass_id).first()
+
+            for arg_key in args.keys():
+                if arg_key != 'password':
+                    password.__setattr__(arg_key, args[arg_key])
+                else:
+                    password.crypt_password(args[arg_key])
+            session.add(password)
+            session.commit()
+            return f'Data of password with id{pass_id} has been updated successfully', 200
+        except SQLAlchemyError as err:
+            return str(err), 500
 
     def delete(self, user_id, pass_id):
         try:
@@ -278,3 +297,16 @@ class PasswordResource(EntityResource):
                 return 'Password Not Found', 404  # Not Found
         except SQLAlchemyError as err:
             return str(err), 500  # Internal Server Error
+
+
+@api.representation('/json')
+class UserSearch(Resource):
+    def get(self, username):
+        try:
+            user_data = session.query(User).filter(User.username == username).first()
+        except SQLAlchemyError as err:
+            return str(err), 500  # Internal Server Error
+        if user_data:
+            return UserSchema().dump(user_data), 200  # OK
+        else:
+            return 'User not found', 404  # Not Found
