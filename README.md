@@ -45,16 +45,38 @@ If you need to make some changes to the project without affecting the server and
 docker-app.sh
 ```
 
-##
+## Local launch
 
-Otherwise, for the standalone web service:
+1. Create `.env` file in `src/app` folder and write the environment variables into it.
 
-```shell
-pip install -r requirements.txt
-python src/manage.py runserver
-```
+2. Environment variables for application:
 
-Visit [http://localhost:5000](http://localhost:5000)
+    ```shell
+    SECRET_KEY=yor_secret_key
+    ``` 
+    
+    Environment variables for your PostgreSQL database:
+    
+    ```shell
+    POSTGRES_USER=your_postgres_user
+    POSTGRES_PASS=your_postgres_password
+    POSTGRES_NAME=your_postgres_db_name
+    POSTGRES_HOST=localhost
+    ``` 
+
+3. Install dependencies:
+
+    ```shell
+    pip install -r src/app/requirements.txt
+    ```
+
+4. Run the application:
+
+    ```shell
+    python src/manage.py runserver
+    ```
+
+5. Visit [http://localhost:5000](http://localhost:5000)
 
 ## Flask Application Structure 
 
