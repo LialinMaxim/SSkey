@@ -174,7 +174,7 @@ class UserResource(EntityResource):
 
         try:
             if not User.is_user_exists(user_id):
-                return 'User has not been found', 404  # Not Found
+                return 'User not found', 404  # Not Found
             user = User.filter_by_id(user_id, session)
             for arg_key in args.keys():
                 if arg_key != 'password':
