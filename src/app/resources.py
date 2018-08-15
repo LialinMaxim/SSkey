@@ -90,7 +90,7 @@ class UserListResource(Resource):
 class UserResource(EntityResource):
     def get(self, user_id):
         try:
-            user_data = session.query(User).filter(User.id == user_id).first()
+            user_data = User.filter_by_id(user_id, session)
         except SQLAlchemyError as err:
             return str(err), 500  # Internal Server Error
         if user_data:
@@ -108,7 +108,7 @@ class UserResource(EntityResource):
         try:
             if not User.is_user_exists(user_id):
                 return 'User not found', 404  # Not Found
-            user = session.query(User).filter(User.id == user_id).first()
+            user = User.filter_by_id(user_id, session)
             for arg_key in args.keys():
                 if arg_key != 'password':
                     user.__setattr__(arg_key, args[arg_key])
@@ -121,7 +121,7 @@ class UserResource(EntityResource):
 
     def delete(self, user_id):
         try:
-            if session.query(User).filter(User.id == user_id).first():
+            if User.filter_by_id(user_id, session):
                 session.query(User).filter(User.id == user_id).delete()
                 session.commit()
                 msg = 'User ID:{0} has been DELETED.'.format(user_id)
@@ -137,7 +137,7 @@ class UserResource(EntityResource):
 class PasswordResource(EntityResource):
     def get(self, user_id, pass_id):
         try:
-            user = session.query(User).filter(User.id == user_id).first()
+            user = User.filter_by_id(user_id, session)
             if not user:
                 return 'User not found', 404, headers
             passwords = session.query(Password).filter(Password.user_id == user_id).all()
@@ -237,10 +237,10 @@ class Register(Resource):
             return str(err), 422  # Unprocessable Entity
 
         # Check if a new user is not exist in data base
-        if session.query(User).filter(User.username == data['username']).first():
+        if User.filter_by_username(data['username'], session):
             msg = "User with username: '{0}' is ALREADY EXISTS.".format(data['username'])
             return msg, 200  # OK
-        elif session.query(User).filter(User.email == data['email']).first():
+        elif User.filter_by_email(data['email'], session):
             msg = "User with email: '{0}' is ALREADY EXISTS".format(data['email'])
             return msg, 200  # OK
         else:
@@ -302,7 +302,7 @@ class Logout(Resource):
 class UserSearch(Resource):
     def get(self, username):
         try:
-            user_data = session.query(User).filter(User.username == username).first()
+            user_data = User.filter_by_username(username, session)
         except SQLAlchemyError as err:
             return str(err), 500  # Internal Server Error
         if user_data:
