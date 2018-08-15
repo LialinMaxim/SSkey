@@ -20,14 +20,8 @@ def client():
     yield client
 
 
-# def test_password_encode_decode():
-#     password = Password('vasya', 'vasya777', 1, "", "", "")
-#     assert password.password != 'vasya777'
-#     assert password.decrypt_password() == 'vasya777'
-
-
 def register(client, email, username, password, first_name, last_name, phone):
-    return client.post("/register", data=dict(
+    return client.post("/register", json=dict(
         email=email,
         username=username,
         password=password,
@@ -38,7 +32,7 @@ def register(client, email, username, password, first_name, last_name, phone):
 
 
 def put_user(client, email, username, first_name, last_name, phone, user_id):
-    return client.put("/users/" + str(user_id), data=dict(
+    return client.put("/users/" + str(user_id), json=dict(
         email=email,
         username=username,
         first_name=first_name,
@@ -53,7 +47,7 @@ def get_user_by_username(client, username):
 
 
 def login(client, email, password):
-    return client.post("/login", data=dict(
+    return client.post("/login", json=dict(
         email=email,
         password=password
     ), follow_redirects=True)
@@ -69,7 +63,7 @@ def logout(client):
 
 def test_home_page(client):
     rv = client.get("/home")
-    assert b"Home Page" in rv.data
+    assert b"This is a Home Page" in rv.data
 
 
 def test_smoke_page(client):
@@ -81,15 +75,14 @@ def test_register(client):
     """Make sure register works."""
     rv = register(client, app.config["EMAIL"], app.config["USERNAME"], app.config["PASSWORD"], app.config["FIRST_NAME"],
                   app.config["LAST_NAME"], app.config["PHONE"])
-    assert b"New user: 'testuser' is SUCCESSFUL ADDED" in rv.data
+    assert b"testuser" in rv.data
 
 
 def test_get_user_by_username(client):
     login(client, app.config["EMAIL"], app.config["PASSWORD"])
     rv = get_user_by_username(client, app.config["USERNAME"])
     assert bytes(app.config["EMAIL"], encoding='utf-8') in rv.data
-    assert b"testuser" in rv.data
-    # assert bytes(app.config["FIRST_NAME"], encoding='utf-8') in rv.data
+    assert bytes(app.config["USERNAME"], encoding='utf-8') in rv.data
     logout(client)
 
 
@@ -110,10 +103,8 @@ def test_put_user(client):
 
 def test_login_logout(client):
     """Make sure login and logout works."""
-
     rv = login(client, app.config["EMAIL"], app.config["PASSWORD"])
-
-    assert b"Logged in as testuser@gmail.com" in rv.data
+    assert b"You are LOGGED IN as testuser@gmail.com" in rv.data
 
     rv = smoke(client)
     assert b"OK" in rv.data
