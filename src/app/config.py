@@ -12,7 +12,7 @@ class Config:
 
 class DevelopmentConfig(Config):
     DEBUG = True
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 't0p s3cr3t'
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'insecure_key'
 
 
 class TestingConfig(Config):
