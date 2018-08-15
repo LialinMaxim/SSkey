@@ -96,7 +96,7 @@ class UserResource(EntityResource):
         if user_data:
             return UserSchema().dump(user_data), 200  # OK
         else:
-            return 'User not found', 404  # Not Found
+            return 'User has not been found', 404  # Not Found
 
     @api.expect(user_put_model)
     @api.representation('/json')
@@ -107,7 +107,7 @@ class UserResource(EntityResource):
         args = parser.parse_args()
         try:
             if not User.is_user_exists(user_id):
-                return 'User not found', 404  # Not Found
+                return 'User has not been found', 404  # Not Found
             user = User.filter_by_id(user_id, session)
             for arg_key in args.keys():
                 if arg_key != 'password':
