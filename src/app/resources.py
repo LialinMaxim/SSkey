@@ -2,7 +2,7 @@ import datetime
 
 from abc import ABCMeta, abstractmethod
 from flask import make_response, request, session as sess
-from flask_restplus import Resource, reqparse
+from flask_restplus import Resource
 from marshmallow import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -157,7 +157,7 @@ class UserListResource(Resource):
 class UserResource(EntityResource):
     def get(self, user_id):
         try:
-            user_data = session.query(User).filter(User.id == user_id).first()
+            user_data = User.filter_by_id(user_id, session)
         except SQLAlchemyError as err:
             return str(err), 500  # Internal Server Error
         if user_data:
@@ -175,7 +175,7 @@ class UserResource(EntityResource):
         try:
             if not User.is_user_exists(user_id):
                 return 'User not found', 404  # Not Found
-            user = session.query(User).filter(User.id == user_id).first()
+            user = User.filter_by_id(user_id, session)
             for arg_key in args.keys():
                 if arg_key != 'password':
                     user.__setattr__(arg_key, args[arg_key])
@@ -188,7 +188,7 @@ class UserResource(EntityResource):
 
     def delete(self, user_id):
         try:
-            if session.query(User).filter(User.id == user_id).first():
+            if User.filter_by_id(user_id, session):
                 session.query(User).filter(User.id == user_id).delete()
                 session.commit()
                 return f'User ID:{user_id} has been DELETED.', 200  # OK
@@ -199,7 +199,7 @@ class UserResource(EntityResource):
 
 
 @api.representation('/json')
-class PasswordListResource(EntityListResource):
+class PasswordListResource(Resource):
     @api.expect(password_api_model)
     def post(self, user_id):
         json_data = request.get_json()
@@ -254,11 +254,6 @@ class PasswordResource(EntityResource):
 
     @api.expect(password_api_model)
     def put(self, user_id, pass_id):
-        # parser = reqparse.RequestParser()
-        # for arg in ['url', 'title', 'login', 'pass', 'comment']:
-        #     parser.add_argument(arg, type=str, help='')
-        # args = parser.parse_args()
-
         args = request.get_json()
         # TODO validation
         try:
@@ -304,7 +299,7 @@ class PasswordResource(EntityResource):
 class UserSearch(Resource):
     def get(self, username):
         try:
-            user_data = session.query(User).filter(User.username == username).first()
+            user_data = User.filter_by_username(username, session)
         except SQLAlchemyError as err:
             return str(err), 500  # Internal Server Error
         if user_data:
