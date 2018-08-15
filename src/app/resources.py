@@ -119,13 +119,14 @@ class Register(Resource):
         json_data = request.get_json()
         if not json_data or not isinstance(json_data, dict):
             return 'No input data provided', 400  # Bad Request
+        print(json_data)
 
         # Validate and deserialize input
         try:
             data = UserSchema().load(json_data)
         except ValidationError as err:
             return str(err), 422  # Unprocessable Entity
-
+        print(data)
         # TODO One function for all
         # Check if a new user is not exist in data base
         if session.query(User).filter(User.username == data['username']).first():

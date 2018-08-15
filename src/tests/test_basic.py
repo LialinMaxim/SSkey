@@ -82,7 +82,7 @@ def test_get_user_by_username(client):
     login(client, app.config["EMAIL"], app.config["PASSWORD"])
     rv = get_user_by_username(client, app.config["USERNAME"])
     assert bytes(app.config["EMAIL"], encoding='utf-8') in rv.data
-    # assert bytes(app.config["FIRST_NAME"], encoding='utf-8') in rv.data
+    assert bytes(app.config["USERNAME"], encoding='utf-8') in rv.data
     logout(client)
 
 
