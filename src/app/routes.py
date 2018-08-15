@@ -6,10 +6,10 @@ from .resources import (Home, Smoke, UserResource, PasswordResource,
 from .base import Session
 
 api.add_resource(Home, "/home")  # GET
-api.add_resource(Smoke, '/smoke')   # GET
-api.add_resource(Login, '/login')   # POST
-api.add_resource(Logout, '/logout')   # GET
-api.add_resource(Register, '/register')   # POST
+api.add_resource(Smoke, '/smoke')  # GET
+api.add_resource(Login, '/login')  # POST
+api.add_resource(Logout, '/logout')  # GET
+api.add_resource(Register, '/register')  # POST
 api.add_resource(UserListResource, '/users')  # GET
 api.add_resource(UserResource, '/users/<int:user_id>')  # GET, PUT, DELETE
 api.add_resource(PasswordListResource, '/users/<int:user_id>/passwords')  # POST, GET

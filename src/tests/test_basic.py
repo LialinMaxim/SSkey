@@ -59,7 +59,6 @@ def test_register(client):
     assert b"testuser" in rv.data
 
 
-
 def test_login_logout(client):
     """Make sure login and logout works."""
     rv = login(client, app.config["EMAIL"], app.config["PASSWORD"])
