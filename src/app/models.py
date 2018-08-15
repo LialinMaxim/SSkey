@@ -87,9 +87,8 @@ class User(Base):
         self.password = hashed_data[2]
 
     def __str__(self):
-        return "Username - {0}; Email - {1}; First_name - {2}; Last name - {3}; Phone - {4}". \
-            format(self.username, self.email, self.first_name, self.last_name,
-                   self.phone)
+        return f'Username - {self.username}, Email - {self.email}, First Name - {self.first_name}, \
+        Last Name - {self.last_name}, Phone - {self.phone}'
 
     @classmethod
     def filter_by_email(cls, email, session):

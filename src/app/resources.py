@@ -2,7 +2,7 @@ import datetime
 
 from abc import ABCMeta, abstractmethod
 from flask import make_response, request, session as sess
-from flask_restplus import Resource, reqparse
+from flask_restplus import Resource
 from marshmallow import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -199,7 +199,7 @@ class UserResource(EntityResource):
 
 
 @api.representation('/json')
-class PasswordListResource(EntityListResource):
+class PasswordListResource(Resource):
     @api.expect(password_api_model)
     def post(self, user_id):
         json_data = request.get_json()
@@ -254,11 +254,6 @@ class PasswordResource(EntityResource):
 
     @api.expect(password_api_model)
     def put(self, user_id, pass_id):
-        # parser = reqparse.RequestParser()
-        # for arg in ['url', 'title', 'login', 'pass', 'comment']:
-        #     parser.add_argument(arg, type=str, help='')
-        # args = parser.parse_args()
-
         args = request.get_json()
         # TODO validation
         try:
