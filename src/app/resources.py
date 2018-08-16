@@ -225,7 +225,7 @@ class PasswordListResource(Resource):
 
     def get(self, user_id):
         try:
-            if not session.query(User).filter(User.id == user_id).first():
+            if not User.filter_by_id(user_id, session):
                 return f'User ID {user_id} - Not Found', 404  # Not Found
             passwords = session.query(Password).filter(Password.user_id == user_id).all()
             passwords_serialized = []
@@ -240,7 +240,7 @@ class PasswordListResource(Resource):
 class PasswordResource(EntityResource):
     def get(self, user_id, pass_id):
         try:
-            if not session.query(User).filter(User.id == user_id).first():
+            if not User.filter_by_id(user_id, session):
                 return f'User ID {user_id} - Not Found', 404  # Not Found
             password = session.query(Password) \
                 .filter(Password.user_id == user_id) \
@@ -276,7 +276,7 @@ class PasswordResource(EntityResource):
 
     def delete(self, user_id, pass_id):
         try:
-            if not session.query(User).filter(User.id == user_id).first():
+            if not User.filter_by_id(user_id, session):
                 return 'User Not Found', 404  # Not Found
             password = session.query(Password) \
                 .filter(Password.user_id == user_id) \
