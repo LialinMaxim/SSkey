@@ -5,32 +5,32 @@ from . import api
 # Models used to generate swagger documentation
 # imported and use in resources.py
 
-user_model = api.model('Create New User', {
-    'email': fields.String,
-    'username': fields.String,
-    'password': fields.String,
-    'first_name': fields.String,
-    'last_name': fields.String,
-    'phone': fields.Integer,
+user_post = api.model('Create New User', {
+    'email': fields.String(example='admin@gmail.com'),
+    'username': fields.String(example='admin'),
+    'password': fields.String(example='admin'),
+    'first_name': fields.String(example='Nicola'),
+    'last_name': fields.String(example='Tesla'),
+    'phone': fields.String(example='068-409-69-36'),
 })
 
-user_put_model = api.model('Update User Data', {
-    'email': fields.String,
-    'username': fields.String,
-    'first_name': fields.String,
-    'last_name': fields.String,
-    'phone': fields.Integer,
+password_api_model = api.model('Create New Password', {
+    'url': fields.Url(example='https://www.youtube.com'),
+    'title': fields.String(example='youtube.com'),
+    'login': fields.String(example='admin'),
+    'password': fields.String(example='admin'),
+    'comment': fields.String(example=''),
 })
 
 user_login = api.model('Logging in', {
-    'email': fields.String,
-    'password': fields.String
+    'email': fields.String(example='admin@gmail.com'),
+    'password': fields.String(example='admin'),
 })
 
-password_put_model = api.model('Update Password Data', {
-    'url': fields.String,
-    'title': fields.String,
-    'login': fields.String,
-    'password': fields.String,
-    'comment': fields.String,
+user_put = api.model('Update User Data', {
+    'email': fields.String(example='admin@gmail.com'),
+    'username': fields.String(example='admin'),
+    'first_name': fields.String(example='Nicola'),
+    'last_name': fields.String(example='Tesla'),
+    'phone': fields.String(example='068-409-69-36'),
 })

@@ -22,6 +22,7 @@ class RepresentationApi(Api):
 
     Can be extended for other representation formats (e.g. xml, html, csv).
     """
+
     def __init__(self, *args, **kwargs):
         super(RepresentationApi, self).__init__(*args, **kwargs)
         self.representations = {

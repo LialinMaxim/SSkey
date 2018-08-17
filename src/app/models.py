@@ -75,22 +75,20 @@ class User(Base):
                                                      self.salt)
         return hash_input_password[2] == self.password
 
-    def __init__(self, username, email, password, first_name, last_name,
-                 phone):
-        self.username = username
-        hashed_data = __class__.get_hash_password(password, User.generate_salt())
+    def __init__(self, data):
+        self.reg_date = datetime.datetime.now()
+        self.username = data['username']
+        self.email = data['email']
+        self.first_name = data['first_name']
+        self.last_name = data['last_name']
+        self.phone = data['phone']
+        hashed_data = __class__.get_hash_password(data['password'], User.generate_salt())
         self.salt = hashed_data[0]
         self.password = hashed_data[2]
-        self.email = email
-        self.reg_date = datetime.datetime.now()
-        self.first_name = first_name
-        self.last_name = last_name
-        self.phone = phone
 
     def __str__(self):
-        return "Username - {0}; Email - {1}; First_name - {2}; Last name - {3}; Phone - {4}". \
-            format(self.username, self.email, self.first_name, self.last_name,
-                   self.phone)
+        return f'Username - {self.username}, Email - {self.email}, First Name - {self.first_name}, \
+        Last Name - {self.last_name}, Phone - {self.phone}'
 
     @classmethod
     def filter_by_email(cls, email, session):
@@ -180,10 +178,10 @@ class Password(Base):
         decrypted_password = cipher.decrypt(self.password)
         return decrypted_password.decode('utf-8')
 
-    def __init__(self, login, password, user_id, url, title, comment):
-        self.login = login
+    def __init__(self, user_id, data):
+        self.login = data['login']
         self.user_id = user_id
-        self.url = url
-        self.title = title
-        self.comment = comment
-        self.crypt_password(password)
+        self.url = data['url']
+        self.title = data['title']
+        self.comment = data['comment']
+        self.crypt_password(data['password'])

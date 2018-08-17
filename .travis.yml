@@ -6,12 +6,6 @@ python:
 services:
   - postgresql
 
-env:
-  - SECRET_KEY=m8t6u7i18s463t6lrd9eutf2
-  - POSTGRES_USER=postgres
-  - POSTGRES_HOST=localhost
-  - POSTGRES_NAME=db_sskey
-
 before_install:
   - pip install pycodestyle
 
