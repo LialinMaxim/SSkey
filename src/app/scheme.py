@@ -1,4 +1,4 @@
-from marshmallow import Schema, fields, ValidationError, pre_load
+from marshmallow import Schema, fields
 
 
 class UserSchema(Schema):
@@ -19,3 +19,7 @@ class PasswordSchema(Schema):
     login = fields.String()
     password = fields.String()
     comment = fields.String()
+
+
+class SearchSchema(Schema):
+    filter = fields.String(required=True)

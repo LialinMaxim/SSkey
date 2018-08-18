@@ -9,8 +9,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from . import app, api
 from .base import Session
 from .models import User, Password
-from .scheme import UserSchema, PasswordSchema
-from .swagger_models import user_post, password_api_model, user_login, user_put
+from .scheme import UserSchema, PasswordSchema, SearchSchema
+from .swagger_models import user_post, password_api_model, user_login, user_put, search_password
 
 session = Session()
 
@@ -403,5 +403,24 @@ class UserPasswordsNumberResource(Resource):
 
 @api.representation('/json')
 class UserPasswordsSearchResource(Resource):
+    @api.expect(search_password)
     def post(self):
-        pass
+        json_data = request.get_json()
+        if not json_data or not isinstance(json_data, dict):
+            return 'No input data provided', 400  # Bad Request
+
+        # Validate and deserialize input
+        try:
+            data = SearchSchema().load(json_data)
+        except ValidationError as err:
+            return str(err), 422  # Unprocessable Entity
+        current_user_email = sess.get('email', 'not set')
+        current_user = User.filter_by_email(current_user_email, session)
+        all_passwords = session.query(Password).filter(Password.user_id == current_user.id).all()
+        filtered_passwords = list()
+        for password in all_passwords:
+            if data.get("filter") in password.title or data.get("filter") in password.comment or \
+                    data.get("filter") in password.url:
+                filtered_passwords.append(password.serialize)
+
+        return filtered_passwords
