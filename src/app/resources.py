@@ -313,7 +313,7 @@ class UserPasswordsResource(Resource):
     """
     User password resource.
 
-    User gets his all passwords and may create a new password.
+    User gets his all passwords and may create a new one.
     """
     def get(self):
         try:
