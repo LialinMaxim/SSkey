@@ -419,8 +419,7 @@ class UserPasswordsSearchResource(Resource):
         all_passwords = session.query(Password).filter(Password.user_id == current_user.id).all()
         filtered_passwords = list()
         for password in all_passwords:
-            if data.get("filter") in password.title or data.get("filter") in password.comment or \
-                    data.get("filter") in password.url:
+            if data.get("filter") in password.title or data.get("filter") in password.comment:
                 filtered_passwords.append(password.serialize)
 
         return filtered_passwords
