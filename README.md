@@ -89,6 +89,7 @@ docker-app.sh
     ├── app
     │   ├── base.py
     │   ├── config.py
+    │   ├── database.py
     │   ├── errors
     │   │   ├── handlers.py
     │   │   └── __init__.py
@@ -129,13 +130,45 @@ Standalone unit tests run with:
 python -m pytest src/tests
 ```
 
-## Postgresql
+## Standalone installation of Database PostgreSQL
 
-Install [postgresql](https://www.postgresql.org/download/) and run:
-```shell
-python base.py # database config
-python migrate.py # in order to create database
-python src/manage.py initdb # create database from models
-python src/manage.py dropdb # delete database
-python src/manage.py recreatedb # delete and create database
-```
+1. Install [postgresql](https://www.postgresql.org/download/)
+
+2. Create environment file .env and put into /src/app directory with content:
+
+    ```shell
+    # LOCAL ENVIRONMENT VALUES
+    FLASK_APP=manage.py
+    SECRET_KEY=m8t6u7i18s463t6lrd9eutf2
+    POSTGRES_USER=postgres
+    POSTGRES_PASS=postgres
+    POSTGRES_HOST=localhost
+    POSTGRES_NAME=db_sskey
+    ```
+3. Change database config if you need in file:
+
+    ```shell
+    src/app/base.py
+    ```
+
+4. Run the database initialization using one of this commands:
+- drop old and create new database, insert tables from SQLAlchemy models:
+    ```shell
+    python manage.py db init 
+    ```
+- create database if not exist and insert tables from SQLAlchemy models:
+    ```shell
+    python manage.py db create
+    ```
+- drop tables from database:
+    ```shell
+    python manage.py db drop
+    ```
+- drop old tables and create new tables in database from SQLAlchemy models:
+    ```shell
+    python manage.py db update
+    ```
+- standalone manual creation of database
+    ```shell
+    python migrate.py
+    ```
