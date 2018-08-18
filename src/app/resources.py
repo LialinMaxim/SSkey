@@ -352,10 +352,7 @@ class UserPasswordsNumberResource(Resource):
         try:
             current_user_email = sess.get('email', 'not set')
             current_user = User.filter_by_email(current_user_email, session)
-            password = session.query(Password) \
-                .filter(Password.user_id == current_user.id) \
-                .filter(Password.pass_id == pass_id) \
-                .first()
+            password = Password.find_pass(current_user.id, pass_id, session)
             if not password:
                 return 'Password Not Found', 404  # Not Found
             return {'password': password.serialize}, 200  # OK
@@ -372,7 +369,7 @@ class UserPasswordsNumberResource(Resource):
         try:
             if not Password.is_password_exists(pass_id):
                 return 'Password not found', 404
-            password = session.query(Password).filter(Password.pass_id == pass_id).first()
+            password = Password.filter_pass_by_id(pass_id, session)
             previous_pass = password.title
 
             for arg_key in data.keys():
@@ -390,10 +387,7 @@ class UserPasswordsNumberResource(Resource):
         try:
             current_user_email = sess.get('email', 'not set')
             current_user = User.filter_by_email(current_user_email, session)
-            password = session.query(Password) \
-                .filter(Password.user_id == current_user.id) \
-                .filter(Password.pass_id == pass_id) \
-                .first()
+            password = Password.find_pass(current_user.id, pass_id, session)
             if password:
                 session.query(Password) \
                     .filter(Password.user_id == current_user.id) \
