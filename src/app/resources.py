@@ -310,6 +310,11 @@ class UserSearch(Resource):
 
 @api.representation('/json')
 class UserPasswordsResource(Resource):
+    """
+    User password resource.
+
+    User gets his all passwords and may create a new password.
+    """
     def get(self):
         try:
             current_user_email = sess.get('email')
@@ -348,6 +353,11 @@ class UserPasswordsResource(Resource):
 
 @api.representation('/json')
 class UserPasswordsNumberResource(Resource):
+    """
+    Class for dealing with user's passwords.
+
+    User can get a password by id, update his password by id and delete password by id.
+    """
     def get(self, pass_id):
         try:
             current_user_email = sess.get('email', 'not set')
@@ -361,6 +371,13 @@ class UserPasswordsNumberResource(Resource):
 
     @api.expect(password_api_model)
     def put(self, pass_id):
+        """
+        Update password data.
+
+        You can update all data of password or just a part of it.
+        :param pass_id: id of password that you'd like to update
+        :return:
+        """
         json_data = request.get_json()
         try:
             data = PasswordSchema().load(json_data)
@@ -403,6 +420,9 @@ class UserPasswordsNumberResource(Resource):
 
 @api.representation('/json')
 class UserPasswordsSearchResource(Resource):
+    """
+    Search for particular passwords using password's description
+    """
     @api.expect(search_password)
     def post(self):
         json_data = request.get_json()
