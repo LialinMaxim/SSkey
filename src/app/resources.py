@@ -212,7 +212,7 @@ class PasswordListResource(Resource):
         except ValidationError as err:
             return str(err), 422  # Unprocessable Entity
 
-        if not session.query(User).filter(User.id == user_id).first():
+        if not User.filter_by_id(user_id, session):
             return f'User ID {user_id} - Not Found', 404  # Not Found
 
         # crate a new password
@@ -306,3 +306,108 @@ class UserSearch(Resource):
             return UserSchema().dump(user_data), 200  # OK
         else:
             return 'User not found', 404  # Not Found
+
+
+@api.representation('/json')
+class UserPasswordsResource(Resource):
+    def get(self):
+        try:
+            current_user_email = sess.get('email')
+            current_user = User.filter_by_email(current_user_email, session)
+            passwords = session.query(Password).filter(Password.user_id == current_user.id).all()
+            passwords_serialized = []
+            for password in passwords:
+                passwords_serialized.append(password.serialize)
+            return {'Your passwords': passwords_serialized}, 200  # OK
+        except SQLAlchemyError as err:
+            return str(err), 500  # Internal Server Error
+
+    @api.expect(password_api_model)
+    def post(self):
+        json_data = request.get_json()
+        if not json_data or not isinstance(json_data, dict):
+            return 'No input data provided', 400  # Bad Request
+
+        # Validate and deserialize input
+        try:
+            data = PasswordSchema().load(json_data)
+        except ValidationError as err:
+            return str(err), 422  # Unprocessable Entity
+
+        current_user_email = sess.get('email', 'not set')
+        current_user = User.filter_by_email(current_user_email, session)
+
+        # create a new password
+        try:
+            session.add(Password(current_user.id, data))
+            session.commit()
+            return 'PASSWORD ADDED', 200  # OK
+        except SQLAlchemyError as err:
+            return str(err), 500  # Internal Server Error
+
+
+@api.representation('/json')
+class UserPasswordsNumberResource(Resource):
+    def get(self, pass_id):
+        try:
+            current_user_email = sess.get('email', 'not set')
+            current_user = User.filter_by_email(current_user_email, session)
+            password = session.query(Password) \
+                .filter(Password.user_id == current_user.id) \
+                .filter(Password.pass_id == pass_id) \
+                .first()
+            if not password:
+                return 'Password Not Found', 404  # Not Found
+            return {'password': password.serialize}, 200  # OK
+        except SQLAlchemyError as err:
+            return str(err), 500  # Internal Server Error
+
+    @api.expect(password_api_model)
+    def put(self, pass_id):
+        json_data = request.get_json()
+        try:
+            data = PasswordSchema().load(json_data)
+        except ValidationError as err:
+            return str(err), 422  # Unprocessable Entity
+        try:
+            if not Password.is_password_exists(pass_id):
+                return 'Password not found', 404
+            password = session.query(Password).filter(Password.pass_id == pass_id).first()
+            previous_pass = password.title
+
+            for arg_key in data.keys():
+                if arg_key != 'password':
+                    password.__setattr__(arg_key, data[arg_key])
+                else:
+                    password.crypt_password(data[arg_key])
+            session.add(password)
+            session.commit()
+            return f'Data for {previous_pass} has been updated successfully', 200
+        except SQLAlchemyError as err:
+            return str(err), 500
+
+    def delete(self, pass_id):
+        try:
+            current_user_email = sess.get('email', 'not set')
+            current_user = User.filter_by_email(current_user_email, session)
+            password = session.query(Password) \
+                .filter(Password.user_id == current_user.id) \
+                .filter(Password.pass_id == pass_id) \
+                .first()
+            if password:
+                session.query(Password) \
+                    .filter(Password.user_id == current_user.id) \
+                    .filter(Password.pass_id == pass_id) \
+                    .delete()
+                session.commit()
+                return f'Password ID {pass_id} DELETED', 200  # OK
+            else:
+                return 'Password Not Found', 404  # Not Found
+        except SQLAlchemyError as err:
+            return str(err), 500  # Internal Server Error
+
+
+@api.representation('/json')
+class UserPasswordsSearchResource(Resource):
+    def post(self):
+        pass
