@@ -14,7 +14,7 @@ class TestUsersRoutes:
         rv = UserRequests.register(client, app.config["EMAIL"], app.config["USERNAME"], app.config["PASSWORD"],
                                    app.config["FIRST_NAME"],
                                    app.config["LAST_NAME"], app.config["PHONE"])
-        assert b"New user: 'testuser' is SUCCESSFUL ADDED" in rv.data
+        assert b"USER testuser ADDED" in rv.data
 
     def test_get_user_by_username(self, client, resource):
         rv = UserRequests.get_user_by_username(client, app.config["USERNAME"])

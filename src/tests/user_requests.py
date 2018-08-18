@@ -3,7 +3,7 @@ class UserRequests:
 
     @staticmethod
     def register(client, email, username, password, first_name, last_name, phone):
-        return client.post("/register", data=dict(
+        return client.post("/register", json=dict(
             email=email,
             username=username,
             password=password,
@@ -18,7 +18,7 @@ class UserRequests:
 
     @staticmethod
     def put_user(client, email, username, first_name, last_name, phone, user_id):
-        return client.put("/users/" + str(user_id), data=dict(
+        return client.put("/users/" + str(user_id), json=dict(
             email=email,
             username=username,
             first_name=first_name,
