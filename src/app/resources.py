@@ -356,7 +356,7 @@ class UserPasswordsNumberResource(Resource):
     """
     Class for dealing with user's passwords.
 
-    User can get a password by id, update his password by id and delete password by id.
+    User can get a password by id, update password by id and delete password by id.
     """
     def get(self, pass_id):
         try:
@@ -442,4 +442,7 @@ class UserPasswordsSearchResource(Resource):
             if data.get("filter") in password.title or data.get("filter") in password.comment:
                 filtered_passwords.append(password.serialize)
 
-        return filtered_passwords
+        if filtered_passwords:
+            return filtered_passwords
+        else:
+            return 'No matches found', 404
