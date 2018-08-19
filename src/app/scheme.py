@@ -22,4 +22,4 @@ class PasswordSchema(Schema):
 
 
 class SearchSchema(Schema):
-    filter = fields.String(required=True)
+    condition = fields.String(required=True)

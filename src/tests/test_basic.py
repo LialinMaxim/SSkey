@@ -1,7 +1,6 @@
 import json
 import pytest
 
-from ..app.models import Password
 from src.app import app
 from src.app import config
 from src.app.base import Base, engine

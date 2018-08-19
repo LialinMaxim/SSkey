@@ -36,5 +36,5 @@ user_put = api.model('Update User Data', {
 })
 
 search_password = api.model('Search for password', {
-    'filter': fields.String(example='google.com')
+    'condition': fields.String(example='google.com')
 })
