@@ -316,6 +316,12 @@ class UserPasswordsResource(Resource):
     User gets his all passwords and may create a new one.
     """
     def get(self):
+        """
+        Get list of user's passwords.
+
+        User defines by sess email, returns a list of passwords for current logged in user.
+        :return: list of passwords or 500 SQLAlchemyError
+        """
         try:
             current_user_email = sess.get('email')
             current_user = User.filter_by_email(current_user_email, session)
@@ -329,6 +335,12 @@ class UserPasswordsResource(Resource):
 
     @api.expect(password_api_model)
     def post(self):
+        """
+        Create a new user's password.
+
+        Create a new password for current logged in user, without specifying any parameters.
+        :return: 200 OK or 500 SQLAlchemyError
+        """
         json_data = request.get_json()
         if not json_data or not isinstance(json_data, dict):
             return 'No input data provided', 400  # Bad Request
@@ -359,6 +371,13 @@ class UserPasswordsNumberResource(Resource):
     User can get a password by id, update password by id and delete password by id.
     """
     def get(self, pass_id):
+        """
+        Get particular password by pass_id
+
+        Get password from current logged in user by pass_id.
+        :param pass_id: id of specific user's password
+        :return: password or 500 SQLAlchemyError
+        """
         try:
             current_user_email = sess.get('email', 'not set')
             current_user = User.filter_by_email(current_user_email, session)
@@ -375,8 +394,8 @@ class UserPasswordsNumberResource(Resource):
         Update password data.
 
         You can update all data of password or just a part of it.
-        :param pass_id: id of password that you'd like to update
-        :return:
+        :param pass_id: id of password data you'd like to update of
+        :return: 200 OK or 500 SQLAlchemyError
         """
         json_data = request.get_json()
         try:
@@ -401,6 +420,13 @@ class UserPasswordsNumberResource(Resource):
             return str(err), 500
 
     def delete(self, pass_id):
+        """
+        Delete specific password
+
+        Delete password from current logged in user by pass_id.
+        :param pass_id: id of specific user's password
+        :return: 200 OK or 404 Password Not Found or 500 SQLAlchemyError
+        """
         try:
             current_user_email = sess.get('email', 'not set')
             current_user = User.filter_by_email(current_user_email, session)
@@ -425,6 +451,12 @@ class UserPasswordsSearchResource(Resource):
     """
     @api.expect(search_password)
     def post(self):
+        """
+        Search for passwords by its description.
+
+        Get json data, tries to find any matches in current logged in user list of passwords by its title and comment.
+        :return: list with passwords that fit or 404 Error or 400 if no data provided or 422 ValidationError
+        """
         json_data = request.get_json()
         if not json_data or not isinstance(json_data, dict):
             return 'No input data provided', 400  # Bad Request
