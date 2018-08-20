@@ -62,6 +62,14 @@ class EntityResource(Resource):
         raise NotImplementedError
 
 
+# GENERAL RESOURCES:
+# Home,
+# Smoke,
+# Login,
+# Logout,
+# Register
+
+
 @api.representation('/json')
 class Home(Resource):
     def get(self):
@@ -141,6 +149,14 @@ class Register(Resource):
                 return f"USER {data['username']} ADDED", 200  # OK
             except SQLAlchemyError as err:
                 return str(err), 500  # Internal Server Error
+
+
+# RESOURCES FOR REGISTERED USER:
+# UserResource,
+# UserPasswordResource,
+# UserPasswordSearchResource,
+# UserPasswordLinkResource,
+# UserPasswordNumberResource
 
 
 @api.representation('/json')
