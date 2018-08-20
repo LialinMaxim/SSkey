@@ -81,41 +81,45 @@ docker-app.sh
 ## Flask Application Structure 
 
 ```
-├── app
-│   ├── api.py
-│   ├── base.py
-│   ├── config.py
-│   ├── database.py
-│   ├── errors
-│   │   ├── handlers.py
+
+.
+├── docker-app.sh
+├── docker-compose.yml
+├── docker-deploy.sh
+├── README.md
+├── src
+│   ├── app
+│   │   ├── api.py
+│   │   ├── base.py
+│   │   ├── config.py
+│   │   ├── database.py
 │   │   ├── __init__.py
+│   │   ├── models.py
+│   │   ├── requirements.txt
+│   │   ├── resources.py
+│   │   ├── routes.py
+│   │   ├── scheme.py
+│   │   ├── swagger_models.py
+│   │   └── swagger.yaml
+│   ├── boot.sh
+│   ├── Dockerfile
 │   ├── __init__.py
-│   ├── migrate.py
-│   ├── models.py
-│   ├── requirements.txt
-│   ├── resources.py
-│   ├── routes.py
-│   ├── scheme.py
-│   ├── swagger_models.py
-│   └── swagger.yaml
-├── boot.sh
-├── Dockerfile
-├── __init__.py
-├── manage.py
-└── tests
-    ├── __init__.py
-    ├── requests
-    │   ├── admin_requests.py
-    │   ├── basic_requests.py
-    │   ├── __init__.py
-    │   ├── login_requests.py
-    │   └── user_requests.py
-    ├── test_admin_routes.py
-    ├── test_basic_routes.py
-    ├── test_login_routes.py
-    ├── test_user_passwords.py
-    ├── test_user_routes.py
-    └── user_passwords_requests.py
+│   ├── manage.py
+│   └── tests
+│       ├── __init__.py
+│       ├── requests
+│       │   ├── admin_requests.py
+│       │   ├── basic_requests.py
+│       │   ├── __init__.py
+│       │   ├── login_requests.py
+│       │   └── user_requests.py
+│       ├── test_admin_routes.py
+│       ├── test_basic_routes.py
+│       ├── test_login_routes.py
+│       ├── test_user_passwords.py
+│       ├── test_user_routes.py
+│       └── user_passwords_requests.py
+└── sskey.env
 
 ```
 
