@@ -1,4 +1,5 @@
 from src.app import app
+from .requests.login_requests import client, resource
 from .requests.user_requests import UserRequests
 from .requests.basic_requests import BasicRequests
 
