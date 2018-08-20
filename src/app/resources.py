@@ -160,6 +160,57 @@ class Register(Resource):
 
 
 @api.representation('/json')
+class UserResource(EntityResource):
+    def get(self, username):
+        try:
+            user_data = User.filter_by_username(username, session)
+        except SQLAlchemyError as err:
+            return str(err), 500
+        return UserSchema().dump(user_data), 200
+        # else:
+        #     return f'User {username} NOT FOUND', 404
+
+    @api.expect(user_put)
+    def put(self, username):
+        args = request.get_json()
+        try:
+            user = User.filter_by_username(username, session)
+            for arg_key in args.keys():
+                if arg_key != 'password':
+                    user.__setattr__(arg_key, args[arg_key])
+            session.add(user)
+            session.commit()
+            return f'User {username} UPDATED', 200
+        except SQLAlchemyError as err:
+            return err, 500
+
+    def delete(self, username):
+        try:
+            User.filter_by_username(username, session)
+            session.query(User).filter(User.username == username).delete()
+            session.commit()
+            return f'User {username} DELETED', 200
+        except SQLAlchemyError as err:
+            return str(err), 500
+
+
+# Please, write here the UserPasswordResource class
+
+
+# Please, write here the UserPasswordSearchResource class
+
+
+# Please, write here the UserPasswordLinkResource class
+
+
+# Please, write here the UserPasswordNumberResource class
+
+
+# RESOURCES FOR ADMIN:
+# Please, write here your admin resources list
+
+
+@api.representation('/json')
 class AdminUsersListResource(Resource):
     def get(self):
         try:
