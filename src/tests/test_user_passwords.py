@@ -23,6 +23,11 @@ def test_post_new_user_pass(client, resource):
     assert b'PASSWORD ADDED' in rv.data
 
 
+def test_unprocess_entity_post_new_user_pass(client, resource):
+    rv = UserPasswords.post_new_user_pass(client, 111, 111, 111, 111, 111)
+    assert '422 UNPROCESSABLE ENTITY' in rv.status
+
+
 def test_get_all_user_pass(client, resource):
     rv = UserPasswords.get_all_user_pass(client)
     assert bytes(app.config['COMMENT'], encoding='utf-8') in rv.data
