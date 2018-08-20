@@ -2,9 +2,9 @@ import json
 
 from src.app import app
 
-from src.tests.login_requests import client, LoginRequests, resource
-from src.tests.admin_requests import AdminRequests
-from src.tests.basic_requests import BasicRequests
+from .requests.login_requests import client, LoginRequests, resource
+from .requests.admin_requests import AdminRequests
+from .requests.basic_requests import BasicRequests
 
 
 class TestAdminRoutes:

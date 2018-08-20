@@ -1,6 +1,6 @@
 from src.app import app
-from .login_requests import client
-from .basic_requests import BasicRequests
+from .requests.login_requests import client
+from .requests.basic_requests import BasicRequests
 
 
 class TestBasicRoutes:
