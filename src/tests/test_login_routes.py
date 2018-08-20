@@ -10,7 +10,7 @@ from src.tests.basic_requests import BasicRequests
 class TestLoginRoutes:
     """ Class contain tests for login routes """
 
-    def test_login(self, client):
+    def test_login_logout(self, client):
         """Make sure login and logout works."""
 
         # register new user
