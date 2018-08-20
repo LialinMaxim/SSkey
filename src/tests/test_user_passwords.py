@@ -1,16 +1,18 @@
 import json
 
 from src.app import app
-from src.tests.user_requests import UserRequests
-from src.tests.login_requests import client, LoginRequests, resource
+from .requests.user_requests import UserRequests
+from .requests.basic_requests import BasicRequests
+from .requests.admin_requests import AdminRequests
+from .requests.login_requests import client, LoginRequests, resource
 from src.tests.user_passwords_requests import UserPasswords, PasswordResource
 
 
 def test_register(client):
     """Make sure register works."""
-    rv = UserRequests.register(client, app.config["EMAIL"], app.config["USERNAME"], app.config["PASSWORD"],
-                               app.config["FIRST_NAME"],
-                               app.config["LAST_NAME"], app.config["PHONE"])
+    rv = BasicRequests.register(client, app.config["EMAIL"], app.config["USERNAME"], app.config["PASSWORD"],
+                                app.config["FIRST_NAME"],
+                                app.config["LAST_NAME"], app.config["PHONE"])
     assert b"USER testuser ADDED" in rv.data
 
 
@@ -68,10 +70,10 @@ def test_delete_particular_user_pass(client, resource):
 def test_delete_user(client, resource):
     """Try to delete user data for existant user"""
 
-    rv = UserRequests.get_user_by_username(client, app.config["USERNAME"])
+    rv = AdminRequests.get_user_by_username(client, app.config["USERNAME"])
 
     user = json.loads(str(rv.data, encoding='utf-8'))
     user_id = user['id']
-    rv = UserRequests.delete_user(client, str(user['id']))
+    rv = AdminRequests.delete_user(client, str(user['id']))
 
     assert bytes(f'User ID:{user_id} has been DELETED.', encoding='utf-8') in rv.data
