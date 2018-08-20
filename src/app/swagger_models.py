@@ -34,3 +34,7 @@ user_put = api.model('Update User Data', {
     'last_name': fields.String(example='Tesla'),
     'phone': fields.String(example='068-409-69-36'),
 })
+
+search_password = api.model('Search for password', {
+    'condition': fields.String(example='google.com')
+})
