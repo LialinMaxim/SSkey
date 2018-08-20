@@ -144,7 +144,7 @@ class Register(Resource):
 
 
 @api.representation('/json')
-class UserListResource(Resource):
+class AdminUsersListResource(Resource):
     def get(self):
         try:
             users = session.query(User).all()
@@ -154,7 +154,7 @@ class UserListResource(Resource):
 
 
 @api.representation('/json')
-class UserResource(EntityResource):
+class AdminUsersResource(EntityResource):
     def get(self, user_id):
         try:
             user_data = User.filter_by_id(user_id, session)
