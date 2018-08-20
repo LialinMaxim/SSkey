@@ -24,6 +24,17 @@ class TestingConfig(Config):
     LAST_NAME = 'test lastname'
     PHONE = '911'
 
+    # post a new password
+    URL = 'https://www.test.com'
+    TITLE = 'test.com'
+    LOGIN = 'testpasslogin'
+    URL_PASS = 'testpass'
+    COMMENT = 'my test password for best site ever'
+
+    # put password
+    TITLE_PUT = 'anothertest.com'
+    COMMENT_PUT = 'another test password'
+
 
 class ProductionConfig(Config):
     pass

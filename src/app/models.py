@@ -185,3 +185,16 @@ class Password(Base):
         self.title = data['title']
         self.comment = data['comment']
         self.crypt_password(data['password'])
+
+    @classmethod
+    def find_pass(cls, current_user_id, pass_id, session):
+        password = session.query(cls) \
+            .filter(cls.user_id == current_user_id) \
+            .filter(cls.pass_id == pass_id) \
+            .first()
+        return password
+
+    @classmethod
+    def filter_pass_by_id(cls, pass_id, session):
+        password = session.query(Password).filter(Password.pass_id == pass_id).first()
+        return password
