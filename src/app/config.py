@@ -12,7 +12,7 @@ class Config:
 
 class DevelopmentConfig(Config):
     DEBUG = True
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 't0p s3cr3t'
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'insecure_key'
 
 
 class TestingConfig(Config):
@@ -23,6 +23,17 @@ class TestingConfig(Config):
     FIRST_NAME = 'test name'
     LAST_NAME = 'test lastname'
     PHONE = '911'
+
+    # post a new password
+    URL = 'https://www.test.com'
+    TITLE = 'test.com'
+    LOGIN = 'testpasslogin'
+    URL_PASS = 'testpass'
+    COMMENT = 'my test password for best site ever'
+
+    # put password
+    TITLE_PUT = 'anothertest.com'
+    COMMENT_PUT = 'another test password'
 
 
 class ProductionConfig(Config):
