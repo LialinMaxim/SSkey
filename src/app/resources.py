@@ -7,7 +7,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from . import app, api
 from .base import Session
-from .models import User, Password
+from .models import User, Password, SessionObject
 from .scheme import UserSchema, PasswordSchema, SearchSchema
 from .swagger_models import user_post, password_api_model, user_login, user_put, search_password
 
@@ -23,7 +23,11 @@ def require_login():
 
     """
     allowed_routes = ['login', 'register', 'home', 'doc', 'restplus_doc.static', 'specs']
-    if request.endpoint not in allowed_routes and 'email' not in sess:
+    token_from_cookie = request.cookies.get('token')
+    user_session = session.query(SessionObject).filter(SessionObject.id == token_from_cookie).first()
+    print(token_from_cookie, "cookie")
+    print(user_session, "user session")
+    if request.endpoint not in allowed_routes and not user_session:
         return make_response('You are not allowed to use this resource without logging in!', 403)
 
 
@@ -60,10 +64,11 @@ class Login(Resource):
         data = request.get_json()
         user = User.filter_by_email(data['email'], session)
         if user and user.compare_hash(data['password']):
-            sess['email'] = data['email']
-            sess.permanent = True
-            app.permanent_session_lifetime = datetime.timedelta(minutes=60)
-            return f'You are LOGGED IN as {user.email}'
+            user_session = SessionObject(user.id)
+            print(user_session.id, "hello from user.id")
+            session.add(user_session)
+            session.commit()
+            return f'You are LOGGED IN as {user.email}', 200, {"Set-Cookie": f'token="{user_session.id}"'}
         return 'Could not verify your login!', 401, {"WWW-Authenticate": 'Basic realm="Login Required"'}
 
 
@@ -75,7 +80,10 @@ class Logout(Resource):
     """
 
     def get(self):
-        sess.pop('email', None)
+        token = request.cookies.get('token')
+        print(token)
+        session.query(SessionObject).filter(SessionObject.id == token).delete()
+        session.commit()
         return 'Dropped!', 200  # OK
 
 
