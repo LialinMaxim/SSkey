@@ -26,10 +26,11 @@ class TestAdminRoutes:
 
         rv = AdminRequests.get_user_by_username(client, app.config["USERNAME"])
         user = json.loads(str(rv.data, encoding='utf-8'))
-        username = user['username']
         user_id = user['id']
-        rv = AdminRequests.put_user(client, user['email'], username, 'Ali', 'Alhazred', '666-666-666', user_id)
-        assert bytes(f'User {username} with id {user_id} has been successfully updated.', encoding='utf-8') in rv.data
+        rv = AdminRequests.put_user(client, app.config['EMAIL'], app.config['USERNAME'],
+                                    'Ali', 'Alhazred', '666-666-666', user_id)
+        assert bytes(f'User {app.config["USERNAME"]} with id {user_id} has been successfully updated.',
+                     encoding='utf-8') in rv.data
 
     def test_delete_user(self, client, resource):
         """Try to delete user data for existant user"""
