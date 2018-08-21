@@ -16,12 +16,12 @@ class TestAdminRoutes:
                                     app.config["FIRST_NAME"], app.config["LAST_NAME"], app.config["PHONE"])
         assert b"USER testuser ADDED" in rv.data
 
-    def test_get_user_by_username(self, client, resource):
+    def test_admin_get_user_by_username(self, client, resource):
         rv = AdminRequests.get_user_by_username(client, app.config["USERNAME"])
         assert bytes(app.config["EMAIL"], encoding='utf-8') in rv.data
         assert bytes(app.config["FIRST_NAME"], encoding='utf-8') in rv.data
 
-    def test_put_user(self, client, resource):
+    def test_admin_put_user(self, client, resource):
         """Try to update user data for existant user"""
 
         rv = AdminRequests.get_user_by_username(client, app.config["USERNAME"])
@@ -32,7 +32,7 @@ class TestAdminRoutes:
         assert bytes(f'User {app.config["USERNAME"]} with id {user_id} has been successfully updated.',
                      encoding='utf-8') in rv.data
 
-    def test_delete_user(self, client, resource):
+    def test_admin_delete_user(self, client, resource):
         """Try to delete user data for existant user"""
 
         rv = AdminRequests.get_user_by_username(client, app.config["USERNAME"])
