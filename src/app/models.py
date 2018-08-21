@@ -9,6 +9,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from cryptography.fernet import Fernet
 
 from .base import Base, Session
+from .admin.models import Admin
 
 session = Session()
 
