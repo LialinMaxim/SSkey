@@ -7,6 +7,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.exc import ProgrammingError
 from dotenv import load_dotenv
 
+from .admin.models import Admin, session
+
 basedir = os.path.abspath(os.path.dirname(__file__))
 load_dotenv(os.path.join(basedir, '.env'))
 
@@ -46,3 +48,10 @@ def update():
 def drop():
     """Drops database tables"""
     Base.metadata.drop_all(engine)
+
+
+@manager.command
+def add_admin(username, password, email):
+    admin = Admin({'username': username, 'password': password, 'email': email})
+    session.add(admin)
+    session.commit()

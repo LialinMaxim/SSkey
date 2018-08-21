@@ -30,7 +30,7 @@ class Admin(Base):
         return urandom(salt_len)
 
     @staticmethod
-    def get_hash_password(password, salt, iterations=9723491, encoding='utf-8'):
+    def get_hash_password(password, salt, iterations=923491, encoding='utf-8'):
         """
         Method create salted password hash
         :param password:
