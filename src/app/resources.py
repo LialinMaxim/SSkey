@@ -79,7 +79,7 @@ class Logout(Resource):
         return 'Dropped!', 200  # OK
 
 
-# @api.representation('/json')
+@api.representation('/json')
 class Register(Resource):
     """
     Register resource.
@@ -126,35 +126,36 @@ class Register(Resource):
 
 @api.representation('/json')
 class UserResource(Resource):
-    def get(self, username):
+    def get(self):
+        current_user_email = sess.get('email', 'not set')
         try:
-            user_data = User.filter_by_username(username, session)
+            user_data = User.filter_by_email(current_user_email, session)
         except SQLAlchemyError as err:
             return str(err), 500
         return UserSchema().dump(user_data), 200
-        # else:
-        #     return f'User {username} NOT FOUND', 404
 
     @api.expect(user_put)
-    def put(self, username):
+    def put(self):
+        current_user_email = sess.get('email', 'not set')
         args = request.get_json()
         try:
-            user = User.filter_by_username(username, session)
+            current_user = User.filter_by_email(current_user_email, session)
             for arg_key in args.keys():
                 if arg_key != 'password':
-                    user.__setattr__(arg_key, args[arg_key])
-            session.add(user)
+                    current_user.__setattr__(arg_key, args[arg_key])
+            session.add(current_user)
             session.commit()
-            return f'User {username} UPDATED', 200
+            return f'User {current_user.username} UPDATED', 200
         except SQLAlchemyError as err:
             return err, 500
 
-    def delete(self, username):
+    def delete(self):
+        current_user_email = sess.get('email', 'not set')
         try:
-            User.filter_by_username(username, session)
-            session.query(User).filter(User.username == username).delete()
+            current_user = User.filter_by_email(current_user_email, session)
+            session.query(User).filter(User.email == current_user_email).delete()
             session.commit()
-            return f'User {username} DELETED', 200
+            return f'User {current_user.username} DELETED', 200
         except SQLAlchemyError as err:
             return str(err), 500
 
