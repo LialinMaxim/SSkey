@@ -5,7 +5,11 @@ from . import api
 from .resources import (Home, Smoke, UserResource, AdminUsersResource, PasswordResource,
                         AdminUsersListResource, PasswordListResource, Register, Login, Logout, UserSearch,
                         UserPasswordsResource, UserPasswordsNumberResource, UserPasswordsSearchResource)
+from .admin.resources import AdminTest
 from .base import Session
+
+
+api.add_resource(AdminTest, '/admin/test')  # GET
 
 api.add_resource(Home, '/home')  # GET
 api.add_resource(Smoke, '/smoke')  # GET
