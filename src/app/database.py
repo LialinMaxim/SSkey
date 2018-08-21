@@ -7,7 +7,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.exc import ProgrammingError
 from dotenv import load_dotenv
 
-from .admin.models import Admin, session
+from .models import User, session
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 load_dotenv(os.path.join(basedir, '.env'))
@@ -52,6 +52,8 @@ def drop():
 
 @manager.command
 def add_admin(username, password, email):
-    admin = Admin({'username': username, 'password': password, 'email': email})
+    admin = User({'username': username, 'password': password, 'email': email,
+                  'first_name': '', 'last_name': '', 'phone': ''})
+    admin.is_admin = True
     session.add(admin)
     session.commit()

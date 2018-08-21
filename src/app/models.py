@@ -3,13 +3,12 @@ import hashlib
 import os
 import base64
 
-from sqlalchemy import Column, String, Integer, Date, LargeBinary, ForeignKey
+from sqlalchemy import Column, String, Integer, Date, LargeBinary, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.exc import SQLAlchemyError
 from cryptography.fernet import Fernet
 
 from .base import Base, Session
-from .admin.models import Admin
 
 session = Session()
 
@@ -28,6 +27,7 @@ class User(Base):
     first_name = Column('first_name', String(150), nullable=True)
     last_name = Column('last_name', String(150), nullable=True)
     phone = Column('phone', String(100), nullable=True)
+    is_admin = Column('is_admin', Boolean, nullable=False)
 
     @staticmethod
     def is_user_exists(user_id):
@@ -86,6 +86,7 @@ class User(Base):
         hashed_data = User.get_hash_password(data['password'], User.generate_salt())
         self.salt = hashed_data[0]
         self.password = hashed_data[2]
+        self.is_admin = False
 
     def __str__(self):
         return f'Username - {self.username}, Email - {self.email}, First Name - {self.first_name}, \

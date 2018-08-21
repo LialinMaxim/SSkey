@@ -9,6 +9,7 @@ class UserSchema(Schema):
     first_name = fields.String()
     last_name = fields.String()
     phone = fields.String()
+    is_admin = fields.Bool(required=True, load_only=True)
 
 
 class PasswordSchema(Schema):
