@@ -82,7 +82,7 @@ class User(Base):
         self.first_name = data['first_name']
         self.last_name = data['last_name']
         self.phone = data['phone']
-        hashed_data = __class__.get_hash_password(data['password'], User.generate_salt())
+        hashed_data = User.get_hash_password(data['password'], User.generate_salt())
         self.salt = hashed_data[0]
         self.password = hashed_data[2]
 
