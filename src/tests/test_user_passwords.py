@@ -1,6 +1,7 @@
 import json
 
 from src.app import app
+from .requests.login_requests import client, resource
 from .requests.basic_requests import BasicRequests
 from .requests.admin_requests import AdminRequests
 from .requests.user_passwords_requests import UserPasswords, PasswordResource
