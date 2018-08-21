@@ -9,7 +9,8 @@ from .admin.resources import AdminTest
 from .base import Session
 
 
-api.add_resource(AdminTest, '/admin/test')  # GET
+
+from .admin import routes
 
 api.add_resource(Home, '/home')  # GET
 api.add_resource(Smoke, '/smoke')  # GET
