@@ -302,7 +302,7 @@ class UserPasswordsNumberResource(Resource):
             return str(err), 422  # Unprocessable Entity
         try:
             if not Password.is_password_exists(pass_id):
-                return 'Password not found', 404
+                return 'Password Not Found', 404
             password = Password.filter_pass_by_id(pass_id, session)
             previous_pass = password.title
 
