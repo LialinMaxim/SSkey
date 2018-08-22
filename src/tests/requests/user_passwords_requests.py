@@ -45,3 +45,9 @@ class PasswordResource:
     @staticmethod
     def search_pass_by_description(client, condition):
         return client.post('/username/passwords/search', json=dict(condition=condition), follow_redirects=True)
+
+    @staticmethod
+    def post_search_password_url(client, url):
+        return client.post('/username/passwords/url', json=dict(
+            url=url
+        ))
