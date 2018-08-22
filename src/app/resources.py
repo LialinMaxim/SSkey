@@ -1,5 +1,3 @@
-import datetime
-
 from flask import make_response, request, session as sess
 from flask_restplus import Resource
 from marshmallow import ValidationError
@@ -20,15 +18,28 @@ def require_login():
     Require login function will be run before each request.
     The function will be called without any arguments. This function checks whether requested route is allowed to
     unregistered user or not in allowed routes. Also, checks if session isn't empty. Otherwise, it will return 403 error
-
     """
-    allowed_routes = ['login', 'register', 'home', 'doc', 'restplus_doc.static', 'specs']
-    token_from_cookie = request.cookies.get('token')
-    user_session = session.query(SessionObject).filter(SessionObject.id == token_from_cookie).first()
-    print(token_from_cookie, "cookie")
-    print(user_session, "user session")
-    if request.endpoint not in allowed_routes and not user_session:
-        return make_response('You are not allowed to use this resource without logging in!', 403)
+    if request.endpoint != 'login':
+        allowed_routes = ['login', 'register', 'home', 'doc', 'restplus_doc.static', 'specs']
+        token_from_cookie = request.cookies.get('token')
+        user_session = session.query(SessionObject).filter(SessionObject.user_id == token_from_cookie).first()
+        expiration_time = is_expiry_time(user_session)
+        if not expiration_time:
+            del user_session
+        if request.endpoint not in allowed_routes and not expiration_time:
+            return make_response('You are not allowed to use this resource without logging in!', 403)
+
+
+def is_expiry_time(user_session):
+    if user_session:
+        token = request.cookies.get('token')
+        out_of_time = user_session.update_login_time() <= user_session.expiration_time
+        if not out_of_time:
+            session.query(SessionObject).filter(SessionObject.user_id == token).delete()
+            session.commit()
+        else:
+            return True
+    return False
 
 
 # GENERAL RESOURCES:
@@ -58,17 +69,15 @@ class Login(Resource):
     Checks whether entered data is in DB. Create user session based on its id and then sets session lifetime.
     Otherwise, it will return 401 error.
     """
-
     @api.expect(user_login)
     def post(self):
         data = request.get_json()
         user = User.filter_by_email(data['email'], session)
         if user and user.compare_hash(data['password']):
             user_session = SessionObject(user.id)
-            print(user_session.id, "hello from user.id")
             session.add(user_session)
             session.commit()
-            return f'You are LOGGED IN as {user.email}', 200, {"Set-Cookie": f'token="{user_session.id}"'}
+            return f'You are LOGGED IN as {user.email}', 200, {"Set-Cookie": f'token="{user_session.user_id}"'}
         return 'Could not verify your login!', 401, {"WWW-Authenticate": 'Basic realm="Login Required"'}
 
 
@@ -82,7 +91,7 @@ class Logout(Resource):
     def get(self):
         token = request.cookies.get('token')
         print(token)
-        session.query(SessionObject).filter(SessionObject.id == token).delete()
+        session.query(SessionObject).filter(SessionObject.user_id == token).delete()
         session.commit()
         return 'Dropped!', 200  # OK
 

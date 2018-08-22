@@ -208,7 +208,7 @@ class SessionObject(Base):
     user_id = Column('user_id', Integer, ForeignKey('users.id'))
     user = relationship("User", backref="session_objects", cascade='all,delete')
     login_time = Column('login_time', DateTime, nullable=False)
-    time_out_value = Column('time_out_value', Integer, nullable=False)
+    expiration_time = Column('expiration_time', DateTime, nullable=False)
 
     @property
     def serialize(self):
@@ -218,14 +218,14 @@ class SessionObject(Base):
             'token': self.token,
             'user_id': self.user_id,
             'login_time': str(self.login_time),
-            'time_out_value': self.time_out_value,
+            'expiration_time': self.expiration_time,
         }
 
-    def __init__(self, user_id, time_out_value=1800, token_len=16):
+    def __init__(self, user_id, token_len=16):
         self.token = str(SessionObject.generate_token(token_len))
         self.user_id = user_id
         self.login_time = datetime.datetime.now()
-        self.time_out_value = time_out_value
+        self.expiration_time = self.login_time + datetime.timedelta(minutes=15)
 
     @staticmethod
     def generate_token(token_len):
@@ -233,7 +233,9 @@ class SessionObject(Base):
 
     def update_login_time(self):
         self.login_time = datetime.datetime.now()
+        self.expiration_time = self.login_time + datetime.timedelta(minutes=15)
+        return self.login_time
 
     def __str__(self):
-        session_data = dict(login_time=self.login_time)
-        return f'{session_data["login_time"]:%X %B %d, %Y}'
+        session_data = dict(login_time=self.login_time, expiration_time=self.expiration_time)
+        return f'{session_data["login_time"]:%X %B %d, %Y}, {session_data["expiration_time"]:%X %B %d, %Y}'
