@@ -126,6 +126,15 @@ class Register(Resource):
 
 @api.representation('/json')
 class UserResource(Resource):
+    """User resource
+
+    Works with user's general data.
+
+    Methods:
+    GET - get user's data,
+    PUT - update user's data,
+    DELETE - remove user with his data.
+    """
     def get(self):
         current_user_email = sess.get('email', 'not set')
         try:
