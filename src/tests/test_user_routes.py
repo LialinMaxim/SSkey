@@ -14,7 +14,7 @@ class TestUserRoutes:
 
     def test_get_username(self, client, resource):
         """Test of incoming <username>'s data"""
-        rv = UserRequests.get_username(client, app.config['USERNAME'])
+        rv = UserRequests.get_username(client)
         assert bytes(app.config['EMAIL'], encoding='utf-8') in rv.data
         assert bytes(app.config['USERNAME'], encoding='utf-8') in rv.data
         assert bytes(app.config['FIRST_NAME'], encoding='utf-8') in rv.data
@@ -28,5 +28,5 @@ class TestUserRoutes:
 
     def test_delete_username(self, client, resource):
         """Test of deleting <username> with data"""
-        rv = UserRequests.delete_username(client, app.config['USERNAME'])
+        rv = UserRequests.delete_username(client)
         assert bytes(f'User {app.config["USERNAME"]} DELETED', encoding='utf-8') in rv.data
