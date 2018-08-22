@@ -1,4 +1,4 @@
-from flask import make_response, request, session as sess
+from flask import make_response, request
 from flask_restplus import Resource
 from marshmallow import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
@@ -109,14 +109,11 @@ class Register(Resource):
         json_data = request.get_json()
         if not json_data or not isinstance(json_data, dict):
             return 'No input data provided', 400  # Bad Request
-        print(json_data)
-
         # Validate and deserialize input
         try:
             data = UserSchema().load(json_data)
         except ValidationError as err:
             return str(err), 422  # Unprocessable Entity
-        print(data)
         # TODO One function for all
         # Check if a new user is not exist in data base
         if session.query(User).filter(User.username == data['username']).first():
@@ -144,19 +141,19 @@ class Register(Resource):
 @api.representation('/json')
 class UserResource(Resource):
     def get(self):
-        current_user_email = sess.get('email', 'not set')
+        token = request.cookies.get('token')
         try:
-            user_data = User.filter_by_email(current_user_email, session)
+            user_data = User.filter_by_id(token, session)
         except SQLAlchemyError as err:
             return str(err), 500
         return UserSchema().dump(user_data), 200
 
     @api.expect(user_put)
     def put(self):
-        current_user_email = sess.get('email', 'not set')
+        token = request.cookies.get('token')
         args = request.get_json()
         try:
-            current_user = User.filter_by_email(current_user_email, session)
+            current_user = User.filter_by_id(token, session)
             for arg_key in args.keys():
                 if arg_key != 'password':
                     current_user.__setattr__(arg_key, args[arg_key])
@@ -167,10 +164,10 @@ class UserResource(Resource):
             return err, 500
 
     def delete(self):
-        current_user_email = sess.get('email', 'not set')
+        token = request.cookies.get('token')
         try:
-            current_user = User.filter_by_email(current_user_email, session)
-            session.query(User).filter(User.email == current_user_email).delete()
+            current_user = User.filter_by_id(token, session)
+            session.query(User).filter(User.id == current_user.id).delete()
             session.commit()
             return f'User {current_user.username} DELETED', 200
         except SQLAlchemyError as err:
@@ -194,8 +191,8 @@ class UserPasswordsResource(Resource):
         :return: list of passwords or 500 SQLAlchemyError
         """
         try:
-            current_user_email = sess.get('email')
-            current_user = User.filter_by_email(current_user_email, session)
+            token = request.cookies.get('token')
+            current_user = User.filter_by_id(token, session)
             passwords = session.query(Password).filter(Password.user_id == current_user.id).all()
             passwords_serialized = []
             for password in passwords:
@@ -222,8 +219,8 @@ class UserPasswordsResource(Resource):
         except ValidationError as err:
             return str(err), 422  # Unprocessable Entity
 
-        current_user_email = sess.get('email', 'not set')
-        current_user = User.filter_by_email(current_user_email, session)
+        token = request.cookies.get('token')
+        current_user = User.filter_by_id(token, session)
 
         # create a new password
         try:
@@ -258,8 +255,8 @@ class UserPasswordsSearchResource(Resource):
             data = SearchSchema().load(json_data)
         except ValidationError as err:
             return str(err), 422  # Unprocessable Entity
-        current_user_email = sess.get('email', 'not set')
-        current_user = User.filter_by_email(current_user_email, session)
+        token = request.cookies.get('token')
+        current_user = User.filter_by_id(token, session)
         all_passwords = session.query(Password).filter(Password.user_id == current_user.id).all()
         filtered_passwords = list()
         for password in all_passwords:
@@ -294,8 +291,8 @@ class UserPasswordsNumberResource(Resource):
         :return: password or 500 SQLAlchemyError
         """
         try:
-            current_user_email = sess.get('email', 'not set')
-            current_user = User.filter_by_email(current_user_email, session)
+            token = request.cookies.get('token')
+            current_user = User.filter_by_id(token, session)
             password = Password.find_pass(current_user.id, pass_id, session)
             if not password:
                 return 'Password Not Found', 404  # Not Found
@@ -343,8 +340,8 @@ class UserPasswordsNumberResource(Resource):
         :return: 200 OK or 404 Password Not Found or 500 SQLAlchemyError
         """
         try:
-            current_user_email = sess.get('email', 'not set')
-            current_user = User.filter_by_email(current_user_email, session)
+            token = request.cookies.get('token')
+            current_user = User.filter_by_id(token, session)
             password = Password.find_pass(current_user.id, pass_id, session)
             if password:
                 session.query(Password) \
