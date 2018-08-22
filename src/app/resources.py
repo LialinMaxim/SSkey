@@ -69,6 +69,7 @@ class Login(Resource):
     Checks whether entered data is in DB. Create user session based on its id and then sets session lifetime.
     Otherwise, it will return 401 error.
     """
+
     @api.expect(user_login)
     def post(self):
         data = request.get_json()
@@ -149,6 +150,7 @@ class UserResource(Resource):
         PUT - update user's data,
         DELETE - remove user with his data.
     """
+
     def get(self):
         token = request.cookies.get('token')
         try:
@@ -286,6 +288,7 @@ class UserPasswordsLinkResource(Resource):
     Methods:
         POST - send condition for searching and get user's password by URL.
     """
+
     @api.expect(search_password_url)
     def post(self):
         json_data = request.get_json()
@@ -298,10 +301,10 @@ class UserPasswordsLinkResource(Resource):
         except ValidationError as err:
             return str(err), 422
 
-        current_user_email = sess.get('email', 'not set')
+        token = request.cookies.get('token')
 
         try:
-            current_user = User.filter_by_email(current_user_email, session)
+            current_user = User.filter_by_id(token, session)
             all_passwords = session.query(Password).filter(Password.user_id == current_user.id).all()
         except SQLAlchemyError as err:
             return str(err), 500
