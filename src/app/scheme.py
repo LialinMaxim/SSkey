@@ -26,4 +26,4 @@ class SearchSchema(Schema):
 
 
 class SearchPasswordUrlSchema(Schema):
-    condition = fields.Url(required=True)
+    url = fields.Url(required=True)
