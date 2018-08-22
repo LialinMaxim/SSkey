@@ -23,3 +23,7 @@ class PasswordSchema(Schema):
 
 class SearchSchema(Schema):
     condition = fields.String(required=True)
+
+
+class SearchPasswordUrlSchema(Schema):
+    condition = fields.Url(required=True)
