@@ -4,7 +4,7 @@ import os
 from flask_script import Manager
 from app.base import Base, engine, POSTGRES_USER, POSTGRES_PASS, POSTGRES_HOST, POSTGRES_NAME
 from sqlalchemy import create_engine
-from sqlalchemy.exc import ProgrammingError
+from sqlalchemy.exc import ProgrammingError, SQLAlchemyError
 from dotenv import load_dotenv
 
 from .models import User, session
@@ -54,6 +54,9 @@ def drop():
 def add_admin(username, password, email):
     admin = User({'username': username, 'password': password, 'email': email,
                   'first_name': '', 'last_name': '', 'phone': ''})
-    admin.is_admin = True
-    session.add(admin)
-    session.commit()
+    try:
+        admin.is_admin = True
+        session.add(admin)
+        session.commit()
+    except SQLAlchemyError as err:
+        print(err)
