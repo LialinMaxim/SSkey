@@ -8,8 +8,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from . import app, api
 from .base import Session
 from .models import User, Password
-from .scheme import UserSchema, PasswordSchema, SearchSchema
-from .swagger_models import user_post, password_api_model, user_login, user_put, search_password
+from .scheme import UserSchema, PasswordSchema, SearchSchema, SearchPasswordUrlSchema
+from .swagger_models import user_post, password_api_model, user_login, user_put, search_password, search_password_url
 
 session = Session()
 
@@ -126,6 +126,15 @@ class Register(Resource):
 
 @api.representation('/json')
 class UserResource(Resource):
+    """User resource
+
+    Works with user's general data.
+
+    Methods:
+        GET - get user's data,
+        PUT - update user's data,
+        DELETE - remove user with his data.
+    """
     def get(self):
         current_user_email = sess.get('email', 'not set')
         try:
@@ -256,10 +265,45 @@ class UserPasswordsSearchResource(Resource):
 
 
 # Please, write here the UserPasswordLinkResource class
+@api.representation('/json')
+class UserPasswordsLinkResource(Resource):
+    """User Passwords Link resource
+
+    Methods:
+        POST - send condition for searching and get user's password by URL.
+    """
+    @api.expect(search_password_url)
+    def post(self):
+        json_data = request.get_json()
+
+        if not json_data or not isinstance(json_data, dict):
+            return 'No input data provided', 400
+
+        try:
+            data = SearchPasswordUrlSchema().load(json_data)
+        except ValidationError as err:
+            return str(err), 422
+
+        current_user_email = sess.get('email', 'not set')
+
+        try:
+            current_user = User.filter_by_email(current_user_email, session)
+            all_passwords = session.query(Password).filter(Password.user_id == current_user.id).all()
+        except SQLAlchemyError as err:
+            return str(err), 500
+
+        filtered_passwords = []
+        for password in all_passwords:
+            if data.get('url') in password.url:
+                filtered_passwords.append(password.serialize)
+
+        if filtered_passwords:
+            return filtered_passwords, 200
+        else:
+            return 'No matches found', 200
 
 
 # Please, write here the UserPasswordNumberResource class
-
 @api.representation('/json')
 class UserPasswordsNumberResource(Resource):
     """
