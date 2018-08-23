@@ -32,6 +32,37 @@ def test_get_all_user_pass(client, resource):
     assert bytes(app.config['COMMENT'], encoding='utf-8') in rv.data
 
 
+def test_post_search_password_by_valid_url(client, resource):
+    """Test of searching password by valid URL
+
+    HTTP Code: 200
+    """
+    rv = PasswordResource.post_search_password_url(client, app.config['URL'])
+    assert bytes(app.config['URL'], encoding='utf-8') in rv.data
+    assert bytes(app.config['TITLE'], encoding='utf-8') in rv.data
+    assert bytes(app.config['LOGIN'], encoding='utf-8') in rv.data
+    assert bytes(app.config['URL_PASS'], encoding='utf-8') in rv.data
+    assert bytes(app.config['COMMENT'], encoding='utf-8') in rv.data
+
+
+def test_post_search_password_by_invalid_url(client, resource):
+    """Test of searching password by invalid URL
+
+    HTTP Code: 422
+    """
+    rv = PasswordResource.post_search_password_url(client, 'invalid.url')
+    assert b'Not a valid URL.' in rv.data
+
+
+def test_post_search_password_by_nonexistent_url(client, resource):
+    """Test of searching password by nonexistent URL
+
+    HTTP Code: 200
+    """
+    rv = PasswordResource.post_search_password_url(client, 'https://nonexistent.url')
+    assert b'No matches found' in rv.data
+
+
 def test_get_particular_user_pass(client, resource):
     rv = UserPasswords.get_all_user_pass(client)
     password = json.loads(str(rv.data, encoding='utf-8'))
