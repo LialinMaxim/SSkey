@@ -266,7 +266,7 @@ class UserPasswordsSearchResource(Resource):
 
 # Please, write here the UserPasswordLinkResource class
 @api.representation('/json')
-class UserPasswordsLinkResource(Resource):
+class UserPasswordsSearchUrlResource(Resource):
     """User Passwords Link resource
 
     Methods:
