@@ -118,9 +118,9 @@ class Register(Resource):
         # TODO One function for all
         # Check if a new user is not exist in data base
         if session.query(User).filter(User.username == data['username']).first():
-            return f"User with username: {data['username']} is ALREADY EXISTS.", 200  # OK
+            return f'User with username: {data["username"]} is ALREADY EXISTS.', 200  # OK
         elif session.query(User).filter(User.email == data['email']).first():
-            return f"User with email: {data['email']} is ALREADY EXISTS.", 200  # OK
+            return f'User with email: {data["email"]} is ALREADY EXISTS.', 200  # OK
         else:
             # crate a new user
             try:
@@ -178,6 +178,7 @@ class UserResource(Resource):
         token = request.cookies.get('token')
         try:
             current_user = User.filter_by_id(token, session)
+            session.query(SessionObject).filter(SessionObject.user_id == token).delete()
             session.query(User).filter(User.id == current_user.id).delete()
             session.commit()
             return f'User {current_user.username} DELETED', 200
@@ -453,6 +454,8 @@ class AdminUsersResource(Resource):
     def delete(self, user_id):
         try:
             if User.filter_by_id(user_id, session):
+                token = request.cookies.get('token')
+                session.query(SessionObject).filter(SessionObject.user_id == token).delete()
                 session.query(User).filter(User.id == user_id).delete()
                 session.commit()
                 return f'User ID:{user_id} has been DELETED.', 200  # OK
