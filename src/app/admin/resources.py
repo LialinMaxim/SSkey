@@ -5,7 +5,7 @@ from flask import request
 from .. import api
 from ..base import Session
 from ..scheme import UserSchema
-from ..models import User
+from ..models import User, SessionObject
 from ..swagger_models import user_put
 
 session = Session()
@@ -63,6 +63,9 @@ class AdminUsersResource(Resource):
     def delete(self, user_id):
         try:
             if User.filter_by_id(user_id, session):
+                token = request.cookies.get('token')
+                current_user = User.filter_by_id(token, session)
+                session.query(SessionObject).filter(SessionObject.user_id == token).delete()
                 session.query(User).filter(User.id == user_id).delete()
                 session.commit()
                 return f'User ID:{user_id} has been DELETED.', 200  # OK
