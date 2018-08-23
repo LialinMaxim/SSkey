@@ -270,7 +270,7 @@ class UserPasswordsSearchUrlResource(Resource):
     """User Passwords Link resource
 
     Methods:
-        POST - send condition for searching and get user's password by URL.
+        POST - send condition for searching and get user's passwords by URL.
     """
     @api.expect(search_password_url)
     def post(self):
@@ -278,7 +278,7 @@ class UserPasswordsSearchUrlResource(Resource):
 
         if not json_data or not isinstance(json_data, dict):
             return 'No input data provided', 400
-
+        # Input data validation by Marshmallow schema
         try:
             data = SearchPasswordUrlSchema().load(json_data)
         except ValidationError as err:
@@ -288,17 +288,17 @@ class UserPasswordsSearchUrlResource(Resource):
 
         try:
             current_user = User.filter_by_email(current_user_email, session)
-            all_passwords = session.query(Password).filter(Password.user_id == current_user.id).all()
+            # Hard search without wildcard percent sign
+            filtered_passwords = session.query(Password).filter(Password.user_id == current_user.id,
+                                                                Password.url.like(f'{data.get("url")}'))
         except SQLAlchemyError as err:
             return str(err), 500
 
-        filtered_passwords = []
-        for password in all_passwords:
-            if data.get('url') in password.url:
-                filtered_passwords.append(password.serialize)
-
-        if filtered_passwords:
-            return filtered_passwords, 200
+        passwords_by_url = []
+        for password in filtered_passwords:
+            passwords_by_url.append(password.serialize)
+        if passwords_by_url:
+            return passwords_by_url, 200
         else:
             return 'No matches found', 200
 
