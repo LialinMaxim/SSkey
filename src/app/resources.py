@@ -267,7 +267,7 @@ class UserPasswordsSearchResource(Resource):
 # Please, write here the UserPasswordLinkResource class
 @api.representation('/json')
 class UserPasswordsSearchUrlResource(Resource):
-    """User Passwords Link resource
+    """User Passwords Search URL resource
 
     Methods:
         POST - send condition for searching and get user's passwords by URL.
