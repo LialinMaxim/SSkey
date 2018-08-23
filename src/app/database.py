@@ -4,8 +4,10 @@ import os
 from flask_script import Manager
 from app.base import Base, engine, POSTGRES_USER, POSTGRES_PASS, POSTGRES_HOST, POSTGRES_NAME
 from sqlalchemy import create_engine
-from sqlalchemy.exc import ProgrammingError
+from sqlalchemy.exc import ProgrammingError, SQLAlchemyError
 from dotenv import load_dotenv
+
+from .models import User, session
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 load_dotenv(os.path.join(basedir, '.env'))
@@ -46,3 +48,15 @@ def update():
 def drop():
     """Drops database tables"""
     Base.metadata.drop_all(engine)
+
+
+@manager.command
+def add_admin(username, password, email):
+    admin = User({'username': username, 'password': password, 'email': email,
+                  'first_name': '', 'last_name': '', 'phone': ''})
+    try:
+        admin.is_admin = True
+        session.add(admin)
+        session.commit()
+    except SQLAlchemyError as err:
+        print(err)
