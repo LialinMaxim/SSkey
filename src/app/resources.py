@@ -305,7 +305,6 @@ class UserPasswordsSearchUrlResource(Resource):
 
         try:
             current_user = User.filter_by_id(token, session)
-            all_passwords = session.query(Password).filter(Password.user_id == current_user.id).all()
             # Hard search without wildcard percent sign
             filtered_passwords = session.query(Password).filter(Password.user_id == current_user.id,
                                                                 Password.url.like(f'{data.get("url")}'))
@@ -461,7 +460,6 @@ class PasswordResource(Resource):
     @api.expect(password_api_model)
     def put(self, user_id, pass_id):
         args = request.get_json()
-        # TODO validation
         try:
             if not User.is_user_exists(user_id):
                 return 'User not found', 404
