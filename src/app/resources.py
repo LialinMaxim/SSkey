@@ -115,11 +115,10 @@ class Register(Resource):
             data = UserSchema().load(json_data)
         except ValidationError as err:
             return str(err), 422  # Unprocessable Entity
-        # TODO One function for all
         # Check if a new user is not exist in data base
-        if session.query(User).filter(User.username == data['username']).first():
+        if User.filter_by_username(data['username'], session):
             return f'User with username: {data["username"]} is ALREADY EXISTS.', 200  # OK
-        elif session.query(User).filter(User.email == data['email']).first():
+        elif User.filter_by_email(data['email'], session):
             return f'User with email: {data["email"]} is ALREADY EXISTS.', 200  # OK
         else:
             # create a new user
