@@ -122,7 +122,7 @@ class Register(Resource):
         elif session.query(User).filter(User.email == data['email']).first():
             return f'User with email: {data["email"]} is ALREADY EXISTS.', 200  # OK
         else:
-            # crate a new user
+            # create a new user
             try:
                 session.add(User(data))
                 session.commit()
@@ -283,11 +283,11 @@ class UserPasswordsSearchResource(Resource):
 
 # Please, write here the UserPasswordLinkResource class
 @api.representation('/json')
-class UserPasswordsLinkResource(Resource):
-    """User Passwords Link resource
+class UserPasswordsSearchUrlResource(Resource):
+    """User Passwords Search URL resource
 
     Methods:
-        POST - send condition for searching and get user's password by URL.
+        POST - send condition for searching and get user's passwords by URL.
     """
 
     @api.expect(search_password_url)
@@ -296,7 +296,7 @@ class UserPasswordsLinkResource(Resource):
 
         if not json_data or not isinstance(json_data, dict):
             return 'No input data provided', 400
-
+        # Input data validation by Marshmallow schema
         try:
             data = SearchPasswordUrlSchema().load(json_data)
         except ValidationError as err:
@@ -307,16 +307,17 @@ class UserPasswordsLinkResource(Resource):
         try:
             current_user = User.filter_by_id(token, session)
             all_passwords = session.query(Password).filter(Password.user_id == current_user.id).all()
+            # Hard search without wildcard percent sign
+            filtered_passwords = session.query(Password).filter(Password.user_id == current_user.id,
+                                                                Password.url.like(f'{data.get("url")}'))
         except SQLAlchemyError as err:
             return str(err), 500
 
-        filtered_passwords = []
-        for password in all_passwords:
-            if data.get('url') in password.url:
-                filtered_passwords.append(password.serialize)
-
-        if filtered_passwords:
-            return filtered_passwords, 200
+        passwords_by_url = []
+        for password in filtered_passwords:
+            passwords_by_url.append(password.serialize)
+        if passwords_by_url:
+            return passwords_by_url, 200
         else:
             return 'No matches found', 200
 

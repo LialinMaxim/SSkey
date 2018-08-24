@@ -4,7 +4,7 @@ from . import api
 from .resources import (Home, Smoke, UserResource, PasswordResource,
                         PasswordListResource, Register, Login, Logout, UserSearch,
                         UserPasswordsResource, UserPasswordsNumberResource, UserPasswordsSearchResource,
-                        UserPasswordsLinkResource)
+                        UserPasswordsSearchUrlResource)
 from .base import Session
 from .resources import AdminUsersResource, AdminUsersListResource, AdminTest
 
@@ -16,7 +16,7 @@ api.add_resource(Register, '/register')  # POST
 
 api.add_resource(UserResource, '/username')  # GET, PUT, DELETE
 api.add_resource(UserPasswordsResource, '/username/passwords')  # GET, POST
-api.add_resource(UserPasswordsLinkResource, '/username/passwords/url')  # POST
+api.add_resource(UserPasswordsSearchUrlResource, '/username/passwords/url')  # POST
 api.add_resource(UserPasswordsNumberResource, '/username/passwords/<int:pass_id>')  # GET, PUT, DELETE
 api.add_resource(UserPasswordsSearchResource, '/username/passwords/search')  # POST
 
