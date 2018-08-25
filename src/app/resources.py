@@ -1,6 +1,7 @@
 from flask import make_response, request
 from flask_restplus import Resource
 from marshmallow import ValidationError
+from sqlalchemy import or_
 from sqlalchemy.exc import SQLAlchemyError
 
 from . import app, api
@@ -268,14 +269,14 @@ class UserPasswordsSearchResource(Resource):
             return str(err), 422  # Unprocessable Entity
         token = request.cookies.get('token')
         current_user = User.filter_by_id(token, session)
-        all_passwords = session.query(Password).filter(Password.user_id == current_user.id).all()
-        filtered_passwords = list()
-        for password in all_passwords:
-            if data.get('condition') in password.title or data.get('condition') in password.comment:
-                filtered_passwords.append(password.serialize)
-
-        if filtered_passwords:
-            return filtered_passwords
+        filtered_passwords = session.query(Password).filter(Password.user_id == current_user.id).filter(or_(
+            Password.comment.like(f'{data.get("condition")}'),
+            Password.title.like(f'{data.get("condition")}')))
+        passwords_by_comment_title = []
+        for password in filtered_passwords:
+            passwords_by_comment_title.append(password.serialize)
+        if passwords_by_comment_title:
+            return passwords_by_comment_title, 200
         else:
             return 'No matches found', 404
 
@@ -317,7 +318,7 @@ class UserPasswordsSearchUrlResource(Resource):
         if passwords_by_url:
             return passwords_by_url, 200
         else:
-            return 'No matches found', 200
+            return 'No matches found', 404
 
 
 # Please, write here the UserPasswordNumberResource class
