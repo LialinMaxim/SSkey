@@ -13,13 +13,6 @@ session = Session()
 
 
 @api.representation('/json')
-class AdminTest(Resource):
-    def get(self):
-        """Simple admin test."""
-        return 'OK', 200  # OK
-
-
-@api.representation('/json')
 class AdminUsersListResource(Resource):
     def get(self):
         """Get all users by list."""
