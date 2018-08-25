@@ -28,3 +28,11 @@ class SearchSchema(Schema):
 
 class SearchPasswordUrlSchema(Schema):
     url = fields.Url(required=True)
+
+
+class UserIdsListSchema(Schema):
+    users_ids = fields.List(fields.Integer(), required=True)
+
+
+class AdminUsersSearchData(Schema):
+    user_data = fields.String(required=True)

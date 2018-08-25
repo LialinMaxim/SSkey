@@ -5,7 +5,8 @@ from .base import Session
 from .resources.general import Home, Smoke, Register, Login, Logout
 from .resources.user import (UserResource, UserPasswordsResource, UserPasswordsSearchResource,
                              UserPasswordsSearchUrlResource, UserPasswordsNumberResource)
-from .resources.admin import AdminUsersListResource, AdminUsersResource, UserSearch
+from .resources.admin import (AdminUsersListResource, AdminUsersResource, UserSearch,
+                              AdminUserListDelete, AdminUsersSearch)
 
 api.add_resource(Home, '/home')  # GET
 api.add_resource(Smoke, '/smoke')  # GET
@@ -20,8 +21,10 @@ user_api.add_resource(UserPasswordsSearchUrlResource, '/username/passwords/url')
 user_api.add_resource(UserPasswordsNumberResource, '/username/passwords/<int:pass_id>')  # GET, PUT, DELETE
 
 admin_api.add_resource(AdminUsersListResource, '/admin/users')  # GET
+admin_api.add_resource(AdminUsersSearch, '/admin/users/search')  # POST
 admin_api.add_resource(AdminUsersResource, '/admin/users/<int:user_id>')  # GET, PUT, DELETE
 admin_api.add_resource(UserSearch, '/users/<string:username>')  # GET
+admin_api.add_resource(AdminUserListDelete, '/admin/users/list')  # DELETE
 
 
 def get_session():

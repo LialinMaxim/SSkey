@@ -1,13 +1,14 @@
-from flask import make_response, request, session as sess
+from flask import request
 from flask_restplus import Resource
 from marshmallow import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import or_
 
 from .. import api
 from ..base import Session
 from ..models import User, Password
-from ..marshmallow_schemes import UserSchema, PasswordSchema, SearchSchema, SearchPasswordUrlSchema
-from ..swagger_models import user_post, password_api_model, user_login, user_put, search_password, search_password_url
+from ..marshmallow_schemes import UserSchema, UserIdsListSchema, AdminUsersSearchData
+from ..swagger_models import users_ids_list, admin_users_search
 
 session = Session()
 
@@ -36,33 +37,15 @@ class AdminUsersResource(Resource):
         else:
             return f'User ID {user_id} - Not Found', 404  # Not Found
 
-    @api.expect(user_put)
-    def put(self, user_id):
-        """Update user data by user_id."""
-        args = request.get_json()
-        # TODO validation
-        # if not json_data or not isinstance(json_data, dict):
-        #     return 'No input data provided', 400  # Bad Request
-
-        try:
-            if not User.is_user_exists(user_id):
-                return 'User not found', 404  # Not Found
-            user = User.filter_by_id(user_id, session)
-            for arg_key in args.keys():
-                if arg_key != 'password':
-                    user.__setattr__(arg_key, args[arg_key])
-            session.add(user)
-            session.commit()
-            msg = f'User {user.username} with id {user_id} has been successfully updated.'
-            return msg, 200  # OK
-        except SQLAlchemyError as err:
-            return err, 500  # Internal Server Error
-
     def delete(self, user_id):
         """Delete user by user_id."""
         try:
-            if User.filter_by_id(user_id, session):
-                session.query(User).filter(User.id == user_id).delete()
+            user = User.filter_by_id(user_id, session)
+            if bool(user):
+                passwords = session.query(Password).filter(Password.user_id == user_id).all()
+                for password in passwords:
+                    session.delete(password)
+                session.delete(user)
                 session.commit()
                 return f'User ID:{user_id} has been DELETED.', 200  # OK
             else:
@@ -81,5 +64,68 @@ class UserSearch(Resource):
             return str(err), 500  # Internal Server Error
         if user_data:
             return UserSchema().dump(user_data), 200  # OK
+        else:
+            return 'User not found', 404  # Not Found
+
+
+@api.representation('/json')
+class AdminUserListDelete(Resource):
+    @api.expect(users_ids_list)
+    def delete(self):
+        """
+        Batch Users removal.
+
+        Remove users by list. Get list of users ids. If delete successfull, return 200 OK
+        Otherwise, return 500 or 400 error.
+        """
+        json_data = request.get_json()
+        if not json_data or not isinstance(json_data, dict):
+            return 'No input data provided', 400  # Bad Request
+
+        # Validate and deserialize input
+        try:
+            users_ids = (UserIdsListSchema().load(json_data))['users_ids']
+        except ValidationError as err:
+            return str(err), 422  # Unprocessable Entity
+        try:
+            for user_id in users_ids:
+                user = User.filter_by_id(user_id, session)
+                if bool(user):
+                    passwords = session.query(Password).filter(Password.user_id == user_id).all()
+                    for password in passwords:
+                        session.delete(password)
+                    session.delete(user)
+            session.commit()
+            return 'Users has been deleted successfully', 200
+        except SQLAlchemyError as err:
+            return str(err), 500
+
+
+@api.representation('/json')
+class AdminUsersSearch(Resource):
+    """Search user by any data - username, email, first_name, last_name or phone"""
+
+    @api.expect(admin_users_search)
+    def post(self):
+        json_data = request.get_json()
+        if not json_data or not isinstance(json_data, dict):
+            return 'No input data provided', 400  # Bad Request
+        # Validate and deserialize input
+        try:
+            user_data = (AdminUsersSearchData().load(json_data))['user_data']
+        except ValidationError as err:
+            return str(err), 422  # Unprocessable Entity
+        print(user_data)
+        # Search users
+        try:
+            users = session.query(User).filter(
+                or_(User.username.like(f'%{user_data}%'), User.email.like(f'%{user_data}%'),
+                    User.first_name.like(f'%{user_data}%'), User.last_name.like(f'%{user_data}%'),
+                    User.phone.like(f'%{user_data}%')
+                    )).all()
+        except SQLAlchemyError as err:
+            return str(err), 500  # Internal Server Error
+        if users:
+            return UserSchema(many=True).dump(users), 200  # OK
         else:
             return 'User not found', 404  # Not Found

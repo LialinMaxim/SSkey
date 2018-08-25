@@ -21,17 +21,6 @@ class TestAdminRoutes:
         assert bytes(app.config["EMAIL"], encoding='utf-8') in rv.data
         assert bytes(app.config["FIRST_NAME"], encoding='utf-8') in rv.data
 
-    def test_admin_put_user(self, client, resource):
-        """Try to update user data for existant user"""
-
-        rv = AdminRequests.get_user_by_username(client, app.config["USERNAME"])
-        user = json.loads(str(rv.data, encoding='utf-8'))
-        user_id = user['id']
-        rv = AdminRequests.put_user(client, app.config['EMAIL'], app.config['USERNAME'],
-                                    'Ali', 'Alhazred', '666-666-666', user_id)
-        assert bytes(f'User {app.config["USERNAME"]} with id {user_id} has been successfully updated.',
-                     encoding='utf-8') in rv.data
-
     def test_admin_delete_user(self, client, resource):
         """Try to delete user data for existant user"""
 
