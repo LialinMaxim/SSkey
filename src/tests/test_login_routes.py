@@ -1,5 +1,3 @@
-import json
-
 from src.app import app
 
 from .requests.login_requests import client, LoginRequests, resource

@@ -9,8 +9,8 @@ from .requests.user_passwords_requests import UserPasswords, PasswordResource
 
 def test_register(client):
     """Make sure register works."""
-    rv = BasicRequests.register(client, app.config["EMAIL"], app.config["USERNAME"], app.config["PASSWORD"],
-                                app.config["FIRST_NAME"], app.config["LAST_NAME"], app.config["PHONE"])
+    rv = BasicRequests.register(client, app.config['EMAIL'], app.config['USERNAME'], app.config['PASSWORD'],
+                                app.config['FIRST_NAME'], app.config['LAST_NAME'], app.config['PHONE'])
     assert bytes(f'USER {app.config["USERNAME"]} ADDED', encoding='utf-8') in rv.data
 
 
