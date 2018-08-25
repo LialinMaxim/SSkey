@@ -14,17 +14,8 @@ session = Session()
 
 @api.representation('/json')
 class UserResource(Resource):
-    """User resource
-
-    Works with user's general data.
-
-    Methods:
-        GET - get user's data,
-        PUT - update user's data,
-        DELETE - remove user with his data.
-    """
-
     def get(self):
+        """Get user's data."""
         token = request.cookies.get('token')
         try:
             user_data = User.filter_by_id(token, session)
@@ -34,6 +25,7 @@ class UserResource(Resource):
 
     @api.expect(user_put)
     def put(self):
+        """Update user's data."""
         token = request.cookies.get('token')
         args = request.get_json()
         try:
@@ -48,6 +40,7 @@ class UserResource(Resource):
             return err, 500
 
     def delete(self):
+        """Remove user with all his data."""
         token = request.cookies.get('token')
         try:
             current_user = User.filter_by_id(token, session)
@@ -118,7 +111,7 @@ class UserPasswordsResource(Resource):
 @api.representation('/json')
 class UserPasswordsSearchResource(Resource):
     """
-    Search for particular passwords using password's description
+    Search for particular passwords using password's description.
     """
 
     @api.expect(search_password)
@@ -156,14 +149,9 @@ class UserPasswordsSearchResource(Resource):
 
 @api.representation('/json')
 class UserPasswordsSearchUrlResource(Resource):
-    """User Passwords Search URL resource
-
-    Methods:
-        POST - send condition for searching and get user's passwords by URL.
-    """
-
     @api.expect(search_password_url)
     def post(self):
+        """Get all user passwords for the particular site."""
         json_data = request.get_json()
 
         if not json_data or not isinstance(json_data, dict):
@@ -199,7 +187,7 @@ class UserPasswordsNumberResource(Resource):
 
     def get(self, pass_id):
         """
-        Get particular password by pass_id
+        Get particular password by pass_id.
 
         Get password from current logged in user by pass_id.
         :param pass_id: id of specific user's password
@@ -248,7 +236,7 @@ class UserPasswordsNumberResource(Resource):
 
     def delete(self, pass_id):
         """
-        Delete specific password
+        Delete specific password.
 
         Delete password from current logged in user by pass_id.
         :param pass_id: id of specific user's password

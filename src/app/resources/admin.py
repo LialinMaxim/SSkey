@@ -14,6 +14,7 @@ session = Session()
 @api.representation('/json')
 class AdminUsersListResource(Resource):
     def get(self):
+        """Get all users by list."""
         try:
             users = session.query(User).all()
         except SQLAlchemyError as err:
@@ -24,6 +25,7 @@ class AdminUsersListResource(Resource):
 @api.representation('/json')
 class AdminUsersResource(Resource):
     def get(self, user_id):
+        """Get user by user_id."""
         try:
             user_data = User.filter_by_id(user_id, session)
         except SQLAlchemyError as err:
@@ -35,6 +37,7 @@ class AdminUsersResource(Resource):
 
     @api.expect(user_put)
     def put(self, user_id):
+        """Update user data by user_id."""
         args = request.get_json()
         # TODO validation
         # if not json_data or not isinstance(json_data, dict):
@@ -55,6 +58,7 @@ class AdminUsersResource(Resource):
             return err, 500  # Internal Server Error
 
     def delete(self, user_id):
+        """Delete user by user_id."""
         try:
             if User.filter_by_id(user_id, session):
                 token = request.cookies.get('token')

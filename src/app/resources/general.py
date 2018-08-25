@@ -52,12 +52,14 @@ def is_expiry_time(user_session):
 
 @api.representation('/json')
 class Home(Resource):
+    """Simple test that works without authorization."""
     def get(self):
         return 'This is a Home Page', 200  # OK
 
 
 @api.representation('/json')
 class Smoke(Resource):
+    """Simple test that requires authorization."""
     def get(self):
         return 'OK', 200  # OK
 
@@ -66,6 +68,7 @@ class Smoke(Resource):
 class Login(Resource):
     """
     Login resource.
+
     Checks whether entered data is in DB. Create user session based on its id and then sets session lifetime.
     Otherwise, it will return 401 error.
     """
@@ -86,6 +89,7 @@ class Login(Resource):
 class Logout(Resource):
     """
     Logout resource.
+
     Remove the username from the session.
     """
 
@@ -101,6 +105,7 @@ class Logout(Resource):
 class Register(Resource):
     """
     Register resource.
+
     Parsing requested data, checks if username or email doesn't exit in DB, then create user in DB. 200 OK
     Otherwise, return 500 or 400 error.
     """
