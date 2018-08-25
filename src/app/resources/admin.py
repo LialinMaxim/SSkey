@@ -1,13 +1,12 @@
-from flask import make_response, request, session as sess
+from flask import request
 from flask_restplus import Resource
-from marshmallow import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 
 from .. import api
 from ..base import Session
-from ..models import User, Password
-from ..marshmallow_schemes import UserSchema, PasswordSchema, SearchSchema, SearchPasswordUrlSchema
-from ..swagger_models import user_post, password_api_model, user_login, user_put, search_password, search_password_url
+from ..models import User, SessionObject, Password
+from ..marshmallow_schemes import UserSchema
+from ..swagger_models import user_put
 
 session = Session()
 
@@ -15,7 +14,6 @@ session = Session()
 @api.representation('/json')
 class AdminUsersListResource(Resource):
     def get(self):
-        """Get all users by list."""
         try:
             users = session.query(User).all()
         except SQLAlchemyError as err:
@@ -26,7 +24,6 @@ class AdminUsersListResource(Resource):
 @api.representation('/json')
 class AdminUsersResource(Resource):
     def get(self, user_id):
-        """Get user by user_id."""
         try:
             user_data = User.filter_by_id(user_id, session)
         except SQLAlchemyError as err:
@@ -38,7 +35,6 @@ class AdminUsersResource(Resource):
 
     @api.expect(user_put)
     def put(self, user_id):
-        """Update user data by user_id."""
         args = request.get_json()
         # TODO validation
         # if not json_data or not isinstance(json_data, dict):
@@ -59,9 +55,11 @@ class AdminUsersResource(Resource):
             return err, 500  # Internal Server Error
 
     def delete(self, user_id):
-        """Delete user by user_id."""
         try:
             if User.filter_by_id(user_id, session):
+                token = request.cookies.get('token')
+                session.query(SessionObject).filter(SessionObject.user_id == token).delete()
+                session.query(Password).filter(Password.user_id == token).delete()
                 session.query(User).filter(User.id == user_id).delete()
                 session.commit()
                 return f'User ID:{user_id} has been DELETED.', 200  # OK

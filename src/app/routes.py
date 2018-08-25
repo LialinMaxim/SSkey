@@ -1,13 +1,7 @@
 from flask import g
 
-from . import api
-from .resources import (Home, Smoke, UserResource, PasswordResource,
-                        PasswordListResource, Register, Login, Logout, UserSearch,
-                        UserPasswordsResource, UserPasswordsNumberResource, UserPasswordsSearchResource,
-                        UserPasswordsSearchUrlResource)
 from . import api, user_api, admin_api
 from .base import Session
-from .resources import AdminUsersResource, AdminUsersListResource, AdminTest
 from .resources.general import Home, Smoke, Register, Login, Logout
 from .resources.user import (UserResource, UserPasswordsResource, UserPasswordsSearchResource,
                              UserPasswordsSearchUrlResource, UserPasswordsNumberResource)
@@ -28,10 +22,6 @@ user_api.add_resource(UserPasswordsNumberResource, '/username/passwords/<int:pas
 admin_api.add_resource(AdminUsersListResource, '/admin/users')  # GET
 admin_api.add_resource(AdminUsersResource, '/admin/users/<int:user_id>')  # GET, PUT, DELETE
 admin_api.add_resource(UserSearch, '/users/<string:username>')  # GET
-
-api.add_resource(AdminTest, '/admin/test')  # GET
-api.add_resource(AdminUsersListResource, '/admin/users')  # GET
-api.add_resource(AdminUsersResource, '/admin/users/<int:user_id>')  # GET, PUT, DELETE
 
 
 def get_session():

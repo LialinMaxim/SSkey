@@ -1,35 +1,43 @@
-from flask import make_response, request, session as sess
+from flask import request
 from flask_restplus import Resource
 from marshmallow import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 
-from .. import app, api
+from .. import api
 from ..base import Session
-from ..models import User, Password
-from ..marshmallow_schemes import UserSchema, PasswordSchema, SearchSchema, SearchPasswordUrlSchema
-from ..swagger_models import user_post, password_api_model, user_login, user_put, search_password, search_password_url
+from ..models import User, Password, SessionObject
+from ..marshmallow_schemes import UserSchema, PasswordSchema, SearchSchema, SearchPasswordUrlSchema, PasswordPutSchema
+from ..swagger_models import password_api_model, user_put, search_password, search_password_url
 
 session = Session()
 
 
 @api.representation('/json')
 class UserResource(Resource):
+    """User resource
+
+    Works with user's general data.
+
+    Methods:
+        GET - get user's data,
+        PUT - update user's data,
+        DELETE - remove user with his data.
+    """
+
     def get(self):
-        """Get user's data."""
-        current_user_email = sess.get('email', 'not set')
+        token = request.cookies.get('token')
         try:
-            user_data = User.filter_by_email(current_user_email, session)
+            user_data = User.filter_by_id(token, session)
         except SQLAlchemyError as err:
             return str(err), 500
         return UserSchema().dump(user_data), 200
 
     @api.expect(user_put)
     def put(self):
-        """Update user's data."""
-        current_user_email = sess.get('email', 'not set')
+        token = request.cookies.get('token')
         args = request.get_json()
         try:
-            current_user = User.filter_by_email(current_user_email, session)
+            current_user = User.filter_by_id(token, session)
             for arg_key in args.keys():
                 if arg_key != 'password':
                     current_user.__setattr__(arg_key, args[arg_key])
@@ -40,11 +48,11 @@ class UserResource(Resource):
             return err, 500
 
     def delete(self):
-        """Remove user with all his data."""
-        current_user_email = sess.get('email', 'not set')
+        token = request.cookies.get('token')
         try:
-            current_user = User.filter_by_email(current_user_email, session)
-            session.query(User).filter(User.email == current_user_email).delete()
+            current_user = User.filter_by_id(token, session)
+            session.query(SessionObject).filter(SessionObject.user_id == token).delete()
+            session.query(User).filter(User.id == current_user.id).delete()
             session.commit()
             return f'User {current_user.username} DELETED', 200
         except SQLAlchemyError as err:
@@ -53,6 +61,12 @@ class UserResource(Resource):
 
 @api.representation('/json')
 class UserPasswordsResource(Resource):
+    """
+    User password resource.
+
+    User gets his all passwords and may create a new one.
+    """
+
     def get(self):
         """
         Get list of user's passwords.
@@ -61,8 +75,8 @@ class UserPasswordsResource(Resource):
         :return: list of passwords or 500 SQLAlchemyError
         """
         try:
-            current_user_email = sess.get('email')
-            current_user = User.filter_by_email(current_user_email, session)
+            token = request.cookies.get('token')
+            current_user = User.filter_by_id(token, session)
             passwords = session.query(Password).filter(Password.user_id == current_user.id).all()
             passwords_serialized = []
             for password in passwords:
@@ -89,8 +103,8 @@ class UserPasswordsResource(Resource):
         except ValidationError as err:
             return str(err), 422  # Unprocessable Entity
 
-        current_user_email = sess.get('email', 'not set')
-        current_user = User.filter_by_email(current_user_email, session)
+        token = request.cookies.get('token')
+        current_user = User.filter_by_id(token, session)
 
         # create a new password
         try:
@@ -103,6 +117,10 @@ class UserPasswordsResource(Resource):
 
 @api.representation('/json')
 class UserPasswordsSearchResource(Resource):
+    """
+    Search for particular passwords using password's description
+    """
+
     @api.expect(search_password)
     def post(self):
         """
@@ -120,25 +138,32 @@ class UserPasswordsSearchResource(Resource):
             data = SearchSchema().load(json_data)
         except ValidationError as err:
             return str(err), 422  # Unprocessable Entity
-        current_user_email = sess.get('email', 'not set')
-        current_user = User.filter_by_email(current_user_email, session)
-        all_passwords = session.query(Password).filter(Password.user_id == current_user.id).all()
-        filtered_passwords = list()
-        for password in all_passwords:
-            if data.get("condition") in password.title or data.get("condition") in password.comment:
-                filtered_passwords.append(password.serialize)
 
-        if filtered_passwords:
-            return filtered_passwords
+        token = request.cookies.get('token')
+        try:
+            filtered_passwords = Password.search_pass_by_description(token, data.get('condition'), session)
+        except SQLAlchemyError as err:
+            return str(err), 500
+
+        passwords_by_comment_title = []
+        for password in filtered_passwords:
+            passwords_by_comment_title.append(password.serialize)
+        if passwords_by_comment_title:
+            return passwords_by_comment_title, 200
         else:
             return 'No matches found', 404
 
 
 @api.representation('/json')
 class UserPasswordsSearchUrlResource(Resource):
+    """User Passwords Search URL resource
+
+    Methods:
+        POST - send condition for searching and get user's passwords by URL.
+    """
+
     @api.expect(search_password_url)
     def post(self):
-        """Get all user passwords for the particular site."""
         json_data = request.get_json()
 
         if not json_data or not isinstance(json_data, dict):
@@ -149,13 +174,9 @@ class UserPasswordsSearchUrlResource(Resource):
         except ValidationError as err:
             return str(err), 422
 
-        current_user_email = sess.get('email', 'not set')
-
+        token = request.cookies.get('token')
         try:
-            current_user = User.filter_by_email(current_user_email, session)
-            # Hard search without wildcard percent sign
-            filtered_passwords = session.query(Password).filter(Password.user_id == current_user.id,
-                                                                Password.url.like(f'{data.get("url")}'))
+            filtered_passwords = Password.search_pass_by_url(token, data.get('url'), session)
         except SQLAlchemyError as err:
             return str(err), 500
 
@@ -165,23 +186,28 @@ class UserPasswordsSearchUrlResource(Resource):
         if passwords_by_url:
             return passwords_by_url, 200
         else:
-            return 'No matches found', 200
+            return 'No matches found', 404
 
 
 @api.representation('/json')
 class UserPasswordsNumberResource(Resource):
+    """
+    Class for dealing with user's passwords.
+
+    User can get a password by id, update password by id and delete password by id.
+    """
 
     def get(self, pass_id):
         """
-        Get particular password by pass_id.
+        Get particular password by pass_id
 
         Get password from current logged in user by pass_id.
         :param pass_id: id of specific user's password
         :return: password or 500 SQLAlchemyError
         """
         try:
-            current_user_email = sess.get('email', 'not set')
-            current_user = User.filter_by_email(current_user_email, session)
+            token = request.cookies.get('token')
+            current_user = User.filter_by_id(token, session)
             password = Password.find_pass(current_user.id, pass_id, session)
             if not password:
                 return 'Password Not Found', 404  # Not Found
@@ -200,7 +226,7 @@ class UserPasswordsNumberResource(Resource):
         """
         json_data = request.get_json()
         try:
-            data = PasswordSchema().load(json_data)
+            data = PasswordPutSchema().load(json_data)
         except ValidationError as err:
             return str(err), 422  # Unprocessable Entity
         try:
@@ -222,15 +248,15 @@ class UserPasswordsNumberResource(Resource):
 
     def delete(self, pass_id):
         """
-        Delete specific password.
+        Delete specific password
 
         Delete password from current logged in user by pass_id.
         :param pass_id: id of specific user's password
         :return: 200 OK or 404 Password Not Found or 500 SQLAlchemyError
         """
         try:
-            current_user_email = sess.get('email', 'not set')
-            current_user = User.filter_by_email(current_user_email, session)
+            token = request.cookies.get('token')
+            current_user = User.filter_by_id(token, session)
             password = Password.find_pass(current_user.id, pass_id, session)
             if password:
                 session.query(Password) \
