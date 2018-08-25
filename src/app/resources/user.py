@@ -44,11 +44,11 @@ class UserResource(Resource):
         token = request.cookies.get('token')
         try:
             current_user = User.filter_by_id(token, session)
-            session.query(SessionObject).filter(SessionObject.user_id == token).delete()
             session.query(User).filter(User.id == current_user.id).delete()
             session.commit()
             return f'User {current_user.username} DELETED', 200
         except SQLAlchemyError as err:
+            session.rollback()
             return str(err), 500
 
 

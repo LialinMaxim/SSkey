@@ -61,9 +61,6 @@ class AdminUsersResource(Resource):
         """Delete user by user_id."""
         try:
             if User.filter_by_id(user_id, session):
-                token = request.cookies.get('token')
-                session.query(SessionObject).filter(SessionObject.user_id == token).delete()
-                session.query(Password).filter(Password.user_id == token).delete()
                 session.query(User).filter(User.id == user_id).delete()
                 session.commit()
                 return f'User ID:{user_id} has been DELETED.', 200  # OK
