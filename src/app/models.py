@@ -203,19 +203,19 @@ class PasswordModel(Base):
 
     @classmethod
     def search_pass_by_description(cls, token, condition, session):
-        current_user = User.filter_by_id(token, session)
-        filtered_passwords = session.query(Password).filter(Password.user_id == current_user.id).filter(or_(
-            Password.comment.like(condition),
-            Password.title.like(condition)))
+        current_user = UserModel.filter_by_id(token, session)
+        filtered_passwords = session.query(PasswordModel).filter(PasswordModel.user_id == current_user.id).filter(or_(
+            PasswordModel.comment.like(condition),
+            PasswordModel.title.like(condition)))
 
         return filtered_passwords
 
     @classmethod
     def search_pass_by_url(cls, token, url, session):
-        current_user = User.filter_by_id(token, session)
+        current_user = UserModel.filter_by_id(token, session)
         # Hard search without wildcard percent sign
-        filtered_passwords = session.query(Password).filter(Password.user_id == current_user.id,
-                                                            Password.url.like(url))
+        filtered_passwords = session.query(PasswordModel).filter(PasswordModel.user_id == current_user.id,
+                                                                 PasswordModel.url.like(url))
 
         return filtered_passwords
 
@@ -226,7 +226,7 @@ class SessionObject(Base):
     id = Column('id', Integer, primary_key=True)
     token = Column('token', String(100), unique=True, nullable=False)
     user_id = Column('user_id', Integer, ForeignKey('users.id'))
-    user = relationship("User", backref="session_objects", cascade='all,delete')
+    user = relationship("UserModel", backref="session_objects", cascade='all,delete')
     login_time = Column('login_time', DateTime, nullable=False)
     expiration_time = Column('expiration_time', DateTime, nullable=False)
 

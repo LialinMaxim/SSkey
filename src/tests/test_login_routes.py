@@ -39,10 +39,7 @@ class TestLoginRoutes:
         BasicRequests.register(client, app.config['EMAIL'], app.config['USERNAME'], app.config['PASSWORD'],
                                app.config['FIRST_NAME'], app.config['LAST_NAME'], app.config['PHONE'])
         LoginRequests.login(client, app.config['EMAIL'], app.config['PASSWORD'])
-        rv = AdminRequests.get_user_by_username(client, app.config['USERNAME'])
-        user = json.loads(str(rv.data, encoding='utf-8'))
-        user_id = user['id']
         rv = LoginRequests.logout(client)
         assert b'Dropped' in rv.data
         LoginRequests.login(client, app.config['EMAIL'], app.config['PASSWORD'])
-        AdminRequests.delete_user(client, str(user_id))
+        UserRequests.delete_username(client)
