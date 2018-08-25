@@ -13,15 +13,15 @@ api.add_resource(Login, '/login')  # POST
 api.add_resource(Logout, '/logout')  # GET
 api.add_resource(Register, '/register')  # POST
 
-user_api.add_resource(User, '/username')  # GET, PUT, DELETE
-user_api.add_resource(UserPasswords, '/username/passwords')  # GET, POST
-user_api.add_resource(UserPasswordsSearch, '/username/passwords/search')  # POST
-user_api.add_resource(UserPasswordsSearchUrl, '/username/passwords/url')  # POST
-user_api.add_resource(UserPasswordsNumber, '/username/passwords/<int:pass_id>')  # GET, PUT, DELETE
+user_api.add_resource(User, '/')  # GET, PUT, DELETE
+user_api.add_resource(UserPasswords, '/passwords')  # GET, POST
+user_api.add_resource(UserPasswordsSearch, '/passwords/search')  # POST
+user_api.add_resource(UserPasswordsSearchUrl, '/passwords/url')  # POST
+user_api.add_resource(UserPasswordsNumber, '/passwords/<int:pass_id>')  # GET, PUT, DELETE
 
-admin_api.add_resource(AdminUsers, '/admin/users')  # GET
-admin_api.add_resource(AdminUsersNumber, '/admin/users/<int:user_id>')  # GET, DELETE
-admin_api.add_resource(AdminUsersSearch, '/admin/users/<string:username>')  # GET
+admin_api.add_resource(AdminUsers, '/users')  # GET
+admin_api.add_resource(AdminUsersNumber, '/users/<int:user_id>')  # GET, DELETE
+admin_api.add_resource(AdminUsersSearch, '/users/<string:username>')  # GET
 
 
 def get_session():
