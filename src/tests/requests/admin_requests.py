@@ -14,8 +14,3 @@ class AdminRequests:
             last_name=last_name,
             phone=phone
         ), follow_redirects=True)
-
-    @staticmethod
-    def get_user_by_username(client, username):
-        return client.get("/users/" + username,
-                          follow_redirects=True)
