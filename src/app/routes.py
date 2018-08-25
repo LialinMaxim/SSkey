@@ -2,10 +2,10 @@ from flask import g
 
 from . import api, user_api, admin_api
 from .base import Session
-from .resources.general import Home, Smoke, Register, Login, Logout
-from .resources.user import (User, UserPasswords, UserPasswordsSearch,
-                             UserPasswordsSearchUrl, UserPasswordsNumber)
-from .resources.admin import AdminUsers, AdminUsersNumber, AdminUsersSearch
+from .resources import Home, Smoke, Register, Login, Logout
+from .resources import (User, UserPasswords, UserPasswordsSearch,
+                        UserPasswordsSearchUrl, UserPasswordsNumber)
+from .resources import AdminUsers, AdminUsersNumber, AdminUsersSearch
 
 api.add_resource(Home, '/home')  # GET
 api.add_resource(Smoke, '/smoke')  # GET

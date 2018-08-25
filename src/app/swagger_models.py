@@ -3,7 +3,7 @@ from flask_restplus import fields
 from . import api
 
 # Models used to generate swagger documentation
-# imported and use in resources.py
+# imported and use in resources
 
 user_post = api.model('Create New User', {
     'email': fields.String(example='admin@gmail.com'),
