@@ -3,11 +3,11 @@ class AdminRequests:
 
     @staticmethod
     def delete_user(client, user_id):
-        return client.delete("admin/users/" + user_id)
+        return client.delete('admin/users/' + user_id)
 
     @staticmethod
     def put_user(client, email, username, first_name, last_name, phone, user_id):
-        return client.put("admin/users/" + str(user_id), json=dict(
+        return client.put('admin/users/' + str(user_id), json=dict(
             email=email,
             username=username,
             first_name=first_name,
@@ -17,11 +17,17 @@ class AdminRequests:
 
     @staticmethod
     def get_user_by_username(client, username):
-        return client.get("/users/" + username,
+        return client.get('/users/' + username,
                           follow_redirects=True)
 
     @staticmethod
+    def batch_users_delete(client, users_ids):
+        return client.delete('admin/users/list', json=dict(
+            users_ids=users_ids,
+        ), follow_redirects=True)
+
+    @staticmethod
     def search_users_by_any_field(client, user_data):
-        return client.post("/admin/users/search", json=dict(
+        return client.post('/admin/users/search', json=dict(
             user_data=user_data,
         ), follow_redirects=True)

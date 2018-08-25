@@ -31,12 +31,12 @@ class TestingConfig(Config):
     ADMIN_PASSWORD = 'admin911'
 
     # tuple wit tuples of test users (user1, user2, user3)
-    # user = (email, username, password)
+    # user = (email, username, password, first_name, last_name, phone)
     USER_BATCH = (
-        ('alice@gmail.com', 'alice', 'alice'),
-        ('bob@yandex.com', 'walle', 'bob'),
-        ('eva@gmail.com', 'eva', 'eva'),
-        ('alex@gmail.com', 'alex', 'alex'),
+        ('alice@gmail.com', 'alice', 'alice', 'Alice', '', '333-555-333'),
+        ('bob@yandex.com', 'walle', 'bob', '', '', '333-555-333'),
+        ('eva@gmail.com', 'eva', 'eva', 'Eva', 'Brown', '333-555-333'),
+        ('alex@gmail.com', 'alex', 'alex', 'Alesha', '', '333-555-333'),
     )
 
     # post a new password

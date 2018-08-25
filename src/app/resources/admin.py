@@ -103,7 +103,9 @@ class AdminUserListDelete(Resource):
 
 @api.representation('/json')
 class AdminUsersSearch(Resource):
-    """Search user by any data - username, email, first_name, last_name or phone"""
+    """
+    Search user by any data - username, email, first_name, last_name or phone
+    """
 
     @api.expect(admin_users_search)
     def post(self):
@@ -115,7 +117,6 @@ class AdminUsersSearch(Resource):
             user_data = (AdminUsersSearchData().load(json_data))['user_data']
         except ValidationError as err:
             return str(err), 422  # Unprocessable Entity
-        print(user_data)
         # Search users
         try:
             users = session.query(User).filter(
