@@ -12,7 +12,7 @@ session = Session()
 
 
 @api.representation('/json')
-class AdminUsersListResource(Resource):
+class AdminUsers(Resource):
     def get(self):
         """Get all users by list."""
         try:
@@ -23,7 +23,7 @@ class AdminUsersListResource(Resource):
 
 
 @api.representation('/json')
-class AdminUsersResource(Resource):
+class AdminUsersNumber(Resource):
     def get(self, user_id):
         """Get user by user_id."""
         try:
