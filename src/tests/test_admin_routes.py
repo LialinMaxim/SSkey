@@ -17,6 +17,16 @@ class TestAdminRoutes:
         assert b"USER testuser ADDED" in rv.data
 
     def test_admin_get_user_by_username(self, client, resource):
+        rv = AdminRequests.search_users_by_any_field(client, app.config["PHONE"])
+        assert bytes(app.config["EMAIL"], encoding='utf-8') in rv.data
+        assert bytes(app.config["FIRST_NAME"], encoding='utf-8') in rv.data
+
+    def test_search_404(self, client, resource):
+        rv = AdminRequests.search_users_by_any_field(client, 'abrakadabra987')
+        assert bytes('User not found', encoding='utf-8') in rv.data
+        # assert bytes(app.config["FIRST_NAME"], encoding='utf-8') in rv.data
+
+    def test_search_user_200(self, client, resource):
         rv = AdminRequests.get_user_by_username(client, app.config["USERNAME"])
         assert bytes(app.config["EMAIL"], encoding='utf-8') in rv.data
         assert bytes(app.config["FIRST_NAME"], encoding='utf-8') in rv.data

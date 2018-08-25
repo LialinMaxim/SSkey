@@ -19,3 +19,9 @@ class AdminRequests:
     def get_user_by_username(client, username):
         return client.get("/users/" + username,
                           follow_redirects=True)
+
+    @staticmethod
+    def search_users_by_any_field(client, user_data):
+        return client.post("/admin/users/search", json=dict(
+            user_data=user_data,
+        ), follow_redirects=True)

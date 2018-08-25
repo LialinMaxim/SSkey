@@ -17,12 +17,27 @@ class DevelopmentConfig(Config):
 
 class TestingConfig(Config):
     TESTING = True
+    # post a new user
     EMAIL = 'testuser@gmail.com'
     USERNAME = 'testuser'
     PASSWORD = 'testpassword'
     FIRST_NAME = 'test name'
     LAST_NAME = 'test lastname'
     PHONE = '911'
+
+    # admin post data
+    ADMIN_EMAIL = 'admin_email@gmail.com'
+    ADMIN_USERNAME = 'admin911'
+    ADMIN_PASSWORD = 'admin911'
+
+    # tuple wit tuples of test users (user1, user2, user3)
+    # user = (email, username, password)
+    USER_BATCH = (
+        ('alice@gmail.com', 'alice', 'alice'),
+        ('bob@yandex.com', 'walle', 'bob'),
+        ('eva@gmail.com', 'eva', 'eva'),
+        ('alex@gmail.com', 'alex', 'alex'),
+    )
 
     # post a new password
     URL = 'https://www.test.com'
