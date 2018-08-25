@@ -49,6 +49,6 @@ class TestLoginRoutes:
         user = json.loads(str(rv.data, encoding='utf-8'))
         user_id = user['id']
         rv = LoginRequests.logout(client)
-        assert b"Dropped" in rv.data
+        assert b'Dropped' in rv.data
         LoginRequests.login(client, app.config['EMAIL'], app.config['PASSWORD'])
         AdminRequests.delete_user(client, str(user_id))
