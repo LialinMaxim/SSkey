@@ -53,7 +53,7 @@ def drop():
 @manager.command
 def add_admin(username, password, email):
     admin = UserModel({'username': username, 'password': password, 'email': email,
-                  'first_name': '', 'last_name': '', 'phone': ''})
+                       'first_name': '', 'last_name': '', 'phone': ''})
     try:
         admin.is_admin = True
         session.add(admin)
