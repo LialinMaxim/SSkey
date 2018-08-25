@@ -7,7 +7,7 @@ class BasicRequests:
 
     @staticmethod
     def home_page(client):
-        assert client.get("/home", follow_redirect=True)
+        return client.get("/home", follow_redirect=True)
 
     @staticmethod
     def register(client, email, username, password, first_name, last_name, phone):
