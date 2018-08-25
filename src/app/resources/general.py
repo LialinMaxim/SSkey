@@ -7,7 +7,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from .. import app, api
 from ..base import Session
-from ..models import User
+from ..models import UserModel
 from ..marshmallow_schemes import UserSchema
 from ..swagger_models import user_post, user_login
 
@@ -52,7 +52,7 @@ class Login(Resource):
         Otherwise, it will return 401 error.
         """
         data = request.get_json()
-        user = User.filter_by_email(data['email'], session)
+        user = UserModel.filter_by_email(data['email'], session)
         if user and user.compare_hash(data['password']):
             sess['email'] = data['email']
             sess.permanent = True
@@ -96,14 +96,14 @@ class Register(Resource):
         print(data)
         # TODO One function for all
         # Check if a new user is not exist in data base
-        if session.query(User).filter(User.username == data['username']).first():
+        if session.query(UserModel).filter(UserModel.username == data['username']).first():
             return f"User with username: {data['username']} is ALREADY EXISTS.", 200  # OK
-        elif session.query(User).filter(User.email == data['email']).first():
+        elif session.query(UserModel).filter(UserModel.email == data['email']).first():
             return f"User with email: {data['email']} is ALREADY EXISTS.", 200  # OK
         else:
             # crate a new user
             try:
-                session.add(User(data))
+                session.add(UserModel(data))
                 session.commit()
                 return f"USER {data['username']} ADDED", 200  # OK
             except SQLAlchemyError as err:

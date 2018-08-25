@@ -13,7 +13,7 @@ from .base import Base, Session
 session = Session()
 
 
-class User(Base):
+class UserModel(Base):
     """
     Class describe User in application
     """
@@ -36,7 +36,7 @@ class User(Base):
         :param user_id:
         :return: boolean or Exception SQLAlchemy error if dont have connect to db
         """
-        user = session.query(User).filter(User.id == user_id).first()
+        user = session.query(UserModel).filter(UserModel.id == user_id).first()
         return bool(user)
 
     @staticmethod
@@ -72,8 +72,8 @@ class User(Base):
         :param input_password:
         :return: boolean
         """
-        hash_input_password = User.get_hash_password(input_password,
-                                                     self.salt)
+        hash_input_password = UserModel.get_hash_password(input_password,
+                                                          self.salt)
         return hash_input_password[2] == self.password
 
     def __init__(self, data):
@@ -83,7 +83,7 @@ class User(Base):
         self.first_name = data['first_name']
         self.last_name = data['last_name']
         self.phone = data['phone']
-        hashed_data = User.get_hash_password(data['password'], User.generate_salt())
+        hashed_data = UserModel.get_hash_password(data['password'], UserModel.generate_salt())
         self.salt = hashed_data[0]
         self.password = hashed_data[2]
         self.is_admin = False
@@ -111,7 +111,7 @@ class User(Base):
         return id
 
 
-class Password(Base):
+class PasswordModel(Base):
     """
     Class describe passwords of user
     """
@@ -137,7 +137,7 @@ class Password(Base):
         :param pass_id:
         :return: boolean or Exception SQLAlchemy error if dont have connect to db
         """
-        password = session.query(Password).filter(Password.pass_id == pass_id).first()
+        password = session.query(PasswordModel).filter(PasswordModel.pass_id == pass_id).first()
         return bool(password)
 
     @property
@@ -161,11 +161,11 @@ class Password(Base):
         :return: Fernet
         """
         try:
-            user = User.filter_by_id(self.user_id, session)
+            user = UserModel.filter_by_id(self.user_id, session)
         except SQLAlchemyError as e:
             # TO DO add error into logs
             raise SQLAlchemyError(str(e))
-        cipher_key = base64.urlsafe_b64encode(user.password) + Password.SECRET_KEY
+        cipher_key = base64.urlsafe_b64encode(user.password) + PasswordModel.SECRET_KEY
         return Fernet(cipher_key)
 
     def crypt_password(self, raw_password):
@@ -198,5 +198,5 @@ class Password(Base):
 
     @classmethod
     def filter_pass_by_id(cls, pass_id, session):
-        password = session.query(Password).filter(Password.pass_id == pass_id).first()
+        password = session.query(PasswordModel).filter(PasswordModel.pass_id == pass_id).first()
         return password

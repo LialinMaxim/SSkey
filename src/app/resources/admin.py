@@ -4,7 +4,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from .. import api
 from ..base import Session
-from ..models import User
+from ..models import UserModel
 from ..marshmallow_schemes import UserSchema
 from ..swagger_models import user_put
 
@@ -16,7 +16,7 @@ class AdminUsers(Resource):
     def get(self):
         """Get all users by list."""
         try:
-            users = session.query(User).all()
+            users = session.query(UserModel).all()
         except SQLAlchemyError as err:
             return str(err), 500  # Internal Server Error
         return UserSchema(many=True).dump(users), 200  # OK
@@ -27,7 +27,7 @@ class AdminUsersNumber(Resource):
     def get(self, user_id):
         """Get user by user_id."""
         try:
-            user_data = User.filter_by_id(user_id, session)
+            user_data = UserModel.filter_by_id(user_id, session)
         except SQLAlchemyError as err:
             return str(err), 500  # Internal Server Error
         if user_data:
@@ -38,8 +38,8 @@ class AdminUsersNumber(Resource):
     def delete(self, user_id):
         """Delete user by user_id."""
         try:
-            if User.filter_by_id(user_id, session):
-                session.query(User).filter(User.id == user_id).delete()
+            if UserModel.filter_by_id(user_id, session):
+                session.query(UserModel).filter(UserModel.id == user_id).delete()
                 session.commit()
                 return f'User ID:{user_id} has been DELETED.', 200  # OK
             else:
@@ -53,7 +53,7 @@ class AdminUsersSearch(Resource):
     def get(self, username):
         """Get user by user name"""
         try:
-            user_data = User.filter_by_username(username, session)
+            user_data = UserModel.filter_by_username(username, session)
         except SQLAlchemyError as err:
             return str(err), 500  # Internal Server Error
         if user_data:

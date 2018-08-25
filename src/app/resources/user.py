@@ -5,7 +5,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from .. import api
 from ..base import Session
-from ..models import User, Password
+from ..models import UserModel, PasswordModel
 from ..marshmallow_schemes import UserSchema, PasswordSchema, SearchSchema, SearchPasswordUrlSchema
 from ..swagger_models import password_api_model, user_put, search_password, search_password_url
 
@@ -18,7 +18,7 @@ class UserResource(Resource):
         """Get user's data."""
         current_user_email = sess.get('email', 'not set')
         try:
-            user_data = User.filter_by_email(current_user_email, session)
+            user_data = UserModel.filter_by_email(current_user_email, session)
         except SQLAlchemyError as err:
             return str(err), 500
         return UserSchema().dump(user_data), 200
@@ -29,7 +29,7 @@ class UserResource(Resource):
         current_user_email = sess.get('email', 'not set')
         args = request.get_json()
         try:
-            current_user = User.filter_by_email(current_user_email, session)
+            current_user = UserModel.filter_by_email(current_user_email, session)
             for arg_key in args.keys():
                 if arg_key != 'password':
                     current_user.__setattr__(arg_key, args[arg_key])
@@ -43,8 +43,8 @@ class UserResource(Resource):
         """Remove user with all his data."""
         current_user_email = sess.get('email', 'not set')
         try:
-            current_user = User.filter_by_email(current_user_email, session)
-            session.query(User).filter(User.email == current_user_email).delete()
+            current_user = UserModel.filter_by_email(current_user_email, session)
+            session.query(UserModel).filter(UserModel.email == current_user_email).delete()
             session.commit()
             return f'User {current_user.username} DELETED', 200
         except SQLAlchemyError as err:
@@ -62,8 +62,8 @@ class UserPasswordsResource(Resource):
         """
         try:
             current_user_email = sess.get('email')
-            current_user = User.filter_by_email(current_user_email, session)
-            passwords = session.query(Password).filter(Password.user_id == current_user.id).all()
+            current_user = UserModel.filter_by_email(current_user_email, session)
+            passwords = session.query(PasswordModel).filter(PasswordModel.user_id == current_user.id).all()
             passwords_serialized = []
             for password in passwords:
                 passwords_serialized.append(password.serialize)
@@ -90,11 +90,11 @@ class UserPasswordsResource(Resource):
             return str(err), 422  # Unprocessable Entity
 
         current_user_email = sess.get('email', 'not set')
-        current_user = User.filter_by_email(current_user_email, session)
+        current_user = UserModel.filter_by_email(current_user_email, session)
 
         # create a new password
         try:
-            session.add(Password(current_user.id, data))
+            session.add(PasswordModel(current_user.id, data))
             session.commit()
             return 'PASSWORD ADDED', 200  # OK
         except SQLAlchemyError as err:
@@ -121,8 +121,8 @@ class UserPasswordsSearchResource(Resource):
         except ValidationError as err:
             return str(err), 422  # Unprocessable Entity
         current_user_email = sess.get('email', 'not set')
-        current_user = User.filter_by_email(current_user_email, session)
-        all_passwords = session.query(Password).filter(Password.user_id == current_user.id).all()
+        current_user = UserModel.filter_by_email(current_user_email, session)
+        all_passwords = session.query(PasswordModel).filter(PasswordModel.user_id == current_user.id).all()
         filtered_passwords = list()
         for password in all_passwords:
             if data.get("condition") in password.title or data.get("condition") in password.comment:
@@ -152,10 +152,10 @@ class UserPasswordsSearchUrlResource(Resource):
         current_user_email = sess.get('email', 'not set')
 
         try:
-            current_user = User.filter_by_email(current_user_email, session)
+            current_user = UserModel.filter_by_email(current_user_email, session)
             # Hard search without wildcard percent sign
-            filtered_passwords = session.query(Password).filter(Password.user_id == current_user.id,
-                                                                Password.url.like(f'{data.get("url")}'))
+            filtered_passwords = session.query(PasswordModel).filter(PasswordModel.user_id == current_user.id,
+                                                                     PasswordModel.url.like(f'{data.get("url")}'))
         except SQLAlchemyError as err:
             return str(err), 500
 
@@ -181,8 +181,8 @@ class UserPasswordsNumberResource(Resource):
         """
         try:
             current_user_email = sess.get('email', 'not set')
-            current_user = User.filter_by_email(current_user_email, session)
-            password = Password.find_pass(current_user.id, pass_id, session)
+            current_user = UserModel.filter_by_email(current_user_email, session)
+            password = PasswordModel.find_pass(current_user.id, pass_id, session)
             if not password:
                 return 'Password Not Found', 404  # Not Found
             return {'password': password.serialize}, 200  # OK
@@ -204,9 +204,9 @@ class UserPasswordsNumberResource(Resource):
         except ValidationError as err:
             return str(err), 422  # Unprocessable Entity
         try:
-            if not Password.is_password_exists(pass_id):
+            if not PasswordModel.is_password_exists(pass_id):
                 return 'Password Not Found', 404
-            password = Password.filter_pass_by_id(pass_id, session)
+            password = PasswordModel.filter_pass_by_id(pass_id, session)
             previous_pass = password.title
 
             for arg_key in data.keys():
@@ -230,12 +230,12 @@ class UserPasswordsNumberResource(Resource):
         """
         try:
             current_user_email = sess.get('email', 'not set')
-            current_user = User.filter_by_email(current_user_email, session)
-            password = Password.find_pass(current_user.id, pass_id, session)
+            current_user = UserModel.filter_by_email(current_user_email, session)
+            password = PasswordModel.find_pass(current_user.id, pass_id, session)
             if password:
-                session.query(Password) \
-                    .filter(Password.user_id == current_user.id) \
-                    .filter(Password.pass_id == pass_id) \
+                session.query(PasswordModel) \
+                    .filter(PasswordModel.user_id == current_user.id) \
+                    .filter(PasswordModel.pass_id == pass_id) \
                     .delete()
                 session.commit()
                 return f'Password ID {pass_id} DELETED', 200  # OK
