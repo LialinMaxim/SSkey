@@ -13,7 +13,7 @@ session = Session()
 
 
 @api.representation('/json')
-class UserResource(Resource):
+class User(Resource):
     def get(self):
         """Get user's data."""
         current_user_email = sess.get('email', 'not set')
@@ -52,7 +52,7 @@ class UserResource(Resource):
 
 
 @api.representation('/json')
-class UserPasswordsResource(Resource):
+class UserPasswords(Resource):
     def get(self):
         """
         Get list of user's passwords.
@@ -102,7 +102,7 @@ class UserPasswordsResource(Resource):
 
 
 @api.representation('/json')
-class UserPasswordsSearchResource(Resource):
+class UserPasswordsSearch(Resource):
     @api.expect(search_password)
     def post(self):
         """
@@ -135,7 +135,7 @@ class UserPasswordsSearchResource(Resource):
 
 
 @api.representation('/json')
-class UserPasswordsSearchUrlResource(Resource):
+class UserPasswordsSearchUrl(Resource):
     @api.expect(search_password_url)
     def post(self):
         """Get all user passwords for the particular site."""
@@ -169,7 +169,7 @@ class UserPasswordsSearchUrlResource(Resource):
 
 
 @api.representation('/json')
-class UserPasswordsNumberResource(Resource):
+class UserPasswordsNumber(Resource):
 
     def get(self, pass_id):
         """
