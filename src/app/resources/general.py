@@ -95,7 +95,6 @@ class Logout(Resource):
 
     def get(self):
         token = request.cookies.get('token')
-        print(token)
         session.query(SessionObject).filter(SessionObject.user_id == token).delete()
         session.commit()
         return 'Dropped!', 200  # OK
