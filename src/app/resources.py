@@ -415,6 +415,7 @@ class AdminUsersNumber(Resource):
         try:
             if UserModel.filter_by_id(user_id, session):
                 session.query(SessionObject).filter(SessionObject.user_id == token).delete()
+                session.query(PasswordModel).filter(PasswordModel.user_id == token).delete()
                 session.query(UserModel).filter(UserModel.id == user_id).delete()
                 session.commit()
                 return f'User ID:{user_id} has been DELETED.', 200  # OK
