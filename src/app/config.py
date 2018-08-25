@@ -29,7 +29,7 @@ class TestingConfig(Config):
     TITLE = 'test.com'
     LOGIN = 'testpasslogin'
     URL_PASS = 'testpass'
-    COMMENT = 'my test password for best site ever'
+    COMMENT = 'my test password for the best site ever'
 
     # put password
     TITLE_PUT = 'anothertest.com'
