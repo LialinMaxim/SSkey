@@ -5,11 +5,11 @@ class UserPasswords:
 
     @staticmethod
     def get_all_user_pass(client):
-        return client.get('/username/passwords', follow_redirects=True)
+        return client.get('/user/passwords', follow_redirects=True)
 
     @staticmethod
     def post_new_user_pass(client, url, title, login, password, comment):
-        return client.post('/username/passwords', json=dict(
+        return client.post('/user/passwords', json=dict(
             url=url,
             title=title,
             login=login,
@@ -25,12 +25,12 @@ class PasswordResource:
 
     @staticmethod
     def get_particular_user_pass(client, pass_id):
-        return client.get('/username/passwords/' + str(pass_id), follow_redirects=True)
+        return client.get('/user/passwords/' + str(pass_id), follow_redirects=True)
 
     @staticmethod
     def put_particular_user_pass(client, pass_id, url, title='default', login='default', password='default',
                                  comment='default'):
-        return client.put('/username/passwords/' + str(pass_id), json=dict(
+        return client.put('/user/passwords/' + str(pass_id), json=dict(
             url=url,
             title=title,
             login=login,
@@ -40,14 +40,14 @@ class PasswordResource:
 
     @staticmethod
     def delete_particular_user_pass(client, pass_id):
-        return client.delete('/username/passwords/' + str(pass_id), follow_redirects=True)
+        return client.delete('/user/passwords/' + str(pass_id), follow_redirects=True)
 
     @staticmethod
     def search_pass_by_description(client, condition):
-        return client.post('/username/passwords/search', json=dict(condition=condition), follow_redirects=True)
+        return client.post('/user/passwords/search', json=dict(condition=condition), follow_redirects=True)
 
     @staticmethod
     def post_search_password_url(client, url):
-        return client.post('/username/passwords/url', json=dict(
+        return client.post('/user/passwords/url', json=dict(
             url=url
         ))
