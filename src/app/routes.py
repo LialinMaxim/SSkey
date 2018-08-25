@@ -13,11 +13,11 @@ api.add_resource(Login, '/login')  # POST
 api.add_resource(Logout, '/logout')  # GET
 api.add_resource(Register, '/register')  # POST
 
-user_api.add_resource(User, '/username')  # GET, PUT, DELETE
-user_api.add_resource(UserPasswords, '/username/passwords')  # GET, POST
-user_api.add_resource(UserPasswordsSearch, '/username/passwords/search')  # POST
-user_api.add_resource(UserPasswordsSearchUrl, '/username/passwords/url')  # POST
-user_api.add_resource(UserPasswordsNumber, '/username/passwords/<int:pass_id>')  # GET, PUT, DELETE
+user_api.add_resource(User, '/user')  # GET, PUT, DELETE
+user_api.add_resource(UserPasswords, '/user/passwords')  # GET, POST
+user_api.add_resource(UserPasswordsSearch, '/user/passwords/search')  # POST
+user_api.add_resource(UserPasswordsSearchUrl, '/user/passwords/url')  # POST
+user_api.add_resource(UserPasswordsNumber, '/user/passwords/<int:pass_id>')  # GET, PUT, DELETE
 
 admin_api.add_resource(AdminUsers, '/admin/users')  # GET
 admin_api.add_resource(AdminUsersNumber, '/admin/users/<int:user_id>')  # GET, DELETE
