@@ -20,7 +20,7 @@ user_api.add_resource(UserPasswordsSearchUrlResource, '/username/passwords/url')
 user_api.add_resource(UserPasswordsNumberResource, '/username/passwords/<int:pass_id>')  # GET, PUT, DELETE
 
 admin_api.add_resource(AdminUsers, '/admin/users')  # GET
-admin_api.add_resource(AdminUsersNumber, '/admin/users/<int:user_id>')  # GET, PUT, DELETE
+admin_api.add_resource(AdminUsersNumber, '/admin/users/<int:user_id>')  # GET, DELETE
 admin_api.add_resource(AdminUsersSearch, '/admin/users/<string:username>')  # GET
 
 
