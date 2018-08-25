@@ -115,10 +115,15 @@ def test_unprocessable_entity_put_particular_user_pass(client, resource):
 
 
 def test_search_pass_by_description(client, resource):
-    condition = 'test password'
+    condition = 'anothertest.com'
     rv = PasswordResource.search_pass_by_description(client, condition)
 
     assert bytes(f'{app.config["TITLE_PUT"]}', encoding='utf-8') in rv.data
+
+    condition = 'another test password'
+    rv = PasswordResource.search_pass_by_description(client, condition)
+
+    assert bytes(f'{app.config["COMMENT_PUT"]}', encoding='utf-8') in rv.data
 
 
 def test_unprocessable_entity_search_pass_by_description(client, resource):
