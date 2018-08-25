@@ -1,7 +1,6 @@
 from flask import make_response, request
 from flask_restplus import Resource
 from marshmallow import ValidationError
-from sqlalchemy import or_
 from sqlalchemy.exc import SQLAlchemyError
 
 from . import app, api
@@ -267,11 +266,13 @@ class UserPasswordsSearchResource(Resource):
             data = SearchSchema().load(json_data)
         except ValidationError as err:
             return str(err), 422  # Unprocessable Entity
+
         token = request.cookies.get('token')
-        current_user = User.filter_by_id(token, session)
-        filtered_passwords = session.query(Password).filter(Password.user_id == current_user.id).filter(or_(
-            Password.comment.like(f'{data.get("condition")}'),
-            Password.title.like(f'{data.get("condition")}')))
+        try:
+            filtered_passwords = Password.search_pass_by_description(token, data.get('condition'), session)
+        except SQLAlchemyError as err:
+            return str(err), 500
+
         passwords_by_comment_title = []
         for password in filtered_passwords:
             passwords_by_comment_title.append(password.serialize)
@@ -303,12 +304,8 @@ class UserPasswordsSearchUrlResource(Resource):
             return str(err), 422
 
         token = request.cookies.get('token')
-
         try:
-            current_user = User.filter_by_id(token, session)
-            # Hard search without wildcard percent sign
-            filtered_passwords = session.query(Password).filter(Password.user_id == current_user.id,
-                                                                Password.url.like(f'{data.get("url")}'))
+            filtered_passwords = Password.search_pass_by_url(token, data.get('url'), session)
         except SQLAlchemyError as err:
             return str(err), 500
 

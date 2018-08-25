@@ -3,7 +3,7 @@ import hashlib
 import os
 import base64
 
-from sqlalchemy import Column, String, Integer, Date, LargeBinary, ForeignKey, DateTime, Boolean
+from sqlalchemy import Column, String, Integer, Date, LargeBinary, ForeignKey, DateTime, Boolean, or_
 from sqlalchemy.orm import relationship
 from sqlalchemy.exc import SQLAlchemyError
 from cryptography.fernet import Fernet
@@ -200,6 +200,24 @@ class Password(Base):
     def filter_pass_by_id(cls, pass_id, session):
         password = session.query(Password).filter(Password.pass_id == pass_id).first()
         return password
+
+    @classmethod
+    def search_pass_by_description(cls, token, condition, session):
+        current_user = User.filter_by_id(token, session)
+        filtered_passwords = session.query(Password).filter(Password.user_id == current_user.id).filter(or_(
+            Password.comment.like(condition),
+            Password.title.like(condition)))
+
+        return filtered_passwords
+
+    @classmethod
+    def search_pass_by_url(cls, token, url, session):
+        current_user = User.filter_by_id(token, session)
+        # Hard search without wildcard percent sign
+        filtered_passwords = session.query(Password).filter(Password.user_id == current_user.id,
+                                                            Password.url.like(url))
+
+        return filtered_passwords
 
 
 class SessionObject(Base):
