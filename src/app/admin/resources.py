@@ -4,7 +4,7 @@ from flask import request
 
 from .. import api
 from ..base import Session
-from ..scheme import UserSchema
+from ..marshmallow_schemes import UserSchema
 from ..models import User
 from ..swagger_models import user_put
 
