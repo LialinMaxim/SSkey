@@ -1,13 +1,12 @@
-from flask import make_response, request, session as sess
+from flask import request
 from flask_restplus import Resource
-from marshmallow import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 
 from .. import api
 from ..base import Session
-from ..models import User, Password
-from ..marshmallow_schemes import UserSchema, PasswordSchema, SearchSchema, SearchPasswordUrlSchema
-from ..swagger_models import user_post, password_api_model, user_login, user_put, search_password, search_password_url
+from ..models import User
+from ..marshmallow_schemes import UserSchema
+from ..swagger_models import user_put
 
 session = Session()
 
@@ -72,7 +71,7 @@ class AdminUsersResource(Resource):
 
 
 @api.representation('/json')
-class UserSearch(Resource):
+class AdminUsersSearch(Resource):
     def get(self, username):
         """Get user by user name"""
         try:

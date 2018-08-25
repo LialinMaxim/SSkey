@@ -7,9 +7,9 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from .. import app, api
 from ..base import Session
-from ..models import User, Password
-from ..marshmallow_schemes import UserSchema, PasswordSchema, SearchSchema, SearchPasswordUrlSchema
-from ..swagger_models import user_post, password_api_model, user_login, user_put, search_password, search_password_url
+from ..models import User
+from ..marshmallow_schemes import UserSchema
+from ..swagger_models import user_post, user_login
 
 session = Session()
 

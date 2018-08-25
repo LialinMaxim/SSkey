@@ -1,13 +1,13 @@
-from flask import make_response, request, session as sess
+from flask import request, session as sess
 from flask_restplus import Resource
 from marshmallow import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 
-from .. import app, api
+from .. import api
 from ..base import Session
 from ..models import User, Password
 from ..marshmallow_schemes import UserSchema, PasswordSchema, SearchSchema, SearchPasswordUrlSchema
-from ..swagger_models import user_post, password_api_model, user_login, user_put, search_password, search_password_url
+from ..swagger_models import password_api_model, user_put, search_password, search_password_url
 
 session = Session()
 
