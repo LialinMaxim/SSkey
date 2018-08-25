@@ -1,7 +1,6 @@
-from .. import api
-from .resources import AdminUsersResource, AdminUsersListResource
-from .resources import AdminTest
+from .. import admin_api
+from .resources import AdminTest, AdminUsersResource, AdminUsersListResource
 
-api.add_resource(AdminTest, '/admin/test')  # GET
-api.add_resource(AdminUsersListResource, '/admin/users')  # GET
-api.add_resource(AdminUsersResource, '/admin/users/<int:user_id>')  # GET, PUT, DELETE
+admin_api.add_resource(AdminTest, '/admin/test')  # GET
+admin_api.add_resource(AdminUsersListResource, '/admin/users')  # GET
+admin_api.add_resource(AdminUsersResource, '/admin/users/<int:user_id>')  # GET, PUT, DELETE
