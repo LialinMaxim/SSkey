@@ -2,7 +2,7 @@ import json
 
 from src.app import app
 
-from .requests.login_requests import client, LoginRequests, resource
+from .requests.login_requests import client, resource
 from .requests.admin_requests import AdminRequests
 from .requests.basic_requests import BasicRequests
 

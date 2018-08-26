@@ -12,7 +12,7 @@ api = RepresentationApi(app,
                         description='A simple application to safe yours passwords',
                         default='general',
                         default_label='Base requests')
-admin_api = api.namespace('', description='Requests for admin')
-user_api = api.namespace('/', description='Requests for user')
+admin_api = api.namespace('admin', description='Requests for admin')
+user_api = api.namespace('user', description='Requests for user')
 
 from . import routes
