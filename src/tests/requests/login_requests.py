@@ -35,9 +35,6 @@ class LoginRequests:
 @pytest.yield_fixture
 def resource(client):
     """ Set up and Tear Down in fixture - do login make some tests and logout after"""
-    print("setup")
     LoginRequests.login(client, app.config["EMAIL"], app.config["PASSWORD"])
-
     yield
-    print("teardown")
     LoginRequests.logout(client)
