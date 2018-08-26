@@ -1,7 +1,23 @@
 # SSkey
-REST application 
-
 [![Build Status](https://travis-ci.org/LialinMaxim/SSkey.svg?branch=Development)](https://travis-ci.org/LialinMaxim/SSkey)
+
+This is REST application for storing user's passwords for Internet resources. In the application built-in Swagger UI for working with the application. Project is based on Flask framework.
+
+
+SSkey project main features:
+
+* built-in swagger ui
+* authentication and authorization with session
+* creating passwords
+* password encryption
+* user’s passwords list
+* search password by its description
+* admin resource for managing users
+
+Here is how it looks at [http://sskey.pythonanywhere.com/](http://sskey.pythonanywhere.com/):
+
+![sskey](https://raw.githubusercontent.com/LialinMaxim/SSkey/sandbox/src/app/static/sskey.png)
+
 
 ## Getting started
 

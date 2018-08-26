@@ -3,7 +3,7 @@ import hashlib
 import os
 import base64
 
-from sqlalchemy import Column, String, Integer, Date, LargeBinary, ForeignKey, Boolean
+from sqlalchemy import Column, String, Integer, Date, LargeBinary, ForeignKey, DateTime, Boolean, or_
 from sqlalchemy.orm import relationship
 from sqlalchemy.exc import SQLAlchemyError
 from cryptography.fernet import Fernet
@@ -13,7 +13,7 @@ from .base import Base, Session
 session = Session()
 
 
-class User(Base):
+class UserModel(Base):
     """
     Class describe User in application
     """
@@ -36,7 +36,7 @@ class User(Base):
         :param user_id:
         :return: boolean or Exception SQLAlchemy error if dont have connect to db
         """
-        user = session.query(User).filter(User.id == user_id).first()
+        user = session.query(UserModel).filter(UserModel.id == user_id).first()
         return bool(user)
 
     @staticmethod
@@ -72,8 +72,8 @@ class User(Base):
         :param input_password:
         :return: boolean
         """
-        hash_input_password = User.get_hash_password(input_password,
-                                                     self.salt)
+        hash_input_password = UserModel.get_hash_password(input_password,
+                                                          self.salt)
         return hash_input_password[2] == self.password
 
     def __init__(self, data):
@@ -83,7 +83,7 @@ class User(Base):
         self.first_name = data['first_name']
         self.last_name = data['last_name']
         self.phone = data['phone']
-        hashed_data = User.get_hash_password(data['password'], User.generate_salt())
+        hashed_data = UserModel.get_hash_password(data['password'], UserModel.generate_salt())
         self.salt = hashed_data[0]
         self.password = hashed_data[2]
         self.is_admin = False
@@ -111,7 +111,7 @@ class User(Base):
         return id
 
 
-class Password(Base):
+class PasswordModel(Base):
     """
     Class describe passwords of user
     """
@@ -122,7 +122,7 @@ class Password(Base):
     pass_id = Column('pass_id', Integer, primary_key=True)
     user_id = Column('user_id', Integer, ForeignKey('users.id'))
 
-    user = relationship("User", backref="passwords", cascade='all,delete')
+    user = relationship("UserModel", backref="passwords", cascade='all,delete')
 
     url = Column('url', String(250), nullable=True)
     title = Column('title', String(250), nullable=True)
@@ -137,7 +137,7 @@ class Password(Base):
         :param pass_id:
         :return: boolean or Exception SQLAlchemy error if dont have connect to db
         """
-        password = session.query(Password).filter(Password.pass_id == pass_id).first()
+        password = session.query(PasswordModel).filter(PasswordModel.pass_id == pass_id).first()
         return bool(password)
 
     @property
@@ -161,11 +161,11 @@ class Password(Base):
         :return: Fernet
         """
         try:
-            user = User.filter_by_id(self.user_id, session)
+            user = UserModel.filter_by_id(self.user_id, session)
         except SQLAlchemyError as e:
             # TO DO add error into logs
             raise SQLAlchemyError(str(e))
-        cipher_key = base64.urlsafe_b64encode(user.password) + Password.SECRET_KEY
+        cipher_key = base64.urlsafe_b64encode(user.password) + PasswordModel.SECRET_KEY
         return Fernet(cipher_key)
 
     def crypt_password(self, raw_password):
@@ -198,5 +198,64 @@ class Password(Base):
 
     @classmethod
     def filter_pass_by_id(cls, pass_id, session):
-        password = session.query(Password).filter(Password.pass_id == pass_id).first()
+        password = session.query(PasswordModel).filter(PasswordModel.pass_id == pass_id).first()
         return password
+
+    @classmethod
+    def search_pass_by_description(cls, token, condition, session):
+        current_user = UserModel.filter_by_id(token, session)
+        filtered_passwords = session.query(PasswordModel).filter(PasswordModel.user_id == current_user.id).filter(or_(
+            PasswordModel.comment.like(condition),
+            PasswordModel.title.like(condition)))
+
+        return filtered_passwords
+
+    @classmethod
+    def search_pass_by_url(cls, token, url, session):
+        current_user = UserModel.filter_by_id(token, session)
+        # Hard search without wildcard percent sign
+        filtered_passwords = session.query(PasswordModel).filter(PasswordModel.user_id == current_user.id,
+                                                                 PasswordModel.url.like(url))
+
+        return filtered_passwords
+
+
+class SessionObject(Base):
+    __tablename__ = 'session_objects'
+
+    id = Column('id', Integer, primary_key=True)
+    token = Column('token', String(100), unique=True, nullable=False)
+    user_id = Column('user_id', Integer, ForeignKey('users.id'))
+    user = relationship("UserModel", backref="session_objects", cascade='all,delete')
+    login_time = Column('login_time', DateTime, nullable=False)
+    expiration_time = Column('expiration_time', DateTime, nullable=False)
+
+    @property
+    def serialize(self):
+        """Return object data in easily serializeable format"""
+        return {
+            'id': self.id,
+            'token': self.token,
+            'user_id': self.user_id,
+            'login_time': str(self.login_time),
+            'expiration_time': self.expiration_time,
+        }
+
+    def __init__(self, user_id, token_len=16):
+        self.token = str(SessionObject.generate_token(token_len))
+        self.user_id = user_id
+        self.login_time = datetime.datetime.now()
+        self.expiration_time = self.login_time + datetime.timedelta(minutes=15)
+
+    @staticmethod
+    def generate_token(token_len):
+        return str(os.urandom(token_len))
+
+    def update_login_time(self):
+        self.login_time = datetime.datetime.now()
+        self.expiration_time = self.login_time + datetime.timedelta(minutes=15)
+        return self.login_time
+
+    def __str__(self):
+        session_data = dict(login_time=self.login_time, expiration_time=self.expiration_time)
+        return f'{session_data["login_time"]:%X %B %d, %Y}, {session_data["expiration_time"]:%X %B %d, %Y}'
