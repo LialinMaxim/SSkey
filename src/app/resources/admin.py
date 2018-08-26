@@ -23,6 +23,36 @@ class AdminUsersListResource(Resource):
             return str(err), 500  # Internal Server Error
         return UserSchema(many=True).dump(users), 200  # OK
 
+    @api.expect(users_ids_list)
+    def delete(self):
+        """
+        Batch Users removal.
+
+        Remove users by list. Get list of users ids. If delete successfull, return 200 OK
+        Otherwise, return 500 or 400 error.
+        """
+        json_data = request.get_json()
+        if not json_data or not isinstance(json_data, dict):
+            return 'No input data provided', 400  # Bad Request
+
+        # Validate and deserialize input
+        try:
+            users_ids = (UserIdsListSchema().load(json_data))['users_ids']
+        except ValidationError as err:
+            return str(err), 422  # Unprocessable Entity
+        try:
+            for user_id in users_ids:
+                user = User.filter_by_id(user_id, session)
+                if bool(user):
+                    passwords = session.query(Password).filter(Password.user_id == user_id).all()
+                    for password in passwords:
+                        session.delete(password)
+                    session.delete(user)
+            session.commit()
+            return 'Users has been deleted successfully', 200
+        except SQLAlchemyError as err:
+            return str(err), 500
+
 
 @api.representation('/json')
 class AdminUsersResource(Resource):
@@ -66,39 +96,6 @@ class UserSearch(Resource):
             return UserSchema().dump(user_data), 200  # OK
         else:
             return 'User not found', 404  # Not Found
-
-
-@api.representation('/json')
-class AdminUserListDelete(Resource):
-    @api.expect(users_ids_list)
-    def delete(self):
-        """
-        Batch Users removal.
-
-        Remove users by list. Get list of users ids. If delete successfull, return 200 OK
-        Otherwise, return 500 or 400 error.
-        """
-        json_data = request.get_json()
-        if not json_data or not isinstance(json_data, dict):
-            return 'No input data provided', 400  # Bad Request
-
-        # Validate and deserialize input
-        try:
-            users_ids = (UserIdsListSchema().load(json_data))['users_ids']
-        except ValidationError as err:
-            return str(err), 422  # Unprocessable Entity
-        try:
-            for user_id in users_ids:
-                user = User.filter_by_id(user_id, session)
-                if bool(user):
-                    passwords = session.query(Password).filter(Password.user_id == user_id).all()
-                    for password in passwords:
-                        session.delete(password)
-                    session.delete(user)
-            session.commit()
-            return 'Users has been deleted successfully', 200
-        except SQLAlchemyError as err:
-            return str(err), 500
 
 
 @api.representation('/json')

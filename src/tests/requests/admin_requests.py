@@ -22,7 +22,7 @@ class AdminRequests:
 
     @staticmethod
     def batch_users_delete(client, users_ids):
-        return client.delete('admin/users/list', json=dict(
+        return client.delete('admin/users', json=dict(
             users_ids=users_ids,
         ), follow_redirects=True)
 
