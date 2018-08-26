@@ -15,6 +15,13 @@ from .swagger_models import user_post, user_login, password_api_model, user_put,
 session = Session()
 
 
+def get_user_by_token():
+    token = request.cookies.get('token')
+    user_session = session.query(SessionObject).filter(SessionObject.token == token).first()
+    user = UserModel.filter_by_id(user_session.user_id, session)
+    return user
+
+
 @app.before_request
 def require_login():
     """
@@ -143,9 +150,8 @@ class Register(Resource):
 class User(Resource):
     def get(self):
         """Get user's data."""
-        token = request.cookies.get('token')
         try:
-            user_data = UserModel.filter_by_id(token, session)
+            user_data = get_user_by_token()
         except SQLAlchemyError as err:
             return str(err), 500
         return UserSchema().dump(user_data), 200
@@ -153,10 +159,9 @@ class User(Resource):
     @api.expect(user_put)
     def put(self):
         """Update user's data."""
-        token = request.cookies.get('token')
         args = request.get_json()
         try:
-            current_user = UserModel.filter_by_id(token, session)
+            current_user = get_user_by_token()
             for arg_key in args.keys():
                 if arg_key != 'password':
                     current_user.__setattr__(arg_key, args[arg_key])
@@ -170,9 +175,9 @@ class User(Resource):
         """Remove user with all his data."""
         token = request.cookies.get('token')
         try:
-            current_user = UserModel.filter_by_id(token, session)
-            session.query(SessionObject).filter(SessionObject.user_id == token).delete()
-            session.query(UserModel).filter(UserModel.id == current_user.id).delete()
+            current_user = get_user_by_token()
+            session.query(SessionObject).filter(SessionObject.token == token).delete()
+            session.delete(current_user)
             session.commit()
             return f'User {current_user.username} DELETED', 200
         except SQLAlchemyError as err:
@@ -196,8 +201,7 @@ class UserPasswords(Resource):
         :return: list of passwords or 500 SQLAlchemyError
         """
         try:
-            token = request.cookies.get('token')
-            current_user = UserModel.filter_by_id(token, session)
+            current_user = get_user_by_token()
             passwords = session.query(PasswordModel).filter(PasswordModel.user_id == current_user.id).all()
             passwords_serialized = []
             for password in passwords:
@@ -224,8 +228,7 @@ class UserPasswords(Resource):
         except ValidationError as err:
             return str(err), 422  # Unprocessable Entity
 
-        token = request.cookies.get('token')
-        current_user = UserModel.filter_by_id(token, session)
+        current_user = get_user_by_token()
 
         # create a new password
         try:
@@ -260,9 +263,9 @@ class UserPasswordsSearch(Resource):
         except ValidationError as err:
             return str(err), 422  # Unprocessable Entity
 
-        token = request.cookies.get('token')
         try:
-            filtered_passwords = PasswordModel.search_pass_by_description(token, data.get('condition'), session)
+            user = get_user_by_token()
+            filtered_passwords = PasswordModel.search_pass_by_description(user.id, data.get('condition'), session)
         except SQLAlchemyError as err:
             return str(err), 500
 
@@ -290,9 +293,9 @@ class UserPasswordsSearchUrl(Resource):
         except ValidationError as err:
             return str(err), 422
 
-        token = request.cookies.get('token')
         try:
-            filtered_passwords = PasswordModel.search_pass_by_url(token, data.get('url'), session)
+            user = get_user_by_token()
+            filtered_passwords = PasswordModel.search_pass_by_url(user.id, data.get('url'), session)
         except SQLAlchemyError as err:
             return str(err), 500
 
@@ -322,8 +325,7 @@ class UserPasswordsNumber(Resource):
         :return: password or 500 SQLAlchemyError
         """
         try:
-            token = request.cookies.get('token')
-            current_user = UserModel.filter_by_id(token, session)
+            current_user = get_user_by_token()
             password = PasswordModel.find_pass(current_user.id, pass_id, session)
             if not password:
                 return 'Password Not Found', 404  # Not Found
@@ -371,8 +373,8 @@ class UserPasswordsNumber(Resource):
         :return: 200 OK or 404 Password Not Found or 500 SQLAlchemyError
         """
         try:
-            token = request.cookies.get('token')
-            current_user = UserModel.filter_by_id(token, session)
+
+            current_user = get_user_by_token()
             password = PasswordModel.find_pass(current_user.id, pass_id, session)
             if password:
                 session.query(PasswordModel) \
@@ -443,11 +445,10 @@ class AdminUsersNumber(Resource):
 
     def delete(self, user_id):
         """Delete user by user_id."""
-        token = request.cookies.get('token')
         try:
             if UserModel.filter_by_id(user_id, session):
-                session.query(SessionObject).filter(SessionObject.user_id == token).delete()
-                session.query(PasswordModel).filter(PasswordModel.user_id == token).delete()
+                session.query(SessionObject).filter(SessionObject.user_id == user_id).delete()
+                session.query(PasswordModel).filter(PasswordModel.user_id == user_id).delete()
                 session.query(UserModel).filter(UserModel.id == user_id).delete()
                 session.commit()
                 return f'User ID:{user_id} has been DELETED.', 200  # OK

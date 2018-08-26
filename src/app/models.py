@@ -204,17 +204,16 @@ class PasswordModel(Base):
         return password
 
     @classmethod
-    def search_pass_by_description(cls, token, condition, session):
-        current_user = UserModel.filter_by_id(token, session)
-        filtered_passwords = session.query(PasswordModel).filter(PasswordModel.user_id == current_user.id).filter(or_(
+    def search_pass_by_description(cls, user_id, condition, session):
+        filtered_passwords = session.query(PasswordModel).filter(PasswordModel.user_id == user_id).filter(or_(
             PasswordModel.comment.like(condition),
             PasswordModel.title.like(condition)))
 
         return filtered_passwords
 
     @classmethod
-    def search_pass_by_url(cls, token, url, session):
-        current_user = UserModel.filter_by_id(token, session)
+    def search_pass_by_url(cls, user_id, url, session):
+        current_user = UserModel.filter_by_id(user_id, session)
         # Hard search without wildcard percent sign
         filtered_passwords = session.query(PasswordModel).filter(PasswordModel.user_id == current_user.id,
                                                                  PasswordModel.url.like(url))

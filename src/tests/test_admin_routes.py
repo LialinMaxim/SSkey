@@ -7,7 +7,6 @@ from .requests.admin_requests import AdminRequests
 from .requests.basic_requests import BasicRequests
 
 
-
 class TestAdminRoutes:
     """ Class contain tests for user routes CRUD functional """
 
@@ -40,6 +39,7 @@ class TestAdminRoutes:
         assert bytes(app.config['FIRST_NAME'], encoding='utf-8') in rv.data
 
     def test_batch_users_delete(self, client, resource):
+        """Test for batch delete users. Get list of users ids"""
         user_ids = []
         for user in app.config['USER_BATCH']:
             BasicRequests.register(client, *user)
@@ -52,7 +52,7 @@ class TestAdminRoutes:
         assert bytes('Users has been deleted successfully', encoding='utf-8') in rv.data
 
     def test_admin_delete_user_404(self, client, resource):
-        """Try to delete user data for existant user"""
+        """Try to delete user data for non existant user"""
 
         user_id = 190786663
         rv = AdminRequests.delete_user(client, str(user_id))
