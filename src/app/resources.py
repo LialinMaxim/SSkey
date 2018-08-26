@@ -53,7 +53,6 @@ def is_expiry_time(user_session):
 # Register
 
 
-@api.representation('/json')
 class Home(Resource):
     """Simple test that works without authorization."""
 
@@ -61,7 +60,6 @@ class Home(Resource):
         return 'This is a Home Page', 200  # OK
 
 
-@api.representation('/json')
 class Smoke(Resource):
     """Simple test that requires authorization."""
 
@@ -69,7 +67,6 @@ class Smoke(Resource):
         return 'OK', 200  # OK
 
 
-@api.representation('/json')
 class Login(Resource):
     """
     Login resource.
@@ -90,7 +87,6 @@ class Login(Resource):
         return 'Could not verify your login!', 401, {"WWW-Authenticate": 'Basic realm="Login Required"'}
 
 
-@api.representation('/json')
 class Logout(Resource):
     """
     Logout resource.
@@ -105,7 +101,6 @@ class Logout(Resource):
         return 'Dropped!', 200  # OK
 
 
-@api.representation('/json')
 class Register(Resource):
     """
     Register resource.
@@ -139,7 +134,6 @@ class Register(Resource):
                 return str(err), 500  # Internal Server Error
 
 
-@api.representation('/json')
 class User(Resource):
     def get(self):
         """Get user's data."""
@@ -180,7 +174,6 @@ class User(Resource):
             return str(err), 500
 
 
-@api.representation('/json')
 class UserPasswords(Resource):
     """
     User password resource.
@@ -236,7 +229,6 @@ class UserPasswords(Resource):
             return str(err), 500  # Internal Server Error
 
 
-@api.representation('/json')
 class UserPasswordsSearch(Resource):
     """
     Search for particular passwords using password's description.
@@ -275,7 +267,6 @@ class UserPasswordsSearch(Resource):
             return 'No matches found', 404
 
 
-@api.representation('/json')
 class UserPasswordsSearchUrl(Resource):
     @api.expect(search_password_url)
     def post(self):
@@ -305,7 +296,6 @@ class UserPasswordsSearchUrl(Resource):
             return 'No matches found', 404
 
 
-@api.representation('/json')
 class UserPasswordsNumber(Resource):
     """
     Class for dealing with user's passwords.
@@ -387,7 +377,6 @@ class UserPasswordsNumber(Resource):
             return str(err), 500  # Internal Server Error
 
 
-@api.representation('/json')
 class AdminUsers(Resource):
     def get(self):
         """Get all users by list."""
@@ -428,7 +417,6 @@ class AdminUsers(Resource):
             return str(err), 500
 
 
-@api.representation('/json')
 class AdminUsersNumber(Resource):
     def get(self, user_id):
         """Get user by user_id."""
@@ -457,7 +445,6 @@ class AdminUsersNumber(Resource):
             return str(err), 500  # Internal Server Error
 
 
-@api.representation('/json')
 class AdminUsersSearch(Resource):
     def get(self, username):
         """Get user by user name"""
