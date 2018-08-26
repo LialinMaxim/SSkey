@@ -43,9 +43,9 @@ class TestAdminRoutes:
         for user in app.config['USER_BATCH']:
             BasicRequests.register(client, *user)
         rv = AdminRequests.search_users_by_any_field(client, app.config['USER_BATCH'][0][5])
-        users = json.loads(str(rv.data, encoding='utf-8'))
-        for user in users:
-            user_ids.append(user['id'])
+        data = json.loads(str(rv.data, encoding='utf-8'))
+        for user, _ in enumerate(data):
+            user_ids.append(data['users'][user]['id'])
         rv = AdminRequests.batch_users_delete(client, user_ids)
 
         assert bytes('Users has been deleted successfully', encoding='utf-8') in rv.data
@@ -55,8 +55,8 @@ class TestAdminRoutes:
 
         rv = AdminRequests.get_user_by_username(client, app.config["USERNAME"])
 
-        user = json.loads(str(rv.data, encoding='utf-8'))
-        user_id = user['id']
-        rv = AdminRequests.delete_user(client, str(user['id']))
+        data = json.loads(str(rv.data, encoding='utf-8'))
+        user_id = data['user']['id']
+        rv = AdminRequests.delete_user(client, str(user_id))
 
         assert bytes(f'User ID:{user_id} has been DELETED.', encoding='utf-8') in rv.data
