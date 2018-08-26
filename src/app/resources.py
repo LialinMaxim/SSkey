@@ -67,23 +67,20 @@ def is_expiry_time(user_session):
 # Register
 
 
-@api.representation('/json')
 class Home(Resource):
     """Simple test that works without authorization."""
 
     def get(self):
-        return 'This is a Home Page', 200  # OK
+        return {'message': 'This is a Home Page'}, 200  # OK
 
 
-@api.representation('/json')
 class Smoke(Resource):
     """Simple test that requires authorization."""
 
     def get(self):
-        return 'OK', 200  # OK
+        return {'message': 'OK'}, 200  # OK
 
 
-@api.representation('/json')
 class Login(Resource):
     """
     Login resource.
@@ -104,7 +101,7 @@ class Login(Resource):
         return 'Could not verify your login!', 401, {"WWW-Authenticate": 'Basic realm="Login Required"'}
 
 
-@api.representation('/json')
+
 class Logout(Resource):
     """
     Logout resource.
@@ -116,10 +113,9 @@ class Logout(Resource):
         token = request.cookies.get('token')
         session.query(SessionObject).filter(SessionObject.token == token).delete()
         session.commit()
-        return 'Dropped!', 200  # OK
+        return {'message': 'Dropped!'}, 200  # OK
 
 
-@api.representation('/json')
 class Register(Resource):
     """
     Register resource.
@@ -137,31 +133,30 @@ class Register(Resource):
         try:
             data = UserSchema().load(json_data)
         except ValidationError as err:
-            return str(err), 422  # Unprocessable Entity
+            return {'error': str(err)}, 422  # Unprocessable Entity
         # Check if a new user is not exist in data base
         if UserModel.filter_by_username(data['username'], session):
-            return f'User with username: {data["username"]} is ALREADY EXISTS.', 200  # OK
+            return {'message': f'User with username: {data["username"]} is ALREADY EXISTS.'}, 200  # OK
         elif UserModel.filter_by_email(data['email'], session):
-            return f'User with email: {data["email"]} is ALREADY EXISTS.', 200  # OK
+            return {'message': f'User with email: {data["email"]} is ALREADY EXISTS.'}, 200  # OK
         else:
             # create a new user
             try:
                 session.add(UserModel(data))
                 session.commit()
-                return f"USER {data['username']} ADDED", 200  # OK
+                return {'message': f"USER {data['username']} ADDED"}, 200  # OK
             except SQLAlchemyError as err:
-                return str(err), 500  # Internal Server Error
+                return {'error': str(err)}, 500  # Internal Server Error
 
 
-@api.representation('/json')
 class User(Resource):
     def get(self):
         """Get user's data."""
         try:
             user_data = get_user_by_token()
         except SQLAlchemyError as err:
-            return str(err), 500
-        return UserSchema().dump(user_data), 200
+            return {'error': str(err)}, 500
+        return {'user': UserSchema().dump(user_data)}, 200
 
     @api.expect(user_put)
     def put(self):
@@ -174,9 +169,9 @@ class User(Resource):
                     current_user.__setattr__(arg_key, args[arg_key])
             session.add(current_user)
             session.commit()
-            return f'User {current_user.username} UPDATED', 200
+            return {'message': f'User {current_user.username} UPDATED'}, 200
         except SQLAlchemyError as err:
-            return err, 500
+            return {'error': err}, 500
 
     def delete(self):
         """Remove user with all his data."""
@@ -186,13 +181,12 @@ class User(Resource):
             session.query(SessionObject).filter(SessionObject.token == token).delete()
             session.delete(current_user)
             session.commit()
-            return f'User {current_user.username} DELETED', 200
+            return {'message': f'User {current_user.username} DELETED'}, 200
         except SQLAlchemyError as err:
             session.rollback()
-            return str(err), 500
+            return {'error': str(err)}, 500
 
 
-@api.representation('/json')
 class UserPasswords(Resource):
     """
     User password resource.
@@ -213,9 +207,9 @@ class UserPasswords(Resource):
             passwords_serialized = []
             for password in passwords:
                 passwords_serialized.append(password.serialize)
-            return {'Your passwords': passwords_serialized}, 200  # OK
+            return {'passwords': passwords_serialized}, 200  # OK
         except SQLAlchemyError as err:
-            return str(err), 500  # Internal Server Error
+            return {'error': str(err)}, 500  # Internal Server Error
 
     @api.expect(password_api_model)
     def post(self):
@@ -227,13 +221,13 @@ class UserPasswords(Resource):
         """
         json_data = request.get_json()
         if not json_data or not isinstance(json_data, dict):
-            return 'No input data provided', 400  # Bad Request
+            return {'message': 'No input data provided'}, 400  # Bad Request
 
         # Validate and deserialize input
         try:
             data = PasswordSchema().load(json_data)
         except ValidationError as err:
-            return str(err), 422  # Unprocessable Entity
+            return {'error': str(err)}, 422  # Unprocessable Entity
 
         current_user = get_user_by_token()
 
@@ -241,12 +235,11 @@ class UserPasswords(Resource):
         try:
             session.add(PasswordModel(current_user.id, data))
             session.commit()
-            return 'PASSWORD ADDED', 200  # OK
+            return {'message': 'PASSWORD ADDED'}, 200  # OK
         except SQLAlchemyError as err:
-            return str(err), 500  # Internal Server Error
+            return {'error': str(err)}, 500  # Internal Server Error
 
 
-@api.representation('/json')
 class UserPasswordsSearch(Resource):
     """
     Search for particular passwords using password's description.
@@ -262,30 +255,29 @@ class UserPasswordsSearch(Resource):
         """
         json_data = request.get_json()
         if not json_data or not isinstance(json_data, dict):
-            return 'No input data provided', 400  # Bad Request
+            return {'message': 'No input data provided'}, 400  # Bad Request
 
         # Validate and deserialize input
         try:
             data = SearchSchema().load(json_data)
         except ValidationError as err:
-            return str(err), 422  # Unprocessable Entity
+            return {'error': str(err)}, 422  # Unprocessable Entity
 
         try:
             user = get_user_by_token()
             filtered_passwords = PasswordModel.search_pass_by_description(user.id, data.get('condition'), session)
         except SQLAlchemyError as err:
-            return str(err), 500
+            return {'error': str(err)}, 500
 
         passwords_by_comment_title = []
         for password in filtered_passwords:
             passwords_by_comment_title.append(password.serialize)
         if passwords_by_comment_title:
-            return passwords_by_comment_title, 200
+            return {'passwords': passwords_by_comment_title}, 200
         else:
-            return 'No matches found', 404
+            return {'message': 'No matches found'}, 404
 
 
-@api.representation('/json')
 class UserPasswordsSearchUrl(Resource):
     @api.expect(search_password_url)
     def post(self):
@@ -293,29 +285,28 @@ class UserPasswordsSearchUrl(Resource):
         json_data = request.get_json()
 
         if not json_data or not isinstance(json_data, dict):
-            return 'No input data provided', 400
+            return {'message': 'No input data provided'}, 400
         # Input data validation by Marshmallow schema
         try:
             data = SearchPasswordUrlSchema().load(json_data)
         except ValidationError as err:
-            return str(err), 422
+            return {'error': str(err)}, 422
 
         try:
             user = get_user_by_token()
             filtered_passwords = PasswordModel.search_pass_by_url(user.id, data.get('url'), session)
         except SQLAlchemyError as err:
-            return str(err), 500
+            return {'message': str(err)}, 500
 
         passwords_by_url = []
         for password in filtered_passwords:
             passwords_by_url.append(password.serialize)
         if passwords_by_url:
-            return passwords_by_url, 200
+            return {'passwords': passwords_by_url}, 200
         else:
-            return 'No matches found', 404
+            return {'message': 'No matches found'}, 404
 
 
-@api.representation('/json')
 class UserPasswordsNumber(Resource):
     """
     Class for dealing with user's passwords.
@@ -335,10 +326,10 @@ class UserPasswordsNumber(Resource):
             current_user = get_user_by_token()
             password = PasswordModel.find_pass(current_user.id, pass_id, session)
             if not password:
-                return 'Password Not Found', 404  # Not Found
+                return {'message': 'Password Not Found'}, 404  # Not Found
             return {'password': password.serialize}, 200  # OK
         except SQLAlchemyError as err:
-            return str(err), 500  # Internal Server Error
+            return {'error': str(err)}, 500  # Internal Server Error
 
     @api.expect(password_api_model)
     def put(self, pass_id):
@@ -353,10 +344,10 @@ class UserPasswordsNumber(Resource):
         try:
             data = PasswordPutSchema().load(json_data)
         except ValidationError as err:
-            return str(err), 422  # Unprocessable Entity
+            return {'error': str(err)}, 422  # Unprocessable Entity
         try:
             if not PasswordModel.is_password_exists(pass_id):
-                return 'Password Not Found', 404
+                return {'message': 'Password Not Found'}, 404
             password = PasswordModel.filter_pass_by_id(pass_id, session)
             previous_pass = password.title
 
@@ -367,9 +358,9 @@ class UserPasswordsNumber(Resource):
                     password.crypt_password(data[arg_key])
             session.add(password)
             session.commit()
-            return f'Data for {previous_pass} has been updated successfully', 200
+            return {'message': f'Data for {previous_pass} has been updated successfully'}, 200
         except SQLAlchemyError as err:
-            return str(err), 500
+            return {'error': str(err)}, 500
 
     def delete(self, pass_id):
         """
@@ -389,22 +380,21 @@ class UserPasswordsNumber(Resource):
                     .filter(PasswordModel.pass_id == pass_id) \
                     .delete()
                 session.commit()
-                return f'Password ID {pass_id} DELETED', 200  # OK
+                return {'message': f'Password ID {pass_id} DELETED'}, 200  # OK
             else:
-                return 'Password Not Found', 404  # Not Found
+                return {'message': 'Password Not Found'}, 404  # Not Found
         except SQLAlchemyError as err:
-            return str(err), 500  # Internal Server Error
+            return {'error': str(err)}, 500  # Internal Server Error
 
 
-@api.representation('/json')
 class AdminUsers(Resource):
     def get(self):
         """Get all users by list."""
         try:
             users = session.query(UserModel).all()
         except SQLAlchemyError as err:
-            return str(err), 500  # Internal Server Error
-        return UserSchema(many=True).dump(users), 200  # OK
+            return {'error': str(err)}, 500  # Internal Server Error
+        return {'users': UserSchema(many=True).dump(users)}, 200  # OK
 
     @api.expect(users_ids_list)
     def delete(self):
@@ -416,13 +406,13 @@ class AdminUsers(Resource):
         """
         json_data = request.get_json()
         if not json_data or not isinstance(json_data, dict):
-            return 'No input data provided', 400  # Bad Request
+            return {'message': 'No input data provided'}, 400  # Bad Request
 
         # Validate and deserialize input
         try:
             users_ids = (UserIdsListSchema().load(json_data))['users_ids']
         except ValidationError as err:
-            return str(err), 422  # Unprocessable Entity
+            return {'error': str(err)}, 422  # Unprocessable Entity
         try:
             for user_id in users_ids:
                 user = UserModel.filter_by_id(user_id, session)
@@ -432,23 +422,22 @@ class AdminUsers(Resource):
                         session.delete(password)
                     session.delete(user)
             session.commit()
-            return 'Users has been deleted successfully', 200
+            return {'message': 'Users has been deleted successfully'}, 200
         except SQLAlchemyError as err:
-            return str(err), 500
+            return {'error': str(err)}, 500
 
 
-@api.representation('/json')
 class AdminUsersNumber(Resource):
     def get(self, user_id):
         """Get user by user_id."""
         try:
             user_data = UserModel.filter_by_id(user_id, session)
         except SQLAlchemyError as err:
-            return str(err), 500  # Internal Server Error
+            return {'error': str(err)}, 500  # Internal Server Error
         if user_data:
-            return UserSchema().dump(user_data), 200  # OK
+            return {'user': UserSchema().dump(user_data)}, 200  # OK
         else:
-            return f'User ID {user_id} - Not Found', 404  # Not Found
+            return {'message': f'User ID {user_id} - Not Found'}, 404  # Not Found
 
     def delete(self, user_id):
         """Delete user by user_id."""
@@ -458,25 +447,24 @@ class AdminUsersNumber(Resource):
                 session.query(PasswordModel).filter(PasswordModel.user_id == user_id).delete()
                 session.query(UserModel).filter(UserModel.id == user_id).delete()
                 session.commit()
-                return f'User ID:{user_id} has been DELETED.', 200  # OK
+                return {'message': f'User ID:{user_id} has been DELETED.'}, 200  # OK
             else:
-                return f'User ID {user_id} - Not Found', 404  # Not Found
+                return {'message': f'User ID {user_id} - Not Found'}, 404  # Not Found
         except SQLAlchemyError as err:
-            return str(err), 500  # Internal Server Error
+            return {'error': str(err)}, 500  # Internal Server Error
 
 
-@api.representation('/json')
 class AdminUsersSearch(Resource):
     def get(self, username):
         """Get user by user name"""
         try:
             user_data = UserModel.filter_by_username(username, session)
         except SQLAlchemyError as err:
-            return str(err), 500  # Internal Server Error
+            return {'error': str(err)}, 500  # Internal Server Error
         if user_data:
-            return UserSchema().dump(user_data), 200  # OK
+            return {'user': UserSchema().dump(user_data)}, 200  # OK
         else:
-            return 'User not found', 404  # Not Found
+            return {'message': 'User not found'}, 404  # Not Found
 
 
 class AdminUsersSearchList(Resource):
@@ -488,12 +476,12 @@ class AdminUsersSearchList(Resource):
     def post(self):
         json_data = request.get_json()
         if not json_data or not isinstance(json_data, dict):
-            return 'No input data provided', 400  # Bad Request
+            return {'message': 'No input data provided'}, 400  # Bad Request
         # Validate and deserialize input
         try:
             user_data = (AdminUsersSearchData().load(json_data))['user_data']
         except ValidationError as err:
-            return str(err), 422  # Unprocessable Entity
+            return {'error': str(err)}, 422  # Unprocessable Entity
         # Search users
         try:
             users = session.query(UserModel).filter(
@@ -502,8 +490,8 @@ class AdminUsersSearchList(Resource):
                     UserModel.phone.like(f'%{user_data}%')
                     )).all()
         except SQLAlchemyError as err:
-            return str(err), 500  # Internal Server Error
+            return {'error': str(err)}, 500  # Internal Server Error
         if users:
-            return UserSchema(many=True).dump(users), 200  # OK
+            return {'users': UserSchema(many=True).dump(users)}, 200  # OK
         else:
-            return 'User not found', 404  # Not Found
+            return {'message': 'User not found'}, 404  # Not Found
