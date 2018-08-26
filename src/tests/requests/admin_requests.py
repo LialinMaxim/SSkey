@@ -1,3 +1,33 @@
+import pytest
+
+from src.app import config
+from src.app import app
+from src.app.base import Session
+from src.app.models import UserModel
+from .login_requests import LoginRequests, client
+
+session = Session()
+
+
+@pytest.fixture
+def create_admin(client):
+    password = app.config["ADMIN_PASSWORD"]
+    username = app.config['ADMIN_USERNAME']
+    admin = UserModel(
+        {'username': username, 'password': password, 'email': app.config['ADMIN_EMAIL'],
+         'first_name': '', 'last_name': '', 'phone': ''})
+    admin.is_admin = True
+    session.add(admin)
+    session.commit()
+
+
+@pytest.yield_fixture
+def login_logout_admin(client):
+    LoginRequests.login(client, app.config["ADMIN_EMAIL"], app.config["ADMIN_PASSWORD"])
+    yield
+    LoginRequests.logout(client)
+
+
 class AdminRequests:
     """ Contain methods to send requests on user routes"""
 
