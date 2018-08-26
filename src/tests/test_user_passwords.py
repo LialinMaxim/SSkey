@@ -65,7 +65,7 @@ def test_post_search_password_by_nonexistent_url(client, resource):
 def test_get_particular_user_pass(client, resource):
     rv = UserPasswords.get_all_user_pass(client)
     password = json.loads(str(rv.data, encoding='utf-8'))
-    pass_id = password.get('Your passwords')[0].get(
+    pass_id = password.get('passwords')[0].get(
         'pass_id')  # you get a dictionary that contains as a value list of dictionary
     rv = PasswordResource.get_particular_user_pass(client, pass_id)
     assert bytes(app.config['COMMENT'], encoding='utf-8') in rv.data
@@ -74,7 +74,7 @@ def test_get_particular_user_pass(client, resource):
 def test_not_found_pass_get_particular_user_pass(client, resource):
     rv = UserPasswords.get_all_user_pass(client)
     password = json.loads(str(rv.data, encoding='utf-8'))
-    pass_id = password.get('Your passwords')[0].get('pass_id') + 1000
+    pass_id = password.get('passwords')[0].get('pass_id') + 1000
     rv = PasswordResource.get_particular_user_pass(client, pass_id)
     assert bytes('Password Not Found', encoding='utf-8') in rv.data
 
@@ -83,8 +83,8 @@ def test_put_particular_user_pass(client, resource):
     rv = UserPasswords.get_all_user_pass(client)
 
     password = json.loads(str(rv.data, encoding='utf-8'))
-    pass_id = password.get('Your passwords')[0].get('pass_id')
-    previous_pass = password.get('Your passwords')[0].get('title')
+    pass_id = password.get('passwords')[0].get('pass_id')
+    previous_pass = password.get('passwords')[0].get('title')
 
     rv = PasswordResource.put_particular_user_pass(client, pass_id, app.config['URL'], title=app.config['TITLE_PUT'],
                                                    comment=app.config['COMMENT_PUT'])
@@ -97,7 +97,7 @@ def test_put_particular_user_pass(client, resource):
 def test_not_found_put_particular_user_pass(client, resource):
     rv = UserPasswords.get_all_user_pass(client)
     password = json.loads(str(rv.data, encoding='utf-8'))
-    pass_id = password.get('Your passwords')[0].get('pass_id') + 1000
+    pass_id = password.get('passwords')[0].get('pass_id') + 1000
 
     rv = PasswordResource.put_particular_user_pass(client, pass_id, app.config['URL'], title=app.config['TITLE_PUT'],
                                                    comment=app.config['COMMENT_PUT'])
@@ -107,7 +107,7 @@ def test_not_found_put_particular_user_pass(client, resource):
 def test_unprocessable_entity_put_particular_user_pass(client, resource):
     rv = UserPasswords.get_all_user_pass(client)
     password = json.loads(str(rv.data, encoding='utf-8'))
-    pass_id = password.get('Your passwords')[0].get('pass_id') + 1000
+    pass_id = password.get('passwords')[0].get('pass_id') + 1000
     rv = PasswordResource.put_particular_user_pass(client, pass_id, 111, 111, 111)
     assert '422 UNPROCESSABLE ENTITY' in rv.status
 
@@ -141,7 +141,7 @@ def test_no_matches_found_search_pass_by_description(client, resource):
 def test_not_found_delete_particular_user_pass(client, resource):
     rv = UserPasswords.get_all_user_pass(client)
     password = json.loads(str(rv.data, encoding='utf-8'))
-    pass_id = password.get('Your passwords')[0].get('pass_id') + 1000
+    pass_id = password.get('passwords')[0].get('pass_id') + 1000
 
     rv = PasswordResource.delete_particular_user_pass(client, pass_id)
     assert bytes('Password Not Found', encoding='utf-8') in rv.data
@@ -150,7 +150,7 @@ def test_not_found_delete_particular_user_pass(client, resource):
 def test_delete_particular_user_pass(client, resource):
     rv = UserPasswords.get_all_user_pass(client)
     password = json.loads(str(rv.data, encoding='utf-8'))
-    pass_id = password.get('Your passwords')[0].get('pass_id')
+    pass_id = password.get('passwords')[0].get('pass_id')
     rv = PasswordResource.delete_particular_user_pass(client, pass_id)
     assert bytes(f'Password ID {pass_id} DELETED', encoding='utf-8') in rv.data
 
