@@ -3,7 +3,7 @@ import hashlib
 import os
 import base64
 
-from sqlalchemy import Column, String, Integer, Date, LargeBinary, ForeignKey, Boolean
+from sqlalchemy import Column, String, Integer, Date, LargeBinary, ForeignKey, DateTime, Boolean, or_
 from sqlalchemy.orm import relationship
 from sqlalchemy.exc import SQLAlchemyError
 from cryptography.fernet import Fernet
@@ -200,3 +200,62 @@ class PasswordModel(Base):
     def filter_pass_by_id(cls, pass_id, session):
         password = session.query(PasswordModel).filter(PasswordModel.pass_id == pass_id).first()
         return password
+
+    @classmethod
+    def search_pass_by_description(cls, token, condition, session):
+        current_user = UserModel.filter_by_id(token, session)
+        filtered_passwords = session.query(PasswordModel).filter(PasswordModel.user_id == current_user.id).filter(or_(
+            PasswordModel.comment.like(condition),
+            PasswordModel.title.like(condition)))
+
+        return filtered_passwords
+
+    @classmethod
+    def search_pass_by_url(cls, token, url, session):
+        current_user = UserModel.filter_by_id(token, session)
+        # Hard search without wildcard percent sign
+        filtered_passwords = session.query(PasswordModel).filter(PasswordModel.user_id == current_user.id,
+                                                                 PasswordModel.url.like(url))
+
+        return filtered_passwords
+
+
+class SessionObject(Base):
+    __tablename__ = 'session_objects'
+
+    id = Column('id', Integer, primary_key=True)
+    token = Column('token', String(100), unique=True, nullable=False)
+    user_id = Column('user_id', Integer, ForeignKey('users.id'))
+    user = relationship("UserModel", backref="session_objects", cascade='all,delete')
+    login_time = Column('login_time', DateTime, nullable=False)
+    expiration_time = Column('expiration_time', DateTime, nullable=False)
+
+    @property
+    def serialize(self):
+        """Return object data in easily serializeable format"""
+        return {
+            'id': self.id,
+            'token': self.token,
+            'user_id': self.user_id,
+            'login_time': str(self.login_time),
+            'expiration_time': self.expiration_time,
+        }
+
+    def __init__(self, user_id, token_len=16):
+        self.token = str(SessionObject.generate_token(token_len))
+        self.user_id = user_id
+        self.login_time = datetime.datetime.now()
+        self.expiration_time = self.login_time + datetime.timedelta(minutes=15)
+
+    @staticmethod
+    def generate_token(token_len):
+        return str(os.urandom(token_len))
+
+    def update_login_time(self):
+        self.login_time = datetime.datetime.now()
+        self.expiration_time = self.login_time + datetime.timedelta(minutes=15)
+        return self.login_time
+
+    def __str__(self):
+        session_data = dict(login_time=self.login_time, expiration_time=self.expiration_time)
+        return f'{session_data["login_time"]:%X %B %d, %Y}, {session_data["expiration_time"]:%X %B %d, %Y}'

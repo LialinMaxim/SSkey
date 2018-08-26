@@ -16,6 +16,16 @@ class PasswordSchema(Schema):
     pass_id = fields.Integer(dump_only=True)
     user_id = fields.Integer(dump_only=True)
     url = fields.Url(required=True)
+    title = fields.String(required=True)
+    login = fields.String(required=True)
+    password = fields.String(required=True)
+    comment = fields.String(required=True)
+
+
+class PasswordPutSchema(Schema):
+    pass_id = fields.Integer(dump_only=True)
+    user_id = fields.Integer(dump_only=True)
+    url = fields.Url(required=True)
     title = fields.String()
     login = fields.String()
     password = fields.String()
@@ -28,3 +38,11 @@ class SearchSchema(Schema):
 
 class SearchPasswordUrlSchema(Schema):
     url = fields.Url(required=True)
+
+
+class UserIdsListSchema(Schema):
+    users_ids = fields.List(fields.Integer(), required=True)
+
+
+class AdminUsersSearchData(Schema):
+    user_data = fields.String(required=True)

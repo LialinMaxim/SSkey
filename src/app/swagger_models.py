@@ -3,7 +3,7 @@ from flask_restplus import fields
 from . import api
 
 # Models used to generate swagger documentation
-# imported and use in resources.py
+# imported and use in resources
 
 user_post = api.model('Create New User', {
     'email': fields.String(example='admin@gmail.com'),
@@ -41,4 +41,11 @@ search_password = api.model('Search for password', {
 
 search_password_url = api.model('Search for password\'s URL', {
     'url': fields.Url(example='https://www.youtube.com')
+})
+
+users_ids_list = api.model('Delete users by id list', {
+    'users_ids': fields.List(fields.Integer(), example=[1, 2, 3])
+})
+admin_users_search = api.model('Search users by any data', {
+    'user_data': fields.String(example='Tesla')
 })

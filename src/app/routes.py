@@ -2,10 +2,11 @@ from flask import g
 
 from . import api, user_api, admin_api
 from .base import Session
-from .resources.general import Home, Smoke, Register, Login, Logout
-from .resources.user import (User, UserPasswords, UserPasswordsSearch,
-                             UserPasswordsSearchUrl, UserPasswordsNumber)
-from .resources.admin import AdminUsers, AdminUsersNumber, AdminUsersSearch
+
+from .resources import Home, Smoke, Register, Login, Logout
+from .resources import (User, UserPasswords, UserPasswordsSearch,
+                        UserPasswordsSearchUrl, UserPasswordsNumber)
+from .resources import AdminUsers, AdminUsersNumber, AdminUsersSearch, AdminUsersSearchList
 
 api.add_resource(Home, '/home')  # GET
 api.add_resource(Smoke, '/smoke')  # GET
@@ -13,15 +14,16 @@ api.add_resource(Login, '/login')  # POST
 api.add_resource(Logout, '/logout')  # GET
 api.add_resource(Register, '/register')  # POST
 
-user_api.add_resource(User, '/user')  # GET, PUT, DELETE
-user_api.add_resource(UserPasswords, '/user/passwords')  # GET, POST
-user_api.add_resource(UserPasswordsSearch, '/user/passwords/search')  # POST
-user_api.add_resource(UserPasswordsSearchUrl, '/user/passwords/url')  # POST
-user_api.add_resource(UserPasswordsNumber, '/user/passwords/<int:pass_id>')  # GET, PUT, DELETE
+user_api.add_resource(User, '/')  # GET, PUT, DELETE
+user_api.add_resource(UserPasswords, '/passwords')  # GET, POST
+user_api.add_resource(UserPasswordsSearch, '/passwords/search')  # POST
+user_api.add_resource(UserPasswordsSearchUrl, '/passwords/url')  # POST
+user_api.add_resource(UserPasswordsNumber, '/passwords/<int:pass_id>')  # GET, PUT, DELETE
 
-admin_api.add_resource(AdminUsers, '/admin/users')  # GET
-admin_api.add_resource(AdminUsersNumber, '/admin/users/<int:user_id>')  # GET, DELETE
-admin_api.add_resource(AdminUsersSearch, '/admin/users/<string:username>')  # GET
+admin_api.add_resource(AdminUsers, '/users')  # GET, #DELETE
+admin_api.add_resource(AdminUsersNumber, '/users/<int:user_id>')  # GET, DELETE
+admin_api.add_resource(AdminUsersSearch, '/users/<string:username>')  # GET
+admin_api.add_resource(AdminUsersSearchList, '/users/search')  # POST
 
 
 def get_session():
