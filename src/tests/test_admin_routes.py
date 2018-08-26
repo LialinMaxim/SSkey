@@ -7,6 +7,7 @@ from .requests.admin_requests import AdminRequests
 from .requests.basic_requests import BasicRequests
 
 
+
 class TestAdminRoutes:
     """ Class contain tests for user routes CRUD functional """
 
@@ -16,13 +17,13 @@ class TestAdminRoutes:
                                     app.config["FIRST_NAME"], app.config["LAST_NAME"], app.config["PHONE"])
         assert b"USER testuser ADDED" in rv.data
 
-    def test_admin_get_user_by_username_ok(self, client, resource):
+    def test_admin_get_user_by_username_200(self, client, resource):
         """Test for get user by username. If user exists in db"""
         rv = AdminRequests.get_user_by_username(client, app.config['USERNAME'])
         assert bytes(app.config['EMAIL'], encoding='utf-8') in rv.data
         assert bytes(app.config['FIRST_NAME'], encoding='utf-8') in rv.data
 
-    def test_admin_get_user_by_username(self, client, resource):
+    def test_admin_get_user_by_username_404(self, client, resource):
         """Test for get user by username. If user not exists in db"""
         rv = AdminRequests.get_user_by_username(client, 'abrakadabra5768')
         assert bytes('User not found', encoding='utf-8') in rv.data
@@ -50,7 +51,15 @@ class TestAdminRoutes:
 
         assert bytes('Users has been deleted successfully', encoding='utf-8') in rv.data
 
-    def test_admin_delete_user(self, client, resource):
+    def test_admin_delete_user_404(self, client, resource):
+        """Try to delete user data for existant user"""
+
+        user_id = 190786663
+        rv = AdminRequests.delete_user(client, str(user_id))
+
+        assert bytes(f'User ID {user_id} - Not Found', encoding='utf-8') in rv.data
+
+    def test_admin_delete_user_200(self, client, resource):
         """Try to delete user data for existant user"""
 
         rv = AdminRequests.get_user_by_username(client, app.config["USERNAME"])

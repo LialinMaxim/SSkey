@@ -25,7 +25,7 @@ def require_login():
     if request.endpoint != 'login':
         allowed_routes = ['login', 'register', 'home', 'doc', 'restplus_doc.static', 'specs']
         token_from_cookie = request.cookies.get('token')
-        user_session = session.query(SessionObject).filter(SessionObject.user_id == token_from_cookie).first()
+        user_session = session.query(SessionObject).filter(SessionObject.token == token_from_cookie).first()
         expiration_time = is_expiry_time(user_session)
         if not expiration_time:
             del user_session
@@ -38,7 +38,7 @@ def is_expiry_time(user_session):
         token = request.cookies.get('token')
         out_of_time = user_session.update_login_time() <= user_session.expiration_time
         if not out_of_time:
-            session.query(SessionObject).filter(SessionObject.user_id == token).delete()
+            session.query(SessionObject).filter(SessionObject.token == token).delete()
             session.commit()
         else:
             return True
@@ -86,7 +86,7 @@ class Login(Resource):
             user_session = SessionObject(user.id)
             session.add(user_session)
             session.commit()
-            return f'You are LOGGED IN as {user.email}', 200, {"Set-Cookie": f'token="{user_session.user_id}"'}
+            return f'You are LOGGED IN as {user.email}', 200, {"Set-Cookie": f'token="{user_session.token}"'}
         return 'Could not verify your login!', 401, {"WWW-Authenticate": 'Basic realm="Login Required"'}
 
 
@@ -100,7 +100,7 @@ class Logout(Resource):
 
     def get(self):
         token = request.cookies.get('token')
-        session.query(SessionObject).filter(SessionObject.user_id == token).delete()
+        session.query(SessionObject).filter(SessionObject.token == token).delete()
         session.commit()
         return 'Dropped!', 200  # OK
 
