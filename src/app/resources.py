@@ -29,6 +29,13 @@ def require_login():
     The function will be called without any arguments. This function checks whether requested route is allowed to
     unregistered user or not in allowed routes. Also, checks if session isn't empty. Otherwise, it will return 403 error
     """
+
+    admin_endpoints = ['admin_admin_users', 'admin_admin_users_search_list', 'admin_admin_users_number',
+                    'admin_admin_users_search']
+    if request.endpoint in admin_endpoints:
+        user = get_user_by_token()
+        if not user.is_admin:
+            return make_response('You are not allowed to use admin functional', 403)
     if request.endpoint != 'login':
         allowed_routes = ['login', 'register', 'home', 'doc', 'restplus_doc.static', 'specs']
         token_from_cookie = request.cookies.get('token')
