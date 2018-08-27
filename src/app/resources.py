@@ -7,10 +7,10 @@ from sqlalchemy import or_
 from . import app, api
 from .base import Session
 from .models import UserModel, PasswordModel, SessionObject
-from .marshmallow_schemes import UserSchema, PasswordSchema, SearchSchema, SearchPasswordUrlSchema, \
-    PasswordPutSchema, UserIdsListSchema, AdminUsersSearchData
-from .swagger_models import user_post, user_login, password_api_model, user_put, search_password, \
-    search_password_url, users_ids_list, admin_users_search
+from .marshmallow_schemes import (UserSchema, PasswordSchema, SearchSchema, PasswordPutSchema, UserIdsListSchema,
+                                  AdminUsersSearchData)
+from .swagger_models import (user_post, user_login, password_api_model, user_put, search_password, users_ids_list,
+                             admin_users_search)
 
 session = Session()
 
