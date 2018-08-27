@@ -123,8 +123,6 @@ class Logout(Resource):
 
 
 class Register(Resource):
-
-
     @api.expect(user_post)
     def post(self):
         """
