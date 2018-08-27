@@ -16,7 +16,7 @@ SSkey project main features:
 
 Here is how it looks at [http://sskey.pythonanywhere.com/](http://sskey.pythonanywhere.com/):
 
-![sskey](https://raw.githubusercontent.com/LialinMaxim/SSkey/sandbox/src/app/static/sskey.png)
+![sskey](https://raw.githubusercontent.com/LialinMaxim/SSkey/sandbox/src/app/static/swagger_sskey.png)
 
 
 ## Getting started
@@ -91,8 +91,14 @@ docker-app.sh
     ```shell
     python src/manage.py runserver
     ```
+    
+5. Initialise Data Base:
 
-5. Visit [http://localhost:5000](http://localhost:5000)
+    ```shell
+    python src/manage.py db init
+    ```
+    
+6. Visit [http://localhost:5000](http://localhost:5000)
 
 ## Flask Application Structure 
 
@@ -165,9 +171,7 @@ python -m pytest src/tests
 2. Create environment file .env and put into /src/app directory with content:
 
     ```shell
-    # LOCAL ENVIRONMENT VALUES
-    FLASK_APP=manage.py
-    SECRET_KEY=m8t6u7i18s463t6lrd9eutf2
+    SECRET_KEY=wizard380684096936
     POSTGRES_USER=postgres
     POSTGRES_PASS=postgres
     POSTGRES_HOST=localhost
