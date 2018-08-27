@@ -97,8 +97,9 @@ class Login(Resource):
             user_session = SessionObject(user.id)
             session.add(user_session)
             session.commit()
-            return f'You are LOGGED IN as {user.email}', 200, {"Set-Cookie": f'token="{user_session.token}"'}
-        return 'Could not verify your login!', 401, {"WWW-Authenticate": 'Basic realm="Login Required"'}
+            return {'message': f'You are LOGGED IN as {user.email}'}, 200, \
+                   {"Set-Cookie": f'token="{user_session.token}"'}
+        return {'message': 'Could not verify your login!'}, 401, {"WWW-Authenticate": 'Basic realm="Login Required"'}
 
 
 class Logout(Resource):
@@ -127,7 +128,7 @@ class Register(Resource):
     def post(self):
         json_data = request.get_json()
         if not json_data or not isinstance(json_data, dict):
-            return 'No input data provided', 400  # Bad Request
+            return {'message': 'No input data provided'}, 400  # Bad Request
         # Validate and deserialize input
         try:
             data = UserSchema().load(json_data)
