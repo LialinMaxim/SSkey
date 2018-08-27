@@ -2,6 +2,8 @@ import datetime
 import hashlib
 import os
 import base64
+from random import choice
+from string import ascii_letters
 
 from sqlalchemy import Column, String, Integer, Date, LargeBinary, ForeignKey, DateTime, Boolean, or_
 from sqlalchemy.orm import relationship
@@ -202,17 +204,16 @@ class PasswordModel(Base):
         return password
 
     @classmethod
-    def search_pass_by_description(cls, token, condition, session):
-        current_user = UserModel.filter_by_id(token, session)
-        filtered_passwords = session.query(PasswordModel).filter(PasswordModel.user_id == current_user.id).filter(or_(
+    def search_pass_by_description(cls, user_id, condition, session):
+        filtered_passwords = session.query(PasswordModel).filter(PasswordModel.user_id == user_id).filter(or_(
             PasswordModel.comment.like(condition),
             PasswordModel.title.like(condition)))
 
         return filtered_passwords
 
     @classmethod
-    def search_pass_by_url(cls, token, url, session):
-        current_user = UserModel.filter_by_id(token, session)
+    def search_pass_by_url(cls, user_id, url, session):
+        current_user = UserModel.filter_by_id(user_id, session)
         # Hard search without wildcard percent sign
         filtered_passwords = session.query(PasswordModel).filter(PasswordModel.user_id == current_user.id,
                                                                  PasswordModel.url.like(url))
@@ -241,15 +242,15 @@ class SessionObject(Base):
             'expiration_time': self.expiration_time,
         }
 
-    def __init__(self, user_id, token_len=16):
+    def __init__(self, user_id, token_len=30):
         self.token = str(SessionObject.generate_token(token_len))
         self.user_id = user_id
         self.login_time = datetime.datetime.now()
         self.expiration_time = self.login_time + datetime.timedelta(minutes=15)
 
     @staticmethod
-    def generate_token(token_len):
-        return str(os.urandom(token_len))
+    def generate_token(token_len=30):
+        return ''.join(choice(ascii_letters) for i in range(token_len))
 
     def update_login_time(self):
         self.login_time = datetime.datetime.now()
