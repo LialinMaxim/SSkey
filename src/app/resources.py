@@ -101,7 +101,6 @@ class Login(Resource):
         return 'Could not verify your login!', 401, {"WWW-Authenticate": 'Basic realm="Login Required"'}
 
 
-
 class Logout(Resource):
     """
     Logout resource.
