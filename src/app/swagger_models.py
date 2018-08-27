@@ -39,7 +39,6 @@ search_password = api.model('Search for password', {
     'condition': fields.String(example='google.com')
 })
 
-
 users_ids_list = api.model('Delete users by id list', {
     'users_ids': fields.List(fields.Integer(), example=[1, 2, 3])
 })

@@ -7,8 +7,8 @@ from sqlalchemy import or_
 from . import app, api
 from .base import Session
 from .models import UserModel, PasswordModel, SessionObject
-from .marshmallow_schemes import (UserSchema, PasswordSchema, SearchSchema, PasswordPutSchema, UserIdsListSchema,
-                                  AdminUsersSearchData)
+from .marshmallow_schemes import (UserSchema, UserLoginSchema, PasswordSchema, SearchSchema, PasswordPutSchema,
+                                  UserIdsListSchema, AdminUsersSearchData)
 from .swagger_models import (user_post, user_login, password_api_model, user_put, search_password, users_ids_list,
                              admin_users_search)
 
@@ -68,48 +68,54 @@ def is_expiry_time(user_session):
 
 
 class Home(Resource):
-    """Simple test that works without authorization."""
-
     def get(self):
+        """Simple test that works without authorization."""
         return {'message': 'This is a Home Page'}, 200  # OK
 
 
 class Smoke(Resource):
-    """Simple test that requires authorization."""
-
     def get(self):
+        """Simple test that requires authorization."""
         return {'message': 'OK'}, 200  # OK
 
 
 class Login(Resource):
-    """
-    Login resource.
-
-    Checks whether entered data is in DB. Create user session based on its id and then sets session lifetime.
-    Otherwise, it will return 401 error.
-    """
-
     @api.expect(user_login)
     def post(self):
-        data = request.get_json()
+        """
+        Login resource.
+
+        Checks whether entered data is in DB. Create user session based on its id and then sets session lifetime.
+        Otherwise, it will return 401 error.
+        """
+        json_data = request.get_json()
+        if not json_data or not isinstance(json_data, dict):
+            return {'message': 'No input data provided'}, 400  # Bad Request
+
+        # Validate and deserialize input
+        try:
+            data = UserLoginSchema().load(json_data)
+        except ValidationError as err:
+            return {'error': str(err)}, 422  # Unprocessable Entity
+
+        # Check if a new user is not exist in data base
         user = UserModel.filter_by_email(data['email'], session)
         if user and user.compare_hash(data['password']):
             user_session = SessionObject(user.id)
             session.add(user_session)
             session.commit()
             return {'message': f'You are LOGGED IN as {user.email}'}, 200, \
-                   {"Set-Cookie": f'token="{user_session.token}"'}
+                   {'Set-Cookie': f'token="{user_session.token}"'}
         return {'message': 'Could not verify your login!'}, 401, {"WWW-Authenticate": 'Basic realm="Login Required"'}
 
 
 class Logout(Resource):
-    """
-    Logout resource.
-
-    Remove the username from the session.
-    """
-
     def get(self):
+        """
+        Logout resource.
+
+        Remove the username from the session.
+        """
         token = request.cookies.get('token')
         session.query(SessionObject).filter(SessionObject.token == token).delete()
         session.commit()
@@ -117,15 +123,14 @@ class Logout(Resource):
 
 
 class Register(Resource):
-    """
-    Register resource.
-
-    Parsing requested data, checks if username or email doesn't exit in DB, then create user in DB. 200 OK
-    Otherwise, return 500 or 400 error.
-    """
-
     @api.expect(user_post)
     def post(self):
+        """
+        Register resource.
+
+        Parsing requested data, checks if username or email doesn't exit in DB, then create user in DB. 200 OK
+        Otherwise, return 500 or 400 error.
+        """
         json_data = request.get_json()
         if not json_data or not isinstance(json_data, dict):
             return {'message': 'No input data provided'}, 400  # Bad Request
@@ -453,12 +458,14 @@ class AdminUsersSearch(Resource):
 
 
 class AdminUsersSearchList(Resource):
-    """
-    Search user by any data - username, email, first_name, last_name or phone
-    """
 
     @api.expect(admin_users_search)
     def post(self):
+        """
+        Search user by any data.
+
+        Search user by - username, email, first_name, last_name or phone.
+        """
         json_data = request.get_json()
         if not json_data or not isinstance(json_data, dict):
             return {'message': 'No input data provided'}, 400  # Bad Request
