@@ -7,10 +7,10 @@ from sqlalchemy import or_
 from . import app, api
 from .base import Session
 from .models import UserModel, PasswordModel, SessionObject
-from .marshmallow_schemes import UserSchema, PasswordSchema, SearchSchema, SearchPasswordUrlSchema, \
-    PasswordPutSchema, UserIdsListSchema, AdminUsersSearchData
-from .swagger_models import user_post, user_login, password_api_model, user_put, search_password, \
-    search_password_url, users_ids_list, admin_users_search
+from .marshmallow_schemes import (UserSchema, PasswordSchema, SearchSchema, PasswordPutSchema, UserIdsListSchema,
+                                  AdminUsersSearchData)
+from .swagger_models import (user_post, user_login, password_api_model, user_put, search_password, users_ids_list,
+                             admin_users_search)
 
 session = Session()
 
@@ -97,9 +97,9 @@ class Login(Resource):
             user_session = SessionObject(user.id)
             session.add(user_session)
             session.commit()
-            return f'You are LOGGED IN as {user.email}', 200, {"Set-Cookie": f'token="{user_session.token}"'}
-        return 'Could not verify your login!', 401, {"WWW-Authenticate": 'Basic realm="Login Required"'}
-
+            return {'message': f'You are LOGGED IN as {user.email}'}, 200, \
+                   {"Set-Cookie": f'token="{user_session.token}"'}
+        return {'message': 'Could not verify your login!'}, 401, {"WWW-Authenticate": 'Basic realm="Login Required"'}
 
 
 class Logout(Resource):
@@ -128,7 +128,7 @@ class Register(Resource):
     def post(self):
         json_data = request.get_json()
         if not json_data or not isinstance(json_data, dict):
-            return 'No input data provided', 400  # Bad Request
+            return {'message': 'No input data provided'}, 400  # Bad Request
         # Validate and deserialize input
         try:
             data = UserSchema().load(json_data)
@@ -147,6 +147,13 @@ class Register(Resource):
                 return {'message': f"USER {data['username']} ADDED"}, 200  # OK
             except SQLAlchemyError as err:
                 return {'error': str(err)}, 500  # Internal Server Error
+
+
+# RESOURCES FOR USER:
+# User,
+# UserPasswords,
+# UserPasswordsSearch,
+# UserPasswordsNumber
 
 
 class User(Resource):
@@ -265,44 +272,15 @@ class UserPasswordsSearch(Resource):
 
         try:
             user = get_user_by_token()
-            filtered_passwords = PasswordModel.search_pass_by_description(user.id, data.get('condition'), session)
+            filtered_passwords = PasswordModel.search_pass_by_condition(user.id, data.get('condition'), session)
         except SQLAlchemyError as err:
             return {'error': str(err)}, 500
 
-        passwords_by_comment_title = []
+        passwords_by_condition = []
         for password in filtered_passwords:
-            passwords_by_comment_title.append(password.serialize)
-        if passwords_by_comment_title:
-            return {'passwords': passwords_by_comment_title}, 200
-        else:
-            return {'message': 'No matches found'}, 404
-
-
-class UserPasswordsSearchUrl(Resource):
-    @api.expect(search_password_url)
-    def post(self):
-        """Get all user passwords for the particular site."""
-        json_data = request.get_json()
-
-        if not json_data or not isinstance(json_data, dict):
-            return {'message': 'No input data provided'}, 400
-        # Input data validation by Marshmallow schema
-        try:
-            data = SearchPasswordUrlSchema().load(json_data)
-        except ValidationError as err:
-            return {'error': str(err)}, 422
-
-        try:
-            user = get_user_by_token()
-            filtered_passwords = PasswordModel.search_pass_by_url(user.id, data.get('url'), session)
-        except SQLAlchemyError as err:
-            return {'message': str(err)}, 500
-
-        passwords_by_url = []
-        for password in filtered_passwords:
-            passwords_by_url.append(password.serialize)
-        if passwords_by_url:
-            return {'passwords': passwords_by_url}, 200
+            passwords_by_condition.append(password.serialize)
+        if passwords_by_condition:
+            return {'passwords': passwords_by_condition}, 200
         else:
             return {'message': 'No matches found'}, 404
 
@@ -385,6 +363,13 @@ class UserPasswordsNumber(Resource):
                 return {'message': 'Password Not Found'}, 404  # Not Found
         except SQLAlchemyError as err:
             return {'error': str(err)}, 500  # Internal Server Error
+
+
+# RESOURCES FOR ADMIN:
+# AdminUsers,
+# AdminUsersNumber,
+# AdminUsersSearch,
+# AdminUsersSearchList
 
 
 class AdminUsers(Resource):
