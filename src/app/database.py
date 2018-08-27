@@ -67,4 +67,3 @@ def add_admin(username='admin', password='admin', email='admin@gmail.com', first
         session.rollback()
     except SQLAlchemyError as err:
         print(err)
-
