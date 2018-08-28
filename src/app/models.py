@@ -5,7 +5,7 @@ import base64
 from random import choice
 from string import ascii_letters
 
-from sqlalchemy import Column, String, Integer, Date, LargeBinary, ForeignKey, DateTime, Boolean, or_
+from sqlalchemy import Column, String, Integer, Date, LargeBinary, ForeignKey, DateTime, Boolean, or_, func
 from sqlalchemy.orm import relationship
 from sqlalchemy.exc import SQLAlchemyError
 from cryptography.fernet import Fernet
@@ -204,19 +204,14 @@ class PasswordModel(Base):
         return password
 
     @classmethod
-    def search_pass_by_description(cls, user_id, condition, session):
+    def search_pass_by_condition(cls, user_id, condition, session):
+        condition = condition.lower()
+        # Soft search with wildcard percent sign
         filtered_passwords = session.query(PasswordModel).filter(PasswordModel.user_id == user_id).filter(or_(
-            PasswordModel.comment.like(condition),
-            PasswordModel.title.like(condition)))
-
-        return filtered_passwords
-
-    @classmethod
-    def search_pass_by_url(cls, user_id, url, session):
-        current_user = UserModel.filter_by_id(user_id, session)
-        # Hard search without wildcard percent sign
-        filtered_passwords = session.query(PasswordModel).filter(PasswordModel.user_id == current_user.id,
-                                                                 PasswordModel.url.like(url))
+            func.lower(PasswordModel.comment).like(f'%{condition}%'),
+            func.lower(PasswordModel.title).like(f'%{condition}%'),
+            func.lower(PasswordModel.url).like(f'%{condition}%')
+        ))
 
         return filtered_passwords
 

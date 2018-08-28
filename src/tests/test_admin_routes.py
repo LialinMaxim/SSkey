@@ -63,9 +63,9 @@ class TestAdminRoutes:
 
         rv = AdminRequests.get_user_by_username(client, app.config['USERNAME'])
 
-        user = json.loads(str(rv.data, encoding='utf-8'))
-        user_id = user['id']
-        rv = AdminRequests.delete_user(client, str(user['id']))
+        data = json.loads(str(rv.data, encoding='utf-8'))
+        user_id = data['user']['id']
+        rv = AdminRequests.delete_user(client, str(user_id))
 
         assert bytes(f'User ID:{user_id} has been DELETED.', encoding='utf-8') in rv.data
 
