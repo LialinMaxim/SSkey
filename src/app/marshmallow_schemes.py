@@ -32,6 +32,11 @@ class PasswordPutSchema(Schema):
     comment = fields.String()
 
 
+class UserLoginSchema(Schema):
+    email = fields.Email(required=True)
+    password = fields.String(required=True, load_only=True)
+
+
 class SearchSchema(Schema):
     condition = fields.String(required=True)
 

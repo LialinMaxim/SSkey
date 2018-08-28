@@ -23,9 +23,8 @@ admin_api.add_resource(AdminUsersNumber, '/users/<int:user_id>')  # GET, DELETE
 admin_api.add_resource(AdminUsersSearch, '/users/<string:username>')  # GET
 admin_api.add_resource(AdminUsersSearchList, '/users/search')  # POST
 
-
-def get_session():
-    session = getattr(g, Session, None)
-    if session is None:
-        session = g.Session()
-    return session
+# def get_session():
+#     session = getattr(g, Session, None)
+#     if session is None:
+#         session = g.Session()
+#     return session
