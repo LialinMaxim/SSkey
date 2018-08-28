@@ -30,7 +30,7 @@ def init():
 def create():
     """Creates database and inserts tables from SQLAlchemy models"""
     try:
-        with engine.connect() as conn:
+        with engine_cr.connect() as conn:
             conn.execute(f'CREATE DATABASE {POSTGRES_NAME}')
     except ProgrammingError:
         print(f'ProgrammingError(SQLAlchemy): Database {POSTGRES_NAME} may be already exist')
