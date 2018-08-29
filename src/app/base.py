@@ -14,8 +14,6 @@ engine = create_engine('postgresql://%s:%s@%s/%s' % (POSTGRES_USER,
                                                      POSTGRES_NAME
                                                      ))
 
-# engine = create_engine("sqlite://")
-
 Session = sessionmaker(bind=engine)
 
 Base = declarative_base()
