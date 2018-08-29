@@ -33,9 +33,13 @@ def require_login():
     admin_endpoints = ['admin_admin_users', 'admin_admin_users_search_list', 'admin_admin_users_number',
                        'admin_admin_users_search']
     if request.endpoint in admin_endpoints:
-        user = get_user_by_token()
-        if not user.is_admin:
-            return make_response('You are not allowed to use admin functional', 403)
+        try:
+            user = get_user_by_token()
+            if not user.is_admin:
+                return make_response('You are not allowed to use admin functional', 403)
+        except AttributeError:
+            return make_response('You are not allowed to use this resource without logging in!', 403)
+
     if request.endpoint != 'login':
         allowed_routes = ['login', 'register', 'home', 'doc', 'restplus_doc.static', 'specs']
         token_from_cookie = request.cookies.get('token')
