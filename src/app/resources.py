@@ -7,10 +7,10 @@ from sqlalchemy import or_
 from . import app, api
 from .base import Session
 from .models import UserModel, PasswordModel, SessionObject
-from .marshmallow_schemes import UserSchema, PasswordSchema, SearchSchema, SearchPasswordUrlSchema, \
-    PasswordPutSchema, UserIdsListSchema, AdminUsersSearchData
-from .swagger_models import user_post, user_login, password_api_model, user_put, search_password, \
-    search_password_url, users_ids_list, admin_users_search
+from .marshmallow_schemes import (UserSchema, UserLoginSchema, PasswordSchema, SearchSchema, PasswordPutSchema,
+                                  UserIdsListSchema, AdminUsersSearchData)
+from .swagger_models import (user_post, user_login, password_api_model, user_put, search_password, users_ids_list,
+                             admin_users_search)
 
 session = Session()
 
@@ -68,48 +68,54 @@ def is_expiry_time(user_session):
 
 
 class Home(Resource):
-    """Simple test that works without authorization."""
-
     def get(self):
+        """Simple test that works without authorization."""
         return {'message': 'This is a Home Page'}, 200  # OK
 
 
 class Smoke(Resource):
-    """Simple test that requires authorization."""
-
     def get(self):
+        """Simple test that requires authorization."""
         return {'message': 'OK'}, 200  # OK
 
 
 class Login(Resource):
-    """
-    Login resource.
-
-    Checks whether entered data is in DB. Create user session based on its id and then sets session lifetime.
-    Otherwise, it will return 401 error.
-    """
-
     @api.expect(user_login)
     def post(self):
-        data = request.get_json()
+        """
+        Login resource.
+
+        Checks whether entered data is in DB. Create user session based on its id and then sets session lifetime.
+        Otherwise, it will return 401 error.
+        """
+        json_data = request.get_json()
+        if not json_data or not isinstance(json_data, dict):
+            return {'message': 'No input data provided'}, 400  # Bad Request
+
+        # Validate and deserialize input
+        try:
+            data = UserLoginSchema().load(json_data)
+        except ValidationError as err:
+            return {'error': str(err)}, 422  # Unprocessable Entity
+
+        # Check if a new user is not exist in data base
         user = UserModel.filter_by_email(data['email'], session)
         if user and user.compare_hash(data['password']):
             user_session = SessionObject(user.id)
             session.add(user_session)
             session.commit()
-            return f'You are LOGGED IN as {user.email}', 200, {"Set-Cookie": f'token="{user_session.token}"'}
-        return 'Could not verify your login!', 401, {"WWW-Authenticate": 'Basic realm="Login Required"'}
-
+            return {'message': f'You are LOGGED IN as {user.email}'}, 200, \
+                   {'Set-Cookie': f'token="{user_session.token}"'}
+        return {'message': 'Could not verify your login!'}, 401, {"WWW-Authenticate": 'Basic realm="Login Required"'}
 
 
 class Logout(Resource):
-    """
-    Logout resource.
-
-    Remove the username from the session.
-    """
-
     def get(self):
+        """
+        Logout resource.
+
+        Remove the username from the session.
+        """
         token = request.cookies.get('token')
         session.query(SessionObject).filter(SessionObject.token == token).delete()
         session.commit()
@@ -117,18 +123,17 @@ class Logout(Resource):
 
 
 class Register(Resource):
-    """
-    Register resource.
-
-    Parsing requested data, checks if username or email doesn't exit in DB, then create user in DB. 200 OK
-    Otherwise, return 500 or 400 error.
-    """
-
     @api.expect(user_post)
     def post(self):
+        """
+        Register resource.
+
+        Parsing requested data, checks if username or email doesn't exit in DB, then create user in DB. 200 OK
+        Otherwise, return 500 or 400 error.
+        """
         json_data = request.get_json()
         if not json_data or not isinstance(json_data, dict):
-            return 'No input data provided', 400  # Bad Request
+            return {'message': 'No input data provided'}, 400  # Bad Request
         # Validate and deserialize input
         try:
             data = UserSchema().load(json_data)
@@ -147,6 +152,13 @@ class Register(Resource):
                 return {'message': f"USER {data['username']} ADDED"}, 200  # OK
             except SQLAlchemyError as err:
                 return {'error': str(err)}, 500  # Internal Server Error
+
+
+# RESOURCES FOR USER:
+# User,
+# UserPasswords,
+# UserPasswordsSearch,
+# UserPasswordsNumber
 
 
 class User(Resource):
@@ -265,44 +277,15 @@ class UserPasswordsSearch(Resource):
 
         try:
             user = get_user_by_token()
-            filtered_passwords = PasswordModel.search_pass_by_description(user.id, data.get('condition'), session)
+            filtered_passwords = PasswordModel.search_pass_by_condition(user.id, data.get('condition'), session)
         except SQLAlchemyError as err:
             return {'error': str(err)}, 500
 
-        passwords_by_comment_title = []
+        passwords_by_condition = []
         for password in filtered_passwords:
-            passwords_by_comment_title.append(password.serialize)
-        if passwords_by_comment_title:
-            return {'passwords': passwords_by_comment_title}, 200
-        else:
-            return {'message': 'No matches found'}, 404
-
-
-class UserPasswordsSearchUrl(Resource):
-    @api.expect(search_password_url)
-    def post(self):
-        """Get all user passwords for the particular site."""
-        json_data = request.get_json()
-
-        if not json_data or not isinstance(json_data, dict):
-            return {'message': 'No input data provided'}, 400
-        # Input data validation by Marshmallow schema
-        try:
-            data = SearchPasswordUrlSchema().load(json_data)
-        except ValidationError as err:
-            return {'error': str(err)}, 422
-
-        try:
-            user = get_user_by_token()
-            filtered_passwords = PasswordModel.search_pass_by_url(user.id, data.get('url'), session)
-        except SQLAlchemyError as err:
-            return {'message': str(err)}, 500
-
-        passwords_by_url = []
-        for password in filtered_passwords:
-            passwords_by_url.append(password.serialize)
-        if passwords_by_url:
-            return {'passwords': passwords_by_url}, 200
+            passwords_by_condition.append(password.serialize)
+        if passwords_by_condition:
+            return {'passwords': passwords_by_condition}, 200
         else:
             return {'message': 'No matches found'}, 404
 
@@ -387,6 +370,13 @@ class UserPasswordsNumber(Resource):
             return {'error': str(err)}, 500  # Internal Server Error
 
 
+# RESOURCES FOR ADMIN:
+# AdminUsers,
+# AdminUsersNumber,
+# AdminUsersSearch,
+# AdminUsersSearchList
+
+
 class AdminUsers(Resource):
     def get(self):
         """Get all users by list."""
@@ -468,12 +458,14 @@ class AdminUsersSearch(Resource):
 
 
 class AdminUsersSearchList(Resource):
-    """
-    Search user by any data - username, email, first_name, last_name or phone
-    """
 
     @api.expect(admin_users_search)
     def post(self):
+        """
+        Search user by any data.
+
+        Search user by - username, email, first_name, last_name or phone.
+        """
         json_data = request.get_json()
         if not json_data or not isinstance(json_data, dict):
             return {'message': 'No input data provided'}, 400  # Bad Request
