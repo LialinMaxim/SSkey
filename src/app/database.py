@@ -13,7 +13,6 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 load_dotenv(os.path.join(basedir, '.env'))
 
 manager = Manager(usage="Perform database operations")
-
 engine_cr = create_engine(f'postgresql://{POSTGRES_USER}:{POSTGRES_PASS}@{POSTGRES_HOST}', isolation_level='AUTOCOMMIT')
 
 

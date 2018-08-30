@@ -15,5 +15,4 @@ engine = create_engine('postgresql://%s:%s@%s/%s' % (POSTGRES_USER,
                                                      ))
 
 Session = sessionmaker(bind=engine)
-
 Base = declarative_base()
