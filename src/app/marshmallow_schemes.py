@@ -12,6 +12,14 @@ class UserSchema(Schema):
     is_admin = fields.Bool(load_only=True)
 
 
+class UserPutSchema(Schema):
+    email = fields.Email()
+    username = fields.String()
+    first_name = fields.String()
+    last_name = fields.String()
+    phone = fields.String()
+
+
 class PasswordSchema(Schema):
     pass_id = fields.Integer(dump_only=True)
     user_id = fields.Integer(dump_only=True)

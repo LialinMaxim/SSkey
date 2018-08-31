@@ -13,7 +13,6 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 load_dotenv(os.path.join(basedir, '.env'))
 
 manager = Manager(usage="Perform database operations")
-
 engine_cr = create_engine(f'postgresql://{POSTGRES_USER}:{POSTGRES_PASS}@{POSTGRES_HOST}', isolation_level='AUTOCOMMIT')
 
 
@@ -21,7 +20,7 @@ engine_cr = create_engine(f'postgresql://{POSTGRES_USER}:{POSTGRES_PASS}@{POSTGR
 def init():
     """Initialization of database. Drops old database, creates new database and inserts tables from SQLAlchemy models"""
     with engine_cr.connect() as conn:
-        conn.execute(f'DROP DATABASE IF EXISTS {POSTGRES_NAME}')
+        # conn.execute(f'DROP DATABASE IF EXISTS {POSTGRES_NAME}')
         conn.execute(f'CREATE DATABASE {POSTGRES_NAME}')
     Base.metadata.create_all(engine)
 
