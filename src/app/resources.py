@@ -7,8 +7,8 @@ from sqlalchemy import or_
 from . import app, api
 from .base import Session
 from .models import UserModel, PasswordModel, SessionObject
-from .marshmallow_schemes import (UserSchema, UserLoginSchema, PasswordSchema, SearchSchema, PasswordPutSchema,
-                                  UserIdsListSchema, AdminUsersSearchData)
+from .marshmallow_schemes import (UserSchema, UserPutSchema, UserLoginSchema, PasswordSchema, SearchSchema,
+                                  PasswordPutSchema, UserIdsListSchema, AdminUsersSearchData)
 from .swagger_models import (user_post, user_login, password_api_model, user_put, search_password, users_ids_list,
                              admin_users_search)
 
@@ -22,6 +22,7 @@ def get_user_by_token():
     return user
 
 
+# TODO session pool, with session close
 @app.before_request
 def require_login():
     """
@@ -33,9 +34,13 @@ def require_login():
     admin_endpoints = ['admin_admin_users', 'admin_admin_users_search_list', 'admin_admin_users_number',
                        'admin_admin_users_search']
     if request.endpoint in admin_endpoints:
-        user = get_user_by_token()
-        if not user.is_admin:
-            return make_response('You are not allowed to use admin functional', 403)
+        try:
+            user = get_user_by_token()
+            if not user.is_admin:
+                return make_response('You are not allowed to use admin functional', 403)
+        except AttributeError:
+            return make_response('You are not allowed to use this resource without logging in!', 403)
+
     if request.endpoint != 'login':
         allowed_routes = ['login', 'register', 'home', 'doc', 'restplus_doc.static', 'specs']
         token_from_cookie = request.cookies.get('token')
@@ -167,23 +172,32 @@ class User(Resource):
         try:
             user_data = get_user_by_token()
         except SQLAlchemyError as err:
-            return {'error': str(err)}, 500
+            return {'error': str(err)}, 500  # Internal Server Error
         return {'user': UserSchema().dump(user_data)}, 200
 
     @api.expect(user_put)
     def put(self):
         """Update user's data."""
-        args = request.get_json()
+        json_data = request.get_json()
+        if not json_data or not isinstance(json_data, dict):
+            return {'message': 'No input data provided'}, 400  # Bad Request
+
+        # Validate and deserialize input
+        try:
+            data = UserPutSchema().load(json_data)
+        except ValidationError as err:
+            return {'error': str(err)}, 422  # Unprocessable Entity
+
         try:
             current_user = get_user_by_token()
-            for arg_key in args.keys():
+            for arg_key in data.keys():
                 if arg_key != 'password':
-                    current_user.__setattr__(arg_key, args[arg_key])
+                    current_user.__setattr__(arg_key, data[arg_key])
             session.add(current_user)
             session.commit()
             return {'message': f'User {current_user.username} UPDATED'}, 200
         except SQLAlchemyError as err:
-            return {'error': err}, 500
+            return {'error': str(err)}, 500  # Internal Server Error
 
     def delete(self):
         """Remove user with all his data."""
@@ -196,7 +210,7 @@ class User(Resource):
             return {'message': f'User {current_user.username} DELETED'}, 200
         except SQLAlchemyError as err:
             session.rollback()
-            return {'error': str(err)}, 500
+            return {'error': str(err)}, 500  # Internal Server Error
 
 
 class UserPasswords(Resource):
@@ -279,7 +293,7 @@ class UserPasswordsSearch(Resource):
             user = get_user_by_token()
             filtered_passwords = PasswordModel.search_pass_by_condition(user.id, data.get('condition'), session)
         except SQLAlchemyError as err:
-            return {'error': str(err)}, 500
+            return {'error': str(err)}, 500  # Internal Server Error
 
         passwords_by_condition = []
         for password in filtered_passwords:
@@ -343,7 +357,7 @@ class UserPasswordsNumber(Resource):
             session.commit()
             return {'message': f'Data for {previous_pass} has been updated successfully'}, 200
         except SQLAlchemyError as err:
-            return {'error': str(err)}, 500
+            return {'error': str(err)}, 500  # Internal Server Error
 
     def delete(self, pass_id):
         """
@@ -414,7 +428,7 @@ class AdminUsers(Resource):
             session.commit()
             return {'message': 'Users has been deleted successfully'}, 200
         except SQLAlchemyError as err:
-            return {'error': str(err)}, 500
+            return {'error': str(err)}, 500  # Internal Server Error
 
 
 class AdminUsersNumber(Resource):
