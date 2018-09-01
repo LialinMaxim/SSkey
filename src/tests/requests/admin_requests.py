@@ -6,8 +6,6 @@ from src.app.base import Session
 from src.app.models import UserModel
 from .login_requests import LoginRequests, client
 
-session = Session()
-
 
 @pytest.fixture
 def create_admin(client):
@@ -17,8 +15,12 @@ def create_admin(client):
         {'username': username, 'password': password, 'email': app.config['ADMIN_EMAIL'],
          'first_name': '', 'last_name': '', 'phone': ''})
     admin.is_admin = True
-    session.add(admin)
-    session.commit()
+    session = Session()
+    try:
+        session.add(admin)
+        session.commit()
+    finally:
+        session.close()
 
 
 @pytest.yield_fixture
