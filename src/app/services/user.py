@@ -17,5 +17,3 @@ class UserService:
         session.delete(current_user)
         session.commit()
         return current_user.username
-
-
