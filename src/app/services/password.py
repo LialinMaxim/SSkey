@@ -78,4 +78,3 @@ class PasswordService:
     def filter_password_by_id(pass_id, session):
         password = session.query(PasswordModel).filter(PasswordModel.pass_id == pass_id).first()
         return password
-
