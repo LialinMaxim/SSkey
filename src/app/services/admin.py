@@ -1,6 +1,6 @@
 from sqlalchemy import or_
 
-from src.app.models import UserModel, PasswordModel, SessionObject
+from ..models import UserModel, PasswordModel, SessionObject
 
 
 class AdminService:
