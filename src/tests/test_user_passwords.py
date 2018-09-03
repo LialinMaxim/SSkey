@@ -18,7 +18,7 @@ def test_post_new_user_pass(client, resource):
     rv = UserPasswords.post_new_user_pass(client, app.config['URL'], app.config['TITLE'], app.config['LOGIN'],
                                           app.config['URL_PASS'],
                                           app.config['COMMENT'])
-    assert b'PASSWORD ADDED' in rv.data
+    assert bytes(f'PASSWORD with title {app.config["TITLE"]} ADDED', encoding='utf-8') in rv.data
 
 
 def test_unprocessable_entity_post_new_user_pass(client, resource):
@@ -53,11 +53,10 @@ def test_put_particular_user_pass(client, resource):
 
     password = json.loads(str(rv.data, encoding='utf-8'))
     pass_id = password.get('passwords')[0].get('pass_id')
-    previous_pass = password.get('passwords')[0].get('title')
 
     rv = PasswordResource.put_particular_user_pass(client, pass_id, app.config['URL'], title=app.config['TITLE_PUT'],
                                                    comment=app.config['COMMENT_PUT'])
-    assert bytes(f'Data for {previous_pass} has been updated successfully', encoding='utf-8') in rv.data
+    assert bytes(f'Data for {app.config["TITLE_PUT"]} has been updated successfully', encoding='utf-8') in rv.data
 
     rv = PasswordResource.get_particular_user_pass(client, pass_id)
     assert bytes(app.config['COMMENT_PUT'], encoding='utf-8') in rv.data
@@ -104,7 +103,7 @@ def test_no_matches_found_search_pass_by_description(client, resource):
     condition = 'nomatchesfound'
     rv = PasswordResource.search_pass_by_description(client, condition)
 
-    assert b'No matches found' in rv.data
+    assert bytes(f'No matches found for {condition}', encoding='utf-8') in rv.data
 
 
 def test_not_found_delete_particular_user_pass(client, resource):
