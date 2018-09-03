@@ -5,7 +5,7 @@ import base64
 from random import choice
 from string import ascii_letters
 
-from sqlalchemy import Column, String, Integer, Date, LargeBinary, ForeignKey, DateTime, Boolean, or_, func
+from sqlalchemy import Column, String, Integer, Date, LargeBinary, ForeignKey, DateTime, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.exc import SQLAlchemyError
 from cryptography.fernet import Fernet
@@ -132,16 +132,6 @@ class PasswordModel(Base):
     password = Column('pass', LargeBinary, nullable=False)
     comment = Column('comment', String(450), nullable=True)
 
-    @staticmethod
-    def is_password_exists(pass_id):
-        """
-        Method check is password exists in the database
-        :param pass_id:
-        :return: boolean or Exception SQLAlchemy error if dont have connect to db
-        """
-        password = session.query(PasswordModel).filter(PasswordModel.pass_id == pass_id).first()
-        return bool(password)
-
     @property
     def serialize(self):
         """Return object data in easily serializeable format"""
@@ -189,31 +179,6 @@ class PasswordModel(Base):
         self.title = data['title']
         self.comment = data['comment']
         self.crypt_password(data['password'])
-
-    @classmethod
-    def find_pass(cls, current_user_id, pass_id, session):
-        password = session.query(cls) \
-            .filter(cls.user_id == current_user_id) \
-            .filter(cls.pass_id == pass_id) \
-            .first()
-        return password
-
-    @classmethod
-    def filter_pass_by_id(cls, pass_id, session):
-        password = session.query(PasswordModel).filter(PasswordModel.pass_id == pass_id).first()
-        return password
-
-    @classmethod
-    def search_pass_by_condition(cls, user_id, condition, session):
-        condition = condition.lower()
-        # Soft search with wildcard percent sign
-        filtered_passwords = session.query(PasswordModel).filter(PasswordModel.user_id == user_id).filter(or_(
-            func.lower(PasswordModel.comment).like(f'%{condition}%'),
-            func.lower(PasswordModel.title).like(f'%{condition}%'),
-            func.lower(PasswordModel.url).like(f'%{condition}%')
-        ))
-
-        return filtered_passwords
 
 
 class SessionObject(Base):

@@ -2,11 +2,13 @@ from flask import make_response, request
 from flask_restplus import Resource
 from marshmallow import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy import or_
 
 from . import app, api
 from .base import Session
 from .models import UserModel, PasswordModel, SessionObject
+from .services.user import UserService
+from .services.password import PasswordService
+from .services.admin import AdminService
 from .marshmallow_schemes import (UserSchema, UserPutSchema, UserLoginSchema, PasswordSchema, SearchSchema,
                                   PasswordPutSchema, UserIdsListSchema, AdminUsersSearchData)
 from .swagger_models import (user_post, user_login, password_api_model, user_put, search_password, users_ids_list,
@@ -218,12 +220,8 @@ class User(Resource):
         session = Session()
         try:
             current_user = get_user_by_token(session)
-            for key in data.keys():
-                if key != 'password':
-                    current_user.__setattr__(key, data[key])
-            session.add(current_user)
-            session.commit()
-            return {'message': f'User {current_user.username} UPDATED'}, 200
+            username = UserService.update_user(data, current_user, session)
+            return {'message': f'User {username} UPDATED'}, 200
         except SQLAlchemyError as err:
             return {'error': str(err)}, 500  # Internal Server Error
         finally:
@@ -235,10 +233,8 @@ class User(Resource):
         session = Session()
         try:
             current_user = get_user_by_token(session)
-            session.query(SessionObject).filter(SessionObject.token == token).delete()
-            session.delete(current_user)
-            session.commit()
-            return {'message': f'User {current_user.username} DELETED'}
+            username = UserService.delete_user(token, current_user, session)
+            return {'message': f'User {username} DELETED'}, 200
         except SQLAlchemyError as err:
             session.rollback()
             return {'error': str(err)}, 500  # Internal Server Error
@@ -263,10 +259,7 @@ class UserPasswords(Resource):
         session = Session()
         try:
             current_user = get_user_by_token(session)
-            passwords = session.query(PasswordModel).filter(PasswordModel.user_id == current_user.id).all()
-            passwords_serialized = []
-            for password in passwords:
-                passwords_serialized.append(password.serialize)
+            passwords_serialized = PasswordService.get_password_list(current_user, session)
             return {'passwords': passwords_serialized}, 200  # OK
         except SQLAlchemyError as err:
             return {'error': str(err)}, 500  # Internal Server Error
@@ -295,9 +288,8 @@ class UserPasswords(Resource):
         session = Session()
         try:
             current_user = get_user_by_token(session)
-            session.add(PasswordModel(current_user.id, data))
-            session.commit()
-            return {'message': 'PASSWORD ADDED'}, 200  # OK
+            password_title = PasswordService.add_password(data, current_user, session)
+            return {'message': f'PASSWORD with title {password_title} ADDED'}, 200  # OK
         except SQLAlchemyError as err:
             return {'error': str(err)}, 500  # Internal Server Error
         finally:
@@ -327,22 +319,19 @@ class UserPasswordsSearch(Resource):
         except ValidationError as err:
             return {'error': str(err)}, 422  # Unprocessable Entity
 
+        condition = data.get('condition')
         session = Session()
         try:
             user = get_user_by_token(session)
-            filtered_passwords = PasswordModel.search_pass_by_condition(user.id, data.get('condition'), session)
+            passwords_by_condition = PasswordService.search_password_by_condition(user.id, condition, session)
+            if passwords_by_condition:
+                return {'passwords': passwords_by_condition}, 200
+            else:
+                return {'message': f'No matches found for {condition}'}, 404
         except SQLAlchemyError as err:
             return {'error': str(err)}, 500  # Internal Server Error
         finally:
             session.close()
-
-        passwords_by_condition = []
-        for password in filtered_passwords:
-            passwords_by_condition.append(password.serialize)
-        if passwords_by_condition:
-            return {'passwords': passwords_by_condition}, 200
-        else:
-            return {'message': 'No matches found'}, 404
 
 
 class UserPasswordsNumber(Resource):
@@ -363,7 +352,7 @@ class UserPasswordsNumber(Resource):
         session = Session()
         try:
             current_user = get_user_by_token(session)
-            password = PasswordModel.find_pass(current_user.id, pass_id, session)
+            password = PasswordService.get_password_by_id(current_user.id, pass_id, session)
             if not password:
                 return {'message': 'Password Not Found'}, 404  # Not Found
             return {'password': password.serialize}, 200  # OK
@@ -388,19 +377,11 @@ class UserPasswordsNumber(Resource):
             return {'error': str(err)}, 422  # Unprocessable Entity
         session = Session()
         try:
-            if not PasswordModel.is_password_exists(pass_id):
+            if not PasswordService.is_password_exists(pass_id, session):
                 return {'message': 'Password Not Found'}, 404
-            password = PasswordModel.filter_pass_by_id(pass_id, session)
-            previous_pass = password.title
-
-            for arg_key in data.keys():
-                if arg_key != 'password':
-                    password.__setattr__(arg_key, data[arg_key])
-                else:
-                    password.crypt_password(data[arg_key])
-            session.add(password)
-            session.commit()
-            return {'message': f'Data for {previous_pass} has been updated successfully'}, 200
+            password = PasswordService.filter_password_by_id(pass_id, session)
+            updated_password = PasswordService.update_password(password, data, session)
+            return {'message': f'Data for {updated_password.title} has been updated successfully'}, 200
         except SQLAlchemyError as err:
             return {'error': str(err)}, 500  # Internal Server Error
         finally:
@@ -417,13 +398,9 @@ class UserPasswordsNumber(Resource):
         session = Session()
         try:
             current_user = get_user_by_token(session)
-            password = PasswordModel.find_pass(current_user.id, pass_id, session)
+            password = PasswordService.get_password_by_id(current_user.id, pass_id, session)
             if password:
-                session.query(PasswordModel) \
-                    .filter(PasswordModel.user_id == current_user.id) \
-                    .filter(PasswordModel.pass_id == pass_id) \
-                    .delete()
-                session.commit()
+                PasswordService.delete_password(pass_id, current_user, session)
                 return {'message': f'Password ID {pass_id} DELETED'}, 200  # OK
             else:
                 return {'message': 'Password Not Found'}, 404  # Not Found
@@ -445,7 +422,7 @@ class AdminUsers(Resource):
         """Get all users by list."""
         session = Session()
         try:
-            users = session.query(UserModel).all()
+            users = AdminService.get_user_list(session)
         except SQLAlchemyError as err:
             return {'error': str(err)}, 500  # Internal Server Error
         finally:
@@ -471,14 +448,7 @@ class AdminUsers(Resource):
             return {'error': str(err)}, 422  # Unprocessable Entity
         session = Session()
         try:
-            for user_id in users_ids:
-                user = UserModel.filter_by_id(user_id, session)
-                if bool(user):
-                    passwords = session.query(PasswordModel).filter(PasswordModel.user_id == user_id).all()
-                    for password in passwords:
-                        session.delete(password)
-                    session.delete(user)
-            session.commit()
+            AdminService.delete_user_list(users_ids, session)
             return {'message': 'Users has been deleted successfully'}, 200
         except SQLAlchemyError as err:
             return {'error': str(err)}, 500  # Internal Server Error
@@ -491,13 +461,13 @@ class AdminUsersNumber(Resource):
         """Get user by user_id."""
         session = Session()
         try:
-            user_data = UserModel.filter_by_id(user_id, session)
+            user = AdminService.get_user_by_id(user_id, session)
         except SQLAlchemyError as err:
             return {'error': str(err)}, 500  # Internal Server Error
         finally:
             session.close()
-        if user_data:
-            return {'user': UserSchema().dump(user_data)}, 200  # OK
+        if user:
+            return {'user': UserSchema().dump(user)}, 200  # OK
         else:
             return {'message': f'User ID {user_id} - Not Found'}, 404  # Not Found
 
@@ -505,11 +475,7 @@ class AdminUsersNumber(Resource):
         """Delete user by user_id."""
         session = Session()
         try:
-            if UserModel.filter_by_id(user_id, session):
-                session.query(SessionObject).filter(SessionObject.user_id == user_id).delete()
-                session.query(PasswordModel).filter(PasswordModel.user_id == user_id).delete()
-                session.query(UserModel).filter(UserModel.id == user_id).delete()
-                session.commit()
+            if AdminService.delete_user_by_id(user_id, session):
                 return {'message': f'User ID:{user_id} has been DELETED.'}, 200  # OK
             else:
                 return {'message': f'User ID {user_id} - Not Found'}, 404  # Not Found
@@ -525,13 +491,13 @@ class AdminUsersSearch(Resource):
         """Get user by user name"""
         session = Session()
         try:
-            user_data = UserModel.filter_by_username(username, session)
+            user = AdminService.search_user_by_username(username, session)
         except SQLAlchemyError as err:
             return {'error': str(err)}, 500  # Internal Server Error
         finally:
             session.close()
-        if user_data:
-            return {'user': UserSchema().dump(user_data)}, 200  # OK
+        if user:
+            return {'user': UserSchema().dump(user)}, 200  # OK
         else:
             return {'message': 'User not found'}, 404  # Not Found
 
@@ -556,11 +522,7 @@ class AdminUsersSearchList(Resource):
         # Search users
         session = Session()
         try:
-            users = session.query(UserModel).filter(
-                or_(UserModel.username.like(f'%{user_data}%'), UserModel.email.like(f'%{user_data}%'),
-                    UserModel.first_name.like(f'%{user_data}%'), UserModel.last_name.like(f'%{user_data}%'),
-                    UserModel.phone.like(f'%{user_data}%')
-                    )).all()
+            users = AdminService.search_user_list(user_data, session)
         except SQLAlchemyError as err:
             return {'error': str(err)}, 500  # Internal Server Error
         finally:
