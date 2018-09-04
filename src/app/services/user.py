@@ -1,4 +1,4 @@
-from src.app.models import SessionObject
+from ..models import SessionObject
 
 
 class UserService:
