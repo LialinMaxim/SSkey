@@ -1,6 +1,6 @@
 from sqlalchemy import or_, func
 
-from src.app.models import PasswordModel
+from ..models import PasswordModel
 
 
 class PasswordService:
