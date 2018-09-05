@@ -8,10 +8,12 @@ load_dotenv(os.path.join(basedir, '.env'))
 
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY')
+    HANDLER_LEVEL = os.environ.get('HANDLER_LEVEL')
 
 
 class DevelopmentConfig(Config):
     DEBUG = True
+    LOGFILE = 'logs/Development.log'
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'insecure_key'
 
 
@@ -52,7 +54,8 @@ class TestingConfig(Config):
 
 
 class ProductionConfig(Config):
-    pass
+    DEBUG = False
+    LOGFILE = 'logs/Production.log'
 
 
 config = {
