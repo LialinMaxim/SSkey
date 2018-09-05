@@ -18,7 +18,6 @@ class AdminService:
                 for password in passwords:
                     session.delete(password)
                 session.delete(user)
-        session.commit()
 
     @staticmethod
     def get_user_by_id(user_id, session):
@@ -31,7 +30,6 @@ class AdminService:
             session.query(SessionObject).filter(SessionObject.user_id == user_id).delete()
             session.query(PasswordModel).filter(PasswordModel.user_id == user_id).delete()
             session.query(UserModel).filter(UserModel.id == user_id).delete()
-            session.commit()
             return True
         else:
             return False
