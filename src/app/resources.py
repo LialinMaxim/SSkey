@@ -221,6 +221,7 @@ class User(Resource):
         try:
             current_user = get_user_by_token(session)
             username = UserService.update_user(data, current_user, session)
+            session.commit()
             return {'message': f'User {username} UPDATED'}, 200
         except SQLAlchemyError as err:
             return {'error': str(err)}, 500  # Internal Server Error
@@ -234,6 +235,7 @@ class User(Resource):
         try:
             current_user = get_user_by_token(session)
             username = UserService.delete_user(token, current_user, session)
+            session.commit()
             return {'message': f'User {username} DELETED'}, 200
         except SQLAlchemyError as err:
             session.rollback()
@@ -289,6 +291,7 @@ class UserPasswords(Resource):
         try:
             current_user = get_user_by_token(session)
             password_title = PasswordService.add_password(data, current_user, session)
+            session.commit()
             return {'message': f'PASSWORD with title {password_title} ADDED'}, 200  # OK
         except SQLAlchemyError as err:
             return {'error': str(err)}, 500  # Internal Server Error
@@ -381,6 +384,7 @@ class UserPasswordsNumber(Resource):
                 return {'message': 'Password Not Found'}, 404
             password = PasswordService.filter_password_by_id(pass_id, session)
             updated_password = PasswordService.update_password(password, data, session)
+            session.commit()
             return {'message': f'Data for {updated_password.title} has been updated successfully'}, 200
         except SQLAlchemyError as err:
             return {'error': str(err)}, 500  # Internal Server Error
@@ -401,6 +405,7 @@ class UserPasswordsNumber(Resource):
             password = PasswordService.get_password_by_id(current_user.id, pass_id, session)
             if password:
                 PasswordService.delete_password(pass_id, current_user, session)
+                session.commit()
                 return {'message': f'Password ID {pass_id} DELETED'}, 200  # OK
             else:
                 return {'message': 'Password Not Found'}, 404  # Not Found
@@ -449,6 +454,7 @@ class AdminUsers(Resource):
         session = Session()
         try:
             AdminService.delete_user_list(users_ids, session)
+            session.commit()
             return {'message': 'Users has been deleted successfully'}, 200
         except SQLAlchemyError as err:
             return {'error': str(err)}, 500  # Internal Server Error
@@ -475,7 +481,9 @@ class AdminUsersNumber(Resource):
         """Delete user by user_id."""
         session = Session()
         try:
-            if AdminService.delete_user_by_id(user_id, session):
+            delete_status = AdminService.delete_user_by_id(user_id, session)
+            session.commit()
+            if delete_status:
                 return {'message': f'User ID:{user_id} has been DELETED.'}, 200  # OK
             else:
                 return {'message': f'User ID {user_id} - Not Found'}, 404  # Not Found

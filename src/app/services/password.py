@@ -34,7 +34,6 @@ class PasswordService:
     @staticmethod
     def add_password(data, current_user, session):
         session.add(PasswordModel(current_user.id, data))
-        session.commit()
         return data['title']
 
     @staticmethod
@@ -45,7 +44,6 @@ class PasswordService:
             else:
                 password.crypt_password(data[key])
         session.add(password)
-        session.commit()
         return password
 
     @staticmethod
@@ -54,7 +52,6 @@ class PasswordService:
             .filter(PasswordModel.user_id == current_user.id) \
             .filter(PasswordModel.pass_id == pass_id) \
             .delete()
-        session.commit()
         return pass_id
 
     @staticmethod
