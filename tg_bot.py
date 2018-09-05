@@ -7,6 +7,7 @@ url = 'http://127.0.0.1:5000/'
 # url = 'http://sskey.herokuapp.com/'
 
 print(bot.get_me())
+cookies = ''
 
 
 def log(message, answer):
@@ -34,7 +35,7 @@ def handle_home_command(message):
 
 @bot.message_handler(commands=['smoke'])
 def handle_smoke_command(message):
-    rv = requests.get(url + 'smoke')
+    rv = requests.get(url + 'smoke', cookies=cookies)
     bot.send_message(message.from_user.id, rv)
 
 
@@ -45,25 +46,33 @@ def handle_register_command(message):
 
 @bot.message_handler(commands=['login'])
 def handle_login_command(message):
+    bot.reply_to(message, 'Enter your email')
+    email = message.text
+    bot.reply_to(message, 'Enter your password')
+    password = message.text
+    bot.send_message(message.from_user.id, input())
     rv = requests.post(url + 'login', json=dict(email='admin@gmail.com', password='admin'))
+    print(rv.cookies)
+    global cookies
+    cookies = rv.cookies
     bot.send_message(message.from_user.id, rv)
 
 
 @bot.message_handler(commands=['get_me'])
 def handle_get_command(message):
-    rv = requests.get(url + 'user/')
+    rv = requests.get(url + 'user/', cookies=cookies)
     bot.send_message(message.from_user.id, rv)
 
 
 @bot.message_handler(commands=['get_my_pass'])
 def handle_get_command(message):
-    rv = requests.get(url + '/user/passwords')
+    rv = requests.get(url + 'user/passwords', cookies=cookies)
     bot.send_message(message.from_user.id, rv)
 
 
 @bot.message_handler(commands=['logout'])
 def handle_get_command(message):
-    rv = requests.get(url + 'logout')
+    rv = requests.get(url + 'logout', cookies=cookies)
     bot.send_message(message.from_user.id, rv)
 
 
