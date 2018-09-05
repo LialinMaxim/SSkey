@@ -12,6 +12,7 @@ class Config:
 
 class DevelopmentConfig(Config):
     DEBUG = True
+    LOGFILE = 'logs/Development.log'
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'insecure_key'
 
 
@@ -52,7 +53,8 @@ class TestingConfig(Config):
 
 
 class ProductionConfig(Config):
-    pass
+    DEBUG = False
+    LOGFILE = 'logs/Production.log'
 
 
 config = {
