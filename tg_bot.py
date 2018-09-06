@@ -32,33 +32,46 @@ def log(message, answer):
 
 @bot.message_handler(commands=['help'])
 def handle_help_command(message):
-    user_markup = telebot.types.ReplyKeyboardMarkup()
-    user_markup.row('/home', '/smoke')
-    user_markup.row('/register', '/login')
-    user_markup.row('/get_me', '/get_my_pass')
-    user_markup.row('/add_my_pass', '/logout')
-    bot.send_message(message.from_user.id, 'Please, choose what you\'d like to do', reply_markup=user_markup)
+    if not cookies:
+        user_markup = telebot.types.ReplyKeyboardMarkup()
+        user_markup.row('/home', '/smoke')
+        user_markup.row('/login', '/help')
+        bot.send_message(message.from_user.id, 'Please, choose what you\'d like to do', reply_markup=user_markup)
+    if cookies:
+        user_markup = telebot.types.ReplyKeyboardMarkup()
+        user_markup.row('/get_me', '/get_my_pass')
+        user_markup.row('/add_my_pass', '/logout')
+        bot.send_message(message.from_user.id, 'Please, choose what you\'d like to do', reply_markup=user_markup)
 
 
 @bot.message_handler(commands=['home'])
 def handle_home_command(message):
-    rv = requests.get(url + 'home')
-    bot.send_message(message.from_user.id, rv)
+    try:
+        rv = requests.get(url + 'home')
+        bot.send_message(message.from_user.id, rv)
+    except Exception as err:
+        bot.reply_to(message, err)
 
 
 @bot.message_handler(commands=['smoke'])
 def handle_smoke_command(message):
-    rv = requests.get(url + 'smoke', cookies=cookies)
-    bot.send_message(message.from_user.id, rv)
+    try:
+        rv = requests.get(url + 'smoke', cookies=cookies)
+        bot.send_message(message.from_user.id, rv)
+    except Exception as err:
+        bot.reply_to(message, err)
 
 
 @bot.message_handler(commands=['login'])
 def handle_login_command(message):
-    msg = bot.reply_to(message, """\
-    Hi there, I am SSkey bot.
-    Please, enter your email?
-    """)
-    bot.register_next_step_handler(msg, get_email)
+    try:
+        msg = bot.reply_to(message, """\
+        Hi there, I am SSkey bot.
+        Please, enter your email?
+        """)
+        bot.register_next_step_handler(msg, get_email)
+    except Exception as err:
+        bot.reply_to(message, err)
 
 
 def get_email(message):
@@ -69,8 +82,8 @@ def get_email(message):
         user_dict[chat_id] = user
         msg = bot.reply_to(message, 'Enter your password?')
         bot.register_next_step_handler(msg, get_pass)
-    except Exception as e:
-        bot.reply_to(message, 'Something went wrong')
+    except Exception as err:
+        bot.reply_to(message, err)
 
 
 def get_pass(message):
@@ -88,25 +101,37 @@ def get_pass(message):
         cookies = rv.cookies
         bot.send_message(message.from_user.id, rv)
     except Exception as e:
-        bot.reply_to(message, 'Something went wrong')
+        bot.reply_to(message, e)
 
 
 @bot.message_handler(commands=['get_me'])
 def handle_get_command(message):
-    rv = requests.get(url + 'user/', cookies=cookies)
-    bot.send_message(message.from_user.id, rv)
+    try:
+        rv = requests.get(url + 'user/', cookies=cookies)
+        bot.send_message(message.from_user.id, rv)
+    except Exception as err:
+        bot.reply_to(message, err)
 
 
 @bot.message_handler(commands=['get_my_pass'])
 def handle_get_command(message):
-    rv = requests.get(url + 'user/passwords', cookies=cookies)
-    bot.send_message(message.from_user.id, rv)
+    try:
+        rv = requests.get(url + 'user/passwords', cookies=cookies)
+        passwords = rv.json()
+
+        for pas in passwords.get("passwords"):
+            bot.send_message(message.from_user.id, f'{pas}')
+    except Exception as err:
+        bot.reply_to(message, err)
 
 
 @bot.message_handler(commands=['logout'])
 def handle_get_command(message):
-    rv = requests.get(url + 'logout', cookies=cookies)
-    bot.send_message(message.from_user.id, rv)
+    try:
+        rv = requests.get(url + 'logout', cookies=cookies)
+        bot.send_message(message.from_user.id, rv)
+    except Exception as err:
+        bot.reply_to(message, err)
 
 
 @bot.message_handler(content_types=['text'])
