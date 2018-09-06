@@ -1,13 +1,26 @@
+import os
 import telebot
 import requests
 
-token = "561689896:AAFOU46PTW4y-4FPNgbBurYRvEWcDY6ESgc"
+from dotenv import load_dotenv
+
+basedir = os.path.abspath(os.path.dirname(__file__))
+load_dotenv(os.path.join(basedir, 'src/app/.env'))
+
+token = os.environ.get('TOKEN')
 bot = telebot.TeleBot(token)
 url = 'http://127.0.0.1:5000/'
 # url = 'http://sskey.herokuapp.com/'
 
 print(bot.get_me())
 cookies = ''
+user_dict = dict()
+
+
+class UserCredentials:
+    def __init__(self, email):
+        self.email = email
+        self.password = None
 
 
 def log(message, answer):
@@ -39,23 +52,43 @@ def handle_smoke_command(message):
     bot.send_message(message.from_user.id, rv)
 
 
-@bot.message_handler(commands=['register'])
-def handle_register_command(message):
-    bot.send_message(message.from_user.id, 'Hello from register')
-
-
 @bot.message_handler(commands=['login'])
 def handle_login_command(message):
-    bot.reply_to(message, 'Enter your email')
-    email = message.text
-    bot.reply_to(message, 'Enter your password')
-    password = message.text
-    bot.send_message(message.from_user.id, input())
-    rv = requests.post(url + 'login', json=dict(email='admin@gmail.com', password='admin'))
-    print(rv.cookies)
-    global cookies
-    cookies = rv.cookies
-    bot.send_message(message.from_user.id, rv)
+    msg = bot.reply_to(message, """\
+    Hi there, I am SSkey bot.
+    Please, enter your email?
+    """)
+    bot.register_next_step_handler(msg, get_email)
+
+
+def get_email(message):
+    try:
+        chat_id = message.chat.id
+        email = message.text
+        user = UserCredentials(email)
+        user_dict[chat_id] = user
+        msg = bot.reply_to(message, 'Enter your password?')
+        bot.register_next_step_handler(msg, get_pass)
+    except Exception as e:
+        bot.reply_to(message, 'Something went wrong')
+
+
+def get_pass(message):
+    try:
+        chat_id = message.chat.id
+        password = message.text
+        if not password:
+            msg = bot.reply_to(message, 'Cannot be empty. Please, enter your password')
+            bot.register_next_step_handler(msg, get_pass)
+            return
+        user = user_dict[chat_id]
+        user.password = password
+        rv = requests.post(url + 'login', json=dict(email=user.email, password=user.password))
+        global cookies
+        cookies = rv.cookies
+        bot.send_message(message.from_user.id, rv)
+    except Exception as e:
+        bot.reply_to(message, 'Something went wrong')
 
 
 @bot.message_handler(commands=['get_me'])
