@@ -114,7 +114,7 @@ class Login(Resource):
         try:
             data = UserLoginSchema().load(json_data)
         except ValidationError as err:
-            return {'error': str(err)}, 422  # Unprocessable Entity
+            return {'error': err.messages}, 422  # Unprocessable Entity
 
         # Check if a new user is not exist in data base
         session = Session
@@ -168,7 +168,7 @@ class Register(Resource):
         try:
             data = UserSchema().load(json_data)
         except ValidationError as err:
-            return {'error': str(err)}, 422  # Unprocessable Entity
+            return {'error': err.messages}, 422  # Unprocessable Entity
         # Check if a new user is not exist in data base
         session = Session()
         if UserModel.filter_by_username(data['username'], session):
@@ -216,7 +216,7 @@ class User(Resource):
         try:
             data = UserPutSchema().load(json_data)
         except ValidationError as err:
-            return {'error': str(err)}, 422  # Unprocessable Entity
+            return {'error': err.messages}, 422  # Unprocessable Entity
         session = Session()
         try:
             current_user = get_user_by_token(session)
@@ -284,7 +284,7 @@ class UserPasswords(Resource):
         try:
             data = PasswordSchema().load(json_data)
         except ValidationError as err:
-            return {'error': str(err)}, 422  # Unprocessable Entity
+            return {'error': err.messages}, 422  # Unprocessable Entity
 
         # create a new password
         session = Session()
@@ -320,7 +320,7 @@ class UserPasswordsSearch(Resource):
         try:
             data = SearchSchema().load(json_data)
         except ValidationError as err:
-            return {'error': str(err)}, 422  # Unprocessable Entity
+            return {'error': err.messages}, 422  # Unprocessable Entity
 
         condition = data.get('condition')
         session = Session()
@@ -377,7 +377,7 @@ class UserPasswordsNumber(Resource):
         try:
             data = PasswordPutSchema().load(json_data)
         except ValidationError as err:
-            return {'error': str(err)}, 422  # Unprocessable Entity
+            return {'error': err.messages}, 422  # Unprocessable Entity
         session = Session()
         try:
             if not PasswordService.is_password_exists(pass_id, session):
