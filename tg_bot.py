@@ -92,8 +92,8 @@ def get_pass(message):
         global cookies
         cookies = rv.cookies
         bot.send_message(message.from_user.id, rv)
-    except Exception as e:
-        bot.reply_to(message, e)
+    except Exception as err:
+        bot.reply_to(message, err)
 
 
 @bot.message_handler(commands=['get_me'])
@@ -183,8 +183,8 @@ def get_title(message):
         user_pass.title = title
         msg = bot.reply_to(message, 'A few more steps. Please, enter your login of the service')
         bot.register_next_step_handler(msg, get_login)
-    except Exception as e:
-        bot.reply_to(message, e)
+    except Exception as err:
+        bot.reply_to(message, err)
 
 
 def get_login(message):
@@ -211,8 +211,8 @@ def get_my_pass(message):
         user_pass.password = password
         msg = bot.reply_to(message, 'Last, but not least. Please, enter your description for your service')
         bot.register_next_step_handler(msg, get_description)
-    except Exception as e:
-        bot.reply_to(message, e)
+    except Exception as err:
+        bot.reply_to(message, err)
 
 
 def get_description(message):
@@ -234,8 +234,8 @@ def get_description(message):
             comment=user_pass.comment
         ), cookies=cookies)
         bot.send_message(message.from_user.id, rv)
-    except Exception as e:
-        bot.reply_to(message, e)
+    except Exception as err:
+        bot.reply_to(message, err)
 
 
 @bot.message_handler(content_types=['text'])
