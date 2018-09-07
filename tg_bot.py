@@ -111,7 +111,7 @@ def handle_get_command(message):
         rv = requests.get(url + 'user/passwords', cookies=cookies)
         passwords = rv.json()
 
-        for pas in passwords.get("passwords"):
+        for pas in passwords.get('passwords'):
             bot.send_message(message.from_user.id, f'{pas}')
     except Exception as err:
         bot.reply_to(message, err)
@@ -129,9 +129,7 @@ def handle_get_command(message):
 @bot.message_handler(commands=['search'])
 def handle_get_command(message):
     try:
-        msg = bot.reply_to(message, """\
-                Please, enter a description of your passport in order to find the password
-                """)
+        msg = bot.reply_to(message, 'Please, enter a description of your passport in order to find the password')
         bot.register_next_step_handler(msg, search_pass)
     except Exception as err:
         bot.reply_to(message, err)
@@ -143,20 +141,20 @@ def search_pass(message):
         rv = requests.post(url + 'user/passwords/search', json=dict(condition=condition), cookies=cookies)
         passwords = rv.json()
 
-        for pas in passwords.get("passwords"):
+        for pas in passwords.get('passwords'):
             bot.send_message(message.from_user.id, f'{pas}')
     except Exception as err:
         bot.reply_to(message, err)
 
 
-@bot.message_handler(commands=['add_pass'])
+@bot.message_handler(commands=['change_pass_info'])
 def handle_login_command(message):
     try:
-        msg = bot.reply_to(message, """\
-        Hi there, I am SSkey bot.
-        Please, enter an url of new password
-        """)
-        bot.register_next_step_handler(msg, get_url)
+        user_markup = telebot.types.ReplyKeyboardMarkup()
+        user_markup.row('/change_url', '/change_title')
+        user_markup.row('/change_login', '/change_pass')
+        user_markup.row('/change_comment')
+        bot.send_message(message.from_user.id, 'Please, choose what you\'d like to do', reply_markup=user_markup)
     except Exception as err:
         bot.reply_to(message, err)
 
