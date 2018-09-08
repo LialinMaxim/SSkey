@@ -473,7 +473,7 @@ class AdminUsers(Resource):
         try:
             users_ids = (UserIdsListSchema().load(json_data))['users_ids']
         except ValidationError as err:
-            return {'error': str(err)}, 422  # Unprocessable Entity
+            return {'error': err.messages}, 422  # Unprocessable Entity
         session = Session()
         try:
             AdminService.delete_user_list(users_ids, session)
@@ -549,7 +549,7 @@ class AdminUsersSearchList(Resource):
         try:
             user_data = (AdminUsersSearchData().load(json_data))['user_data']
         except ValidationError as err:
-            return {'error': str(err)}, 422  # Unprocessable Entity
+            return {'error': err.messages}, 422  # Unprocessable Entity
         # Search users
         session = Session()
         try:
