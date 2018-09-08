@@ -50,9 +50,9 @@ def handle_help_command(message):
         bot.send_message(message.from_user.id, 'Please, choose what you\'d like to do', reply_markup=user_markup)
     if cookies:
         user_markup = telebot.types.ReplyKeyboardMarkup()
-        user_markup.row('/profile', '/get_passwords')
-        user_markup.row('/search', '/logout')
-        user_markup.row('/add_pass', '/edit_pass_info')
+        user_markup.row('/profile', '/search')
+        user_markup.row('/get_passwords', '/logout')
+        user_markup.row('/help')
         bot.send_message(message.from_user.id, 'Please, choose what you\'d like to do', reply_markup=user_markup)
 
 
