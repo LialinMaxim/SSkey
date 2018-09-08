@@ -1,5 +1,6 @@
 import os
 import telebot
+import re
 import requests
 
 from dotenv import load_dotenv
@@ -48,7 +49,7 @@ def handle_help_command(message):
         bot.send_message(message.from_user.id, 'Please, choose what you\'d like to do', reply_markup=user_markup)
     if cookies:
         user_markup = telebot.types.ReplyKeyboardMarkup()
-        user_markup.row('/get_me', '/get_my_pass')
+        user_markup.row('/profile', '/get_my_pass')
         user_markup.row('/search', '/logout')
         user_markup.row('/add_pass', '/change_pass_info')
         bot.send_message(message.from_user.id, 'Please, choose what you\'d like to do', reply_markup=user_markup)
@@ -96,11 +97,14 @@ def get_pass(message):
         bot.reply_to(message, err)
 
 
-@bot.message_handler(commands=['get_me'])
+@bot.message_handler(commands=['profile'])
 def handle_get_command(message):
     try:
         rv = requests.get(url + 'user/', cookies=cookies)
         bot.send_message(message.from_user.id, rv)
+        user_markup = telebot.types.ReplyKeyboardMarkup()
+        user_markup.row('/logout', '/edit')
+        user_markup.row('/delete_profile')
     except Exception as err:
         bot.reply_to(message, err)
 
@@ -110,9 +114,16 @@ def handle_get_command(message):
     try:
         rv = requests.get(url + 'user/passwords', cookies=cookies)
         passwords = rv.json()
+        counter = 0
+        results = ''
 
         for pas in passwords.get('passwords'):
-            bot.send_message(message.from_user.id, f'{pas}')
+            counter += 1
+            results = results + '/' + str(pas.get('pass_id')) + ' - ' + pas.get('title') + ': ' + pas.get(
+                'login') + '\n'
+        header = f'Results of {counter} \n'
+        results = header + results
+        bot.send_message(message.from_user.id, results)
     except Exception as err:
         bot.reply_to(message, err)
 
@@ -236,6 +247,19 @@ def get_description(message):
         bot.send_message(message.from_user.id, rv)
     except Exception as err:
         bot.reply_to(message, err)
+
+
+@bot.message_handler(func=lambda message: re.match(r'/\d+', message.text))
+def handle_get_command(message):
+    if cookies:
+        try:
+            # removed / after passwords because message.text will be smth like /digit
+            rv = requests.get(url + 'user/passwords' + message.text, cookies=cookies)
+            bot.send_message(message.from_user.id, rv)
+        except Exception as err:
+            bot.reply_to(message, err)
+    else:
+        bot.send_message(message.from_user.id, 'You have to be logged in.')
 
 
 @bot.message_handler(content_types=['text'])
