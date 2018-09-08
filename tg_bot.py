@@ -4,6 +4,7 @@ import re
 import requests
 
 from dotenv import load_dotenv
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 load_dotenv(os.path.join(basedir, 'src/app/.env'))
@@ -49,9 +50,9 @@ def handle_help_command(message):
         bot.send_message(message.from_user.id, 'Please, choose what you\'d like to do', reply_markup=user_markup)
     if cookies:
         user_markup = telebot.types.ReplyKeyboardMarkup()
-        user_markup.row('/profile', '/get_my_pass')
+        user_markup.row('/profile', '/get_passwords')
         user_markup.row('/search', '/logout')
-        user_markup.row('/add_pass', '/change_pass_info')
+        user_markup.row('/add_pass', '/edit_pass_info')
         bot.send_message(message.from_user.id, 'Please, choose what you\'d like to do', reply_markup=user_markup)
 
 
@@ -98,19 +99,59 @@ def get_pass(message):
 
 
 @bot.message_handler(commands=['profile'])
-def handle_get_command(message):
+def handle_profile_command(message):
     try:
         rv = requests.get(url + 'user/', cookies=cookies)
         bot.send_message(message.from_user.id, rv)
         user_markup = telebot.types.ReplyKeyboardMarkup()
-        user_markup.row('/logout', '/edit')
+        user_markup.row('/logout', '/edit_profile')
         user_markup.row('/delete_profile')
+        bot.send_message(message.from_user.id, 'You\'re available to', reply_markup=user_markup)
     except Exception as err:
         bot.reply_to(message, err)
 
 
-@bot.message_handler(commands=['get_my_pass'])
-def handle_get_command(message):
+def gen_edit_markup():
+    markup = InlineKeyboardMarkup()
+    markup.row_width = 4
+    markup.add(InlineKeyboardButton('First Name', callback_data=f'change_f_name'),
+               InlineKeyboardButton('Last Name', callback_data=f'change_l_name'),
+               InlineKeyboardButton('Email', callback_data=f'change_email'),
+               InlineKeyboardButton('Phone', callback_data=f'change_phone'))
+    return markup
+
+
+@bot.callback_query_handler(func=lambda call: True)
+def callback_query(call):
+    if call.data == 'change_f_name':
+        bot.answer_callback_query(call.id, "Answer is Yes")
+    elif call.data == 'change_l_name':
+        bot.answer_callback_query(call.id, "Answer is No")
+    elif call.data == 'change_email':
+        pass
+    elif call.data == 'change_phone':
+        pass
+
+
+@bot.message_handler(commands=['edit_profile'])
+def handle_edit_profile_command(message):
+    try:
+        bot.send_message(message.chat.id, "Choose what you wanna change", reply_markup=gen_edit_markup())
+    except Exception as err:
+        bot.reply_to(message, err)
+
+
+@bot.message_handler(commands=['delete_profile'])
+def handle_delete_profile_command(message):
+    try:
+        rv = requests.delete(url + 'user/', cookies=cookies)
+        bot.send_message(message.from_user.id, rv)
+    except Exception as err:
+        bot.reply_to(message, err)
+
+
+@bot.message_handler(commands=['get_passwords'])
+def handle_get_passwords_command(message):
     try:
         rv = requests.get(url + 'user/passwords', cookies=cookies)
         passwords = rv.json()
@@ -129,7 +170,7 @@ def handle_get_command(message):
 
 
 @bot.message_handler(commands=['logout'])
-def handle_get_command(message):
+def handle_logout_command(message):
     try:
         rv = requests.get(url + 'logout', cookies=cookies)
         bot.send_message(message.from_user.id, rv)
@@ -138,7 +179,7 @@ def handle_get_command(message):
 
 
 @bot.message_handler(commands=['search'])
-def handle_get_command(message):
+def handle_search_command(message):
     try:
         msg = bot.reply_to(message, 'Please, enter a description of your passport in order to find the password')
         bot.register_next_step_handler(msg, search_pass)
@@ -158,14 +199,39 @@ def search_pass(message):
         bot.reply_to(message, err)
 
 
-@bot.message_handler(commands=['change_pass_info'])
-def handle_login_command(message):
+def gen_edit_pass_markup():
+    markup = InlineKeyboardMarkup()
+    markup.row_width = 5
+    markup.add(InlineKeyboardButton('URL', callback_data=f'change_url'),
+               InlineKeyboardButton('Title', callback_data=f'change_title'),
+               InlineKeyboardButton('Login', callback_data=f'change_login'),
+               InlineKeyboardButton('Password', callback_data=f'change_pass'),
+               InlineKeyboardButton('Comment', callback_data=f'change_comment'))
+    return markup
+
+
+@bot.callback_query_handler(func=lambda call: True)
+def callback_query(call):
+    if call.data == 'change_url':
+        bot.answer_callback_query(call.id, "Answer is Yes")
+    elif call.data == 'change_title':
+        bot.answer_callback_query(call.id, "Answer is No")
+    elif call.data == 'change_login':
+        pass
+    elif call.data == 'change_pass':
+        pass
+    elif call.data == 'change_comment':
+        pass
+
+
+@bot.message_handler(commands=['edit_pass_info'])
+def handle_edit_pass_command(message):
     try:
         user_markup = telebot.types.ReplyKeyboardMarkup()
         user_markup.row('/change_url', '/change_title')
         user_markup.row('/change_login', '/change_pass')
         user_markup.row('/change_comment')
-        bot.send_message(message.from_user.id, 'Please, choose what you\'d like to do', reply_markup=user_markup)
+        bot.send_message(message.from_user.id, 'Choose, what to change', reply_markup=gen_edit_pass_markup())
     except Exception as err:
         bot.reply_to(message, err)
 
@@ -250,12 +316,15 @@ def get_description(message):
 
 
 @bot.message_handler(func=lambda message: re.match(r'/\d+', message.text))
-def handle_get_command(message):
+def handle_get_particular_pass_command(message):
     if cookies:
         try:
             # removed / after passwords because message.text will be smth like /digit
             rv = requests.get(url + 'user/passwords' + message.text, cookies=cookies)
             bot.send_message(message.from_user.id, rv)
+            user_markup = telebot.types.ReplyKeyboardMarkup()
+            user_markup.row('/edit_pass_info', '/delete_password')
+            bot.send_message(message.from_user.id, '', reply_markup=user_markup)
         except Exception as err:
             bot.reply_to(message, err)
     else:
