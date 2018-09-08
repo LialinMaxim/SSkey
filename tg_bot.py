@@ -93,7 +93,8 @@ def get_pass(message):
         rv = requests.post(url + 'login', json=dict(email=user.email, password=user.password))
         global cookies
         cookies = rv.cookies
-        bot.send_message(message.from_user.id, rv)
+        rv = rv.json()
+        bot.send_message(message.from_user.id, rv.get('message'))
     except Exception as err:
         bot.reply_to(message, err)
 
@@ -136,7 +137,7 @@ def callback_query(call):
 @bot.message_handler(commands=['edit_profile'])
 def handle_edit_profile_command(message):
     try:
-        bot.send_message(message.chat.id, "Choose what you wanna change", reply_markup=gen_edit_markup())
+        bot.send_message(message.chat.id, 'Choose what you wanna change', reply_markup=gen_edit_markup())
     except Exception as err:
         bot.reply_to(message, err)
 
@@ -173,7 +174,8 @@ def handle_get_passwords_command(message):
 def handle_logout_command(message):
     try:
         rv = requests.get(url + 'logout', cookies=cookies)
-        bot.send_message(message.from_user.id, rv)
+        rv = rv.json()
+        bot.send_message(message.from_user.id, rv.get('message'))
     except Exception as err:
         bot.reply_to(message, err)
 
@@ -324,7 +326,7 @@ def handle_get_particular_pass_command(message):
             bot.send_message(message.from_user.id, rv)
             user_markup = telebot.types.ReplyKeyboardMarkup()
             user_markup.row('/edit_pass_info', '/delete_password')
-            bot.send_message(message.from_user.id, '', reply_markup=user_markup)
+            bot.send_message(message.from_user.id, 'Also, you are able to', reply_markup=user_markup)
         except Exception as err:
             bot.reply_to(message, err)
     else:
