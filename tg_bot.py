@@ -15,7 +15,7 @@ url = 'http://127.0.0.1:5000/'
 # url = 'http://sskey.herokuapp.com/'
 
 print(bot.get_me())
-cookies = list()
+cookies = dict()
 user_dict = dict()
 pass_dict = dict()
 
@@ -92,7 +92,8 @@ def get_pass(message):
         user.password = password
         rv = requests.post(url + 'login', json=dict(email=user.email, password=user.password))
         global cookies
-        cookies.append(rv.cookies)
+        # cookies.append(rv.cookies)
+        cookies['cookie'] = rv.cookies
         rv = rv.json()
         bot.send_message(message.from_user.id, rv.get('message'))
     except Exception as err:
@@ -101,15 +102,18 @@ def get_pass(message):
 
 @bot.message_handler(commands=['profile'])
 def handle_profile_command(message):
-    try:
-        rv = requests.get(url + 'user/', cookies=cookies[0])
-        bot.send_message(message.from_user.id, rv)
-        user_markup = telebot.types.ReplyKeyboardMarkup()
-        user_markup.row('/logout', '/edit_profile')
-        user_markup.row('/delete_profile', '/help')
-        bot.send_message(message.from_user.id, 'You\'re available to', reply_markup=user_markup)
-    except Exception as err:
-        bot.reply_to(message, err)
+    if cookies:
+        try:
+            rv = requests.get(url + 'user/', cookies=cookies.get('cookie'))
+            bot.send_message(message.from_user.id, rv)
+            user_markup = telebot.types.ReplyKeyboardMarkup()
+            user_markup.row('/logout', '/edit_profile')
+            user_markup.row('/delete_profile', '/help')
+            bot.send_message(message.from_user.id, 'You\'re available to', reply_markup=user_markup)
+        except Exception as err:
+            bot.reply_to(message, err)
+    else:
+        bot.send_message(message.from_user.id, 'You have to be logged in.')
 
 
 def gen_edit_markup():
@@ -136,16 +140,19 @@ def callback_query(call):
 
 @bot.message_handler(commands=['edit_profile'])
 def handle_edit_profile_command(message):
-    try:
-        bot.send_message(message.chat.id, 'Choose what you wanna change', reply_markup=gen_edit_markup())
-    except Exception as err:
-        bot.reply_to(message, err)
+    if cookies:
+        try:
+            bot.send_message(message.chat.id, 'Choose what you wanna change', reply_markup=gen_edit_markup())
+        except Exception as err:
+            bot.reply_to(message, err)
+    else:
+        bot.send_message(message.from_user.id, 'You have to be logged in.')
 
 
 @bot.message_handler(commands=['delete_profile'])
 def handle_delete_profile_command(message):
     try:
-        rv = requests.delete(url + 'user/', cookies=cookies[0])
+        rv = requests.delete(url + 'user/', cookies=cookies.get('cookie'))
         bot.send_message(message.from_user.id, rv)
     except Exception as err:
         bot.reply_to(message, err)
@@ -153,29 +160,32 @@ def handle_delete_profile_command(message):
 
 @bot.message_handler(commands=['get_passwords'])
 def handle_get_passwords_command(message):
-    try:
-        rv = requests.get(url + 'user/passwords', cookies=cookies[0])
-        passwords = rv.json()
-        counter = 0
-        results = ''
+    if cookies:
+        try:
+            rv = requests.get(url + 'user/passwords', cookies=cookies.get('cookie'))
+            passwords = rv.json()
+            counter = 0
+            results = ''
 
-        for pas in passwords.get('passwords'):
-            counter += 1
-            results = results + '/' + str(pas.get('pass_id')) + ' - ' + pas.get('title') + ': ' + pas.get(
-                'login') + '\n'
-        header = f'Results of {counter} \n'
-        results = header + results
-        bot.send_message(message.from_user.id, results)
-    except Exception as err:
-        bot.reply_to(message, err)
+            for pas in passwords.get('passwords'):
+                counter += 1
+                results = results + '/' + str(pas.get('pass_id')) + ' - ' + pas.get('title') + ': ' + pas.get(
+                    'login') + '\n'
+            header = f'Results of {counter} \n'
+            results = header + results
+            bot.send_message(message.from_user.id, results)
+        except Exception as err:
+            bot.reply_to(message, err)
+    else:
+        bot.send_message(message.from_user.id, 'You have to be logged in.')
 
 
 @bot.message_handler(commands=['logout'])
 def handle_logout_command(message):
     try:
-        rv = requests.get(url + 'logout', cookies=cookies[0])
+        rv = requests.get(url + 'logout', cookies=cookies.get('cookie'))
         rv = rv.json()
-        del cookies[0]
+        cookies.clear()
         bot.send_message(message.from_user.id, rv.get('message'))
     except Exception as err:
         bot.reply_to(message, err)
@@ -183,17 +193,20 @@ def handle_logout_command(message):
 
 @bot.message_handler(commands=['search'])
 def handle_search_command(message):
-    try:
-        msg = bot.reply_to(message, 'Please, enter a description of your passport in order to find the password')
-        bot.register_next_step_handler(msg, search_pass)
-    except Exception as err:
-        bot.reply_to(message, err)
+    if cookies:
+        try:
+            msg = bot.reply_to(message, 'Please, enter a description of your passport in order to find the password')
+            bot.register_next_step_handler(msg, search_pass)
+        except Exception as err:
+            bot.reply_to(message, err)
+    else:
+        bot.send_message(message.from_user.id, 'You have to be logged in.')
 
 
 def search_pass(message):
     try:
         condition = message.text
-        rv = requests.post(url + 'user/passwords/search', json=dict(condition=condition), cookies=cookies[0])
+        rv = requests.post(url + 'user/passwords/search', json=dict(condition=condition), cookies=cookies.get('cookie'))
         passwords = rv.json()
 
         for pas in passwords.get('passwords'):
@@ -229,14 +242,17 @@ def callback_query(call):
 
 @bot.message_handler(commands=['edit_pass_info'])
 def handle_edit_pass_command(message):
-    try:
-        user_markup = telebot.types.ReplyKeyboardMarkup()
-        user_markup.row('/change_url', '/change_title')
-        user_markup.row('/change_login', '/change_pass')
-        user_markup.row('/change_comment', '/help')
-        bot.send_message(message.from_user.id, 'Choose, what to change', reply_markup=gen_edit_pass_markup())
-    except Exception as err:
-        bot.reply_to(message, err)
+    if cookies:
+        try:
+            user_markup = telebot.types.ReplyKeyboardMarkup()
+            user_markup.row('/change_url', '/change_title')
+            user_markup.row('/change_login', '/change_pass')
+            user_markup.row('/change_comment', '/help')
+            bot.send_message(message.from_user.id, 'Choose, what to change', reply_markup=gen_edit_pass_markup())
+        except Exception as err:
+            bot.reply_to(message, err)
+    else:
+        bot.send_message(message.from_user.id, 'You have to be logged in.')
 
 
 def get_url(message):
@@ -312,7 +328,7 @@ def get_description(message):
             login=user_pass.login,
             password=user_pass.password,
             comment=user_pass.comment
-        ), cookies=cookies[0])
+        ), cookies=cookies.get('cookie'))
         bot.send_message(message.from_user.id, rv)
     except Exception as err:
         bot.reply_to(message, err)
@@ -323,7 +339,7 @@ def handle_get_particular_pass_command(message):
     if cookies:
         try:
             # removed / after passwords because message.text will be smth like /digit
-            rv = requests.get(url + 'user/passwords' + message.text, cookies=cookies[0])
+            rv = requests.get(url + 'user/passwords' + message.text, cookies=cookies.get('cookie'))
             bot.send_message(message.from_user.id, rv)
             chat_id = message.chat.id
             pass_id = message.text
@@ -341,13 +357,17 @@ def handle_get_particular_pass_command(message):
 
 @bot.message_handler(commands=['delete_password'])
 def handle_delete_password_command(message):
-    try:
-        chat_id = message.chat.id
-        rv = requests.delete(url + 'user/passwords' + pass_dict.get(chat_id).id, cookies=cookies[0])
-        rv = rv.json()
-        bot.send_message(message.from_user.id, rv.get('message'))
-    except Exception as err:
-        bot.reply_to(message, err)
+    if cookies:
+        try:
+            chat_id = message.chat.id
+            # removed / after passwords because message.text will be smth like /digit
+            rv = requests.delete(url + 'user/passwords' + pass_dict.get(chat_id).id, cookies=cookies.get('cookie'))
+            rv = rv.json()
+            bot.send_message(message.from_user.id, rv.get('message'))
+        except Exception as err:
+            bot.reply_to(message, err)
+    else:
+        bot.send_message(message.from_user.id, 'You have to be logged in.')
 
 
 @bot.message_handler(content_types=['text'])
