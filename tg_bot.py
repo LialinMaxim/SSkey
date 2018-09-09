@@ -27,8 +27,9 @@ class UserCredentials:
 
 
 class PasswordCredentials:
-    def __init__(self, n_url):
-        self.url = n_url
+    def __init__(self, id):
+        self.id = id
+        self.url = None
         self.title = None
         self.login = None
         self.password = None
@@ -324,6 +325,10 @@ def handle_get_particular_pass_command(message):
             # removed / after passwords because message.text will be smth like /digit
             rv = requests.get(url + 'user/passwords' + message.text, cookies=cookies[0])
             bot.send_message(message.from_user.id, rv)
+            chat_id = message.chat.id
+            pass_id = message.text
+            user_pass = PasswordCredentials(pass_id)
+            pass_dict[chat_id] = user_pass
             user_markup = telebot.types.ReplyKeyboardMarkup()
             user_markup.row('/edit_pass_info', '/delete_password')
             user_markup.row('/help')
@@ -332,6 +337,17 @@ def handle_get_particular_pass_command(message):
             bot.reply_to(message, err)
     else:
         bot.send_message(message.from_user.id, 'You have to be logged in.')
+
+
+@bot.message_handler(commands=['delete_password'])
+def handle_delete_password_command(message):
+    try:
+        chat_id = message.chat.id
+        rv = requests.delete(url + 'user/passwords' + pass_dict.get(chat_id).id, cookies=cookies[0])
+        rv = rv.json()
+        bot.send_message(message.from_user.id, rv.get('message'))
+    except Exception as err:
+        bot.reply_to(message, err)
 
 
 @bot.message_handler(content_types=['text'])
