@@ -27,10 +27,15 @@ def get_user_by_token(session):
 
 
 @app.errorhandler(SQLAlchemyError)
-def exception_logger(error):
+def handle_sqlalchemy_error(error):
+    """Database exception logger
+
+    :param error: Response with error
+    :return: error
+    """
     tb = traceback.format_exc()
     app.logger.error(f'5xx INTERNAL SERVER ERROR\n{tb}')
-    return "Internal Server Error", 500
+    return error
 
 
 @app.before_request
