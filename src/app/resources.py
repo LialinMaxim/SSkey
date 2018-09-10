@@ -21,18 +21,9 @@ def get_user_by_token(session):
     token = request.cookies.get('token')
     user_session = session.query(SessionObject).filter(SessionObject.token == token).first()
     user = UserModel.filter_by_id(user_session.user_id, session)
+    app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                    f'User "{user.username}" requested by token "{token}"')
     return user
-
-
-@app.after_request
-def response_logger(response):
-    if response.status_code == 200:
-        app.logger.info(f'{request.remote_addr} '
-                        f'{request.method} '
-                        f'{request.scheme} '
-                        f'{request.path} '
-                        f'{response.status} ')
-    return response
 
 
 @app.errorhandler(SQLAlchemyError)
@@ -57,6 +48,8 @@ def require_login():
         try:
             user = get_user_by_token(session)
             if not user.is_admin:
+                app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 403 '
+                                f'User "{user.username}" requested allow to the administration functional')
                 return make_response('You are not allowed to use admin functional', 403)
         except AttributeError:
             return make_response('You are not allowed to use this resource without logging in!', 403)
@@ -68,13 +61,15 @@ def require_login():
         try:
             user_session = session.query(SessionObject).filter(SessionObject.token == token_from_cookie).first()
         except SQLAlchemyError as err:
-            return {'error': str(err)}
+            return {'error': str(err)}, 500
         finally:
             session.close()
         expiration_time = is_expiry_time(user_session)
         if not expiration_time:
             del user_session
         if request.endpoint not in allowed_routes and not expiration_time:
+            app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 403 '
+                            f'User token "{token_from_cookie}" expired')
             return make_response('You are not allowed to use this resource without logging in!', 403)
 
 
@@ -88,11 +83,13 @@ def is_expiry_time(user_session):
                 session.query(SessionObject).filter(SessionObject.token == token).delete()
                 session.commit()
             except SQLAlchemyError as err:
-                return {'error': str(err)}
+                return {'error': str(err)}, 500
             finally:
                 session.close()
         else:
             return True
+        app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                        f'User token "{token}" was deleted by expired time')
     return False
 
 
@@ -107,12 +104,16 @@ def is_expiry_time(user_session):
 class Home(Resource):
     def get(self):
         """Simple test that works without authorization."""
+        app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                        f'Requested Home Page')
         return {'message': 'This is a Home Page'}, 200  # OK
 
 
 class Smoke(Resource):
     def get(self):
         """Simple test that requires authorization."""
+        app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                        f'Requested Smoke Page')
         return {'message': 'OK'}, 200  # OK
 
 
@@ -143,12 +144,16 @@ class Login(Resource):
                 user_session = SessionObject(user.id)
                 session.add(user_session)
                 session.commit()
+                app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                                f'User "{user.username}" logged in as {"[ADMIN]" if user.is_admin else "[USER]"}')
                 return {'message': f'You are LOGGED IN as {user.email}'}, 200, \
                        {'Set-Cookie': f'token="{user_session.token}"'}
         except SQLAlchemyError as err:
-            return {'error': str(err)}
+            return {'error': str(err)}, 500
         finally:
             session.close()
+        app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 401 '
+                        f'User with email "{data["email"]}" tried to log in')
         return {'message': 'Could not verify your login!'}, 401, {"WWW-Authenticate": 'Basic realm="Login Required"'}
 
 
@@ -165,9 +170,11 @@ class Logout(Resource):
             session.query(SessionObject).filter(SessionObject.token == token).delete()
             session.commit()
         except SQLAlchemyError as err:
-            return {'error': str(err)}
+            return {'error': str(err)}, 500
         finally:
             session.close()
+        app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                        f'User token "{token}" was deleted by logout')
         return {'message': 'Dropped!'}, 200  # OK
 
 
@@ -199,11 +206,13 @@ class Register(Resource):
             try:
                 session.add(UserModel(data))
                 session.commit()
-                return {'message': f"USER {data['username']} ADDED"}, 200  # OK
             except SQLAlchemyError as err:
                 return {'error': str(err)}, 500  # Internal Server Error
             finally:
                 session.close()
+            app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                            f'User "{data["username"]}" registered with email {data["email"]}')
+            return {'message': f"USER {data['username']} ADDED"}, 200  # OK
 
 
 # RESOURCES FOR USER:
@@ -223,7 +232,8 @@ class User(Resource):
             return {'error': str(err)}, 500  # Internal Server Error
         finally:
             session.close()
-        app.logger.info(f'User "{current_user.username}" requested his own data')
+        app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                        f'User "{current_user.username}" requested his own data')
         return {'user': UserSchema().dump(current_user)}, 200
 
     @api.expect(user_put)
@@ -242,7 +252,8 @@ class User(Resource):
             current_user = get_user_by_token(session)
             username = UserService.update_user(data, current_user, session)
             session.commit()
-            app.logger.info(f'User "{current_user.username}" updated his own data')
+            app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                            f'User "{current_user.username}" updated his own data')
         except SQLAlchemyError as err:
             return {'error': str(err)}, 500  # Internal Server Error
         finally:
@@ -262,7 +273,8 @@ class User(Resource):
             return {'error': str(err)}, 500  # Internal Server Error
         finally:
             session.close()
-        app.logger.info(f'User "{current_user.username}" deleted himself')
+        app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                        f'User "{current_user.username}" deleted himself')
         return {'message': f'User {username} DELETED'}, 200
 
 
@@ -288,7 +300,8 @@ class UserPasswords(Resource):
             return {'error': str(err)}, 500  # Internal Server Error
         finally:
             session.close()
-        app.logger.info(f'User "{current_user.username}" updated his own data')
+        app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                        f'User "{current_user.username}" requested his own passwords')
         return {'passwords': passwords_serialized}, 200  # OK
 
     @api.expect(password_api_model)
@@ -315,11 +328,13 @@ class UserPasswords(Resource):
             current_user = get_user_by_token(session)
             password_title = PasswordService.add_password(data, current_user, session)
             session.commit()
-            return {'message': f'PASSWORD with title {password_title} ADDED'}, 200  # OK
+            app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                            f'User "{current_user.username}" added new password with title "{password_title}"')
         except SQLAlchemyError as err:
             return {'error': str(err)}, 500  # Internal Server Error
         finally:
             session.close()
+        return {'message': f'PASSWORD with title {password_title} ADDED'}, 200  # OK
 
 
 class UserPasswordsSearch(Resource):
@@ -350,14 +365,18 @@ class UserPasswordsSearch(Resource):
         try:
             user = get_user_by_token(session)
             passwords_by_condition = PasswordService.search_password_by_condition(user.id, condition, session)
-            if passwords_by_condition:
-                return {'passwords': passwords_by_condition}, 200
-            else:
-                return {'message': f'No matches found for {condition}'}, 404
         except SQLAlchemyError as err:
             return {'error': str(err)}, 500  # Internal Server Error
         finally:
             session.close()
+        if passwords_by_condition:
+            app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                            f'User "{user.username}" searched password by condition "{condition}"')
+            return {'passwords': passwords_by_condition}, 200
+        else:
+            app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 404 '
+                            f'User "{user.username}" tried to search password by condition "{condition}"')
+            return {'message': f'No matches found for {condition}'}, 404
 
 
 class UserPasswordsNumber(Resource):
@@ -379,13 +398,17 @@ class UserPasswordsNumber(Resource):
         try:
             current_user = get_user_by_token(session)
             password = PasswordService.get_password_by_id(current_user.id, pass_id, session)
-            if not password:
-                return {'message': 'Password Not Found'}, 404  # Not Found
-            return {'password': password.serialize}, 200  # OK
         except SQLAlchemyError as err:
             return {'error': str(err)}, 500  # Internal Server Error
         finally:
             session.close()
+        if not password:
+            app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 404 '
+                            f'User "{current_user.username}" tried to search password by id "{pass_id}"')
+            return {'message': 'Password Not Found'}, 404  # Not Found
+        app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                        f'User "{current_user.username}" searched password by id "{pass_id}"')
+        return {'password': password.serialize}, 200  # OK
 
     @api.expect(password_api_model)
     def put(self, pass_id):
@@ -429,8 +452,12 @@ class UserPasswordsNumber(Resource):
             if password:
                 PasswordService.delete_password(pass_id, current_user, session)
                 session.commit()
+                app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                                f'User "{current_user.username}" deleted password by id "{pass_id}"')
                 return {'message': f'Password ID {pass_id} DELETED'}, 200  # OK
             else:
+                app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 404 '
+                                f'User "{current_user.username}" tried to deleted password by id "{pass_id}"')
                 return {'message': 'Password Not Found'}, 404  # Not Found
         except SQLAlchemyError as err:
             return {'error': str(err)}, 500  # Internal Server Error
@@ -455,6 +482,8 @@ class AdminUsers(Resource):
             return {'error': str(err)}, 500  # Internal Server Error
         finally:
             session.close()
+        app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                        f'Admin requested user list')
         return {'users': UserSchema(many=True).dump(users)}, 200  # OK
 
     @api.expect(users_ids_list)
@@ -478,11 +507,13 @@ class AdminUsers(Resource):
         try:
             AdminService.delete_user_list(users_ids, session)
             session.commit()
-            return {'message': 'Users has been deleted successfully'}, 200
         except SQLAlchemyError as err:
             return {'error': str(err)}, 500  # Internal Server Error
         finally:
             session.close()
+        app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                        f'Admin deleted users by ids {users_ids}')
+        return {'message': 'Users has been deleted successfully'}, 200
 
 
 class AdminUsersNumber(Resource):
@@ -496,8 +527,12 @@ class AdminUsersNumber(Resource):
         finally:
             session.close()
         if user:
+            app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                            f'Admin requested user by id "{user_id}"')
             return {'user': UserSchema().dump(user)}, 200  # OK
         else:
+            app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 404 '
+                            f'Admin tried to find user by id "{user_id}"')
             return {'message': f'User ID {user_id} - Not Found'}, 404  # Not Found
 
     def delete(self, user_id):
@@ -506,15 +541,19 @@ class AdminUsersNumber(Resource):
         try:
             delete_status = AdminService.delete_user_by_id(user_id, session)
             session.commit()
-            if delete_status:
-                return {'message': f'User ID:{user_id} has been DELETED.'}, 200  # OK
-            else:
-                return {'message': f'User ID {user_id} - Not Found'}, 404  # Not Found
         except SQLAlchemyError as err:
             session.rollback()
             return {'error': str(err)}, 500  # Internal Server Error
         finally:
             session.close()
+        if delete_status:
+            app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                            f'Admin deleted user by id "{user_id}"')
+            return {'message': f'User ID:{user_id} has been DELETED.'}, 200  # OK
+        else:
+            app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 404 '
+                            f'Admin tried to delete user by id "{user_id}"')
+            return {'message': f'User ID {user_id} - Not Found'}, 404  # Not Found
 
 
 class AdminUsersSearch(Resource):
@@ -528,8 +567,12 @@ class AdminUsersSearch(Resource):
         finally:
             session.close()
         if user:
+            app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                            f'Admin searched user by username "{username}"')
             return {'user': UserSchema().dump(user)}, 200  # OK
         else:
+            app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 404 '
+                            f'Admin tried to find user by username "{username}"')
             return {'message': 'User not found'}, 404  # Not Found
 
 
@@ -559,6 +602,10 @@ class AdminUsersSearchList(Resource):
         finally:
             session.close()
         if users:
+            app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                            f'Admin searched user by data "{user_data}"')
             return {'users': UserSchema(many=True).dump(users)}, 200  # OK
         else:
+            app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 404 '
+                            f'Admin tried to find user by data "{user_data}"')
             return {'message': 'User not found'}, 404  # Not Found
