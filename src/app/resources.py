@@ -11,19 +11,11 @@ from .marshmallow_schemes import (UserSchema, UserPutSchema, UserLoginSchema, Pa
                                   PasswordPutSchema, UserIdsListSchema, AdminUsersSearchData)
 from .models import UserModel, SessionObject
 from .services.admin import AdminService
+from .services.auth import AuthService
 from .services.password import PasswordService
 from .services.user import UserService
 from .swagger_models import (user_post, user_login, password_api_model, user_put, search_password, users_ids_list,
                              admin_users_search)
-
-
-def get_user_by_token(session):
-    token = request.cookies.get('token')
-    user_session = session.query(SessionObject).filter(SessionObject.token == token).first()
-    user = UserModel.filter_by_id(user_session.user_id, session)
-    app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
-                    f'User "{user.username}" requested by token "{token}"')
-    return user
 
 
 @app.errorhandler(SQLAlchemyError)
@@ -51,20 +43,21 @@ def require_login():
     if request.endpoint in admin_endpoints:
         session = Session()
         try:
-            user = get_user_by_token(session)
-            if not user.is_admin:
-                app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 403 '
-                                f'User "{user.username}" requested allow to the administration functional')
-                return make_response('You are not allowed to use admin functional', 403)
+            current_user = AuthService.get_user_by_token(session)
         except AttributeError:
             return make_response('You are not allowed to use this resource without logging in!', 403)
+        finally:
+            session.close()
+        if not current_user.is_admin:
+            app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 403 '
+                            f'User "{current_user.username}" requested allow to the administration functional')
+            return make_response('You are not allowed to use admin functional', 403)
 
     if request.endpoint != 'login':
         allowed_routes = ['login', 'register', 'home', 'doc', 'restplus_doc.static', 'specs']
-        token_from_cookie = request.cookies.get('token')
         session = Session()
         try:
-            user_session = session.query(SessionObject).filter(SessionObject.token == token_from_cookie).first()
+            user_session = AuthService.get_user_session(session)
         except SQLAlchemyError as err:
             return {'error': str(err)}, 500
         finally:
@@ -73,8 +66,6 @@ def require_login():
         if not expiration_time:
             del user_session
         if request.endpoint not in allowed_routes and not expiration_time:
-            app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 403 '
-                            f'User token "{token_from_cookie}" expired')
             return make_response('You are not allowed to use this resource without logging in!', 403)
 
 
@@ -85,7 +76,7 @@ def is_expiry_time(user_session):
         if not out_of_time:
             session = Session()
             try:
-                session.query(SessionObject).filter(SessionObject.token == token).delete()
+                AuthService.delete_token(token, session)
                 session.commit()
             except SQLAlchemyError as err:
                 return {'error': str(err)}, 500
@@ -232,7 +223,7 @@ class User(Resource):
         """Get user's data."""
         session = Session()
         try:
-            current_user = get_user_by_token(session)
+            current_user = AuthService.get_user_by_token(session)
         except SQLAlchemyError as err:
             return {'error': str(err)}, 500  # Internal Server Error
         finally:
@@ -254,7 +245,7 @@ class User(Resource):
             return {'error': str(err)}, 422  # Unprocessable Entity
         session = Session()
         try:
-            current_user = get_user_by_token(session)
+            current_user = AuthService.get_user_by_token(session)
             username = UserService.update_user(data, current_user, session)
             session.commit()
             app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
@@ -270,7 +261,7 @@ class User(Resource):
         token = request.cookies.get('token')
         session = Session()
         try:
-            current_user = get_user_by_token(session)
+            current_user = AuthService.get_user_by_token(session)
             username = UserService.delete_user(token, current_user, session)
             session.commit()
         except SQLAlchemyError as err:
@@ -299,7 +290,7 @@ class UserPasswords(Resource):
         """
         session = Session()
         try:
-            current_user = get_user_by_token(session)
+            current_user = AuthService.get_user_by_token(session)
             passwords_serialized = PasswordService.get_password_list(current_user, session)
         except SQLAlchemyError as err:
             return {'error': str(err)}, 500  # Internal Server Error
@@ -330,7 +321,7 @@ class UserPasswords(Resource):
         # create a new password
         session = Session()
         try:
-            current_user = get_user_by_token(session)
+            current_user = AuthService.get_user_by_token(session)
             password_title = PasswordService.add_password(data, current_user, session)
             session.commit()
             app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
@@ -368,19 +359,19 @@ class UserPasswordsSearch(Resource):
         condition = data.get('condition')
         session = Session()
         try:
-            user = get_user_by_token(session)
-            passwords_by_condition = PasswordService.search_password_by_condition(user.id, condition, session)
+            current_user = AuthService.get_user_by_token(session)
+            passwords_by_condition = PasswordService.search_password_by_condition(current_user.id, condition, session)
         except SQLAlchemyError as err:
             return {'error': str(err)}, 500  # Internal Server Error
         finally:
             session.close()
         if passwords_by_condition:
             app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
-                            f'User "{user.username}" searched password by condition "{condition}"')
+                            f'User "{current_user.username}" searched password by condition "{condition}"')
             return {'passwords': passwords_by_condition}, 200
         else:
             app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 404 '
-                            f'User "{user.username}" tried to search password by condition "{condition}"')
+                            f'User "{current_user.username}" tried to search password by condition "{condition}"')
             return {'message': f'No matches found for {condition}'}, 404
 
 
@@ -401,7 +392,7 @@ class UserPasswordsNumber(Resource):
         """
         session = Session()
         try:
-            current_user = get_user_by_token(session)
+            current_user = AuthService.get_user_by_token(session)
             password = PasswordService.get_password_by_id(current_user.id, pass_id, session)
         except SQLAlchemyError as err:
             return {'error': str(err)}, 500  # Internal Server Error
@@ -452,7 +443,7 @@ class UserPasswordsNumber(Resource):
         """
         session = Session()
         try:
-            current_user = get_user_by_token(session)
+            current_user = AuthService.get_user_by_token(session)
             password = PasswordService.get_password_by_id(current_user.id, pass_id, session)
             if password:
                 PasswordService.delete_password(pass_id, current_user, session)
