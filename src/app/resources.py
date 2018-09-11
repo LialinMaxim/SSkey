@@ -328,7 +328,12 @@ class UserPasswords(Resource):
             current_user = get_user_by_token(session)
             password_title = PasswordService.add_password(data, current_user, session)
             session.commit()
-            return {'message': f'PASSWORD with title {password_title} ADDED'}, 200  # OK
+
+            checks = PasswordService.check_password(data['password'])
+            length = len([i for i in checks if checks[i]])
+            return {'message': f'PASSWORD with title {password_title} ADDED',
+                    'strength': f'{length} of 5',
+                    'checks': checks}, 200  # OK
         except SQLAlchemyError as err:
             return {'error': str(err)}, 500  # Internal Server Error
         finally:
