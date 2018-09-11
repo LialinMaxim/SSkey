@@ -1,3 +1,4 @@
+import random
 from sqlalchemy import or_, func
 
 from ..models import PasswordModel
@@ -35,6 +36,20 @@ class PasswordService:
     def add_password(data, current_user, session):
         session.add(PasswordModel(current_user.id, data))
         return data['title']
+
+    @staticmethod
+    def generate_password(length=8):
+        password = ''
+        chars = "abcdefghijklmnopqrstuvwxyz01234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()?"
+
+        if length <= 5:
+            length = 5
+        if length >= 30:
+            length = 30
+
+        for i in range(length):
+            password += random.choice(chars)
+        return password
 
     @staticmethod
     def update_password(password, data, session):
