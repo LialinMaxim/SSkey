@@ -16,6 +16,5 @@ def make_logger(app):
 
     file_handler = RotatingFileHandler(app.config['LOGFILE'], maxBytes=1000000, backupCount=1)
     file_handler.setLevel(app.config['HANDLER_LEVEL'])
-    file_format = '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
-    file_handler.setFormatter(Formatter(file_format))
+    file_handler.setFormatter(Formatter(app.config['HANDLER_FORMAT']))
     app.logger.addHandler(file_handler)
