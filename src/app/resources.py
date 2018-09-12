@@ -44,6 +44,8 @@ def response_logger(response):
         app.logger.error(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 422 '
                          f'UNPROCESSABLE ENTITY - {response.get_data(True)}')
         return response
+    else:
+        return response
 
 
 @app.before_request
