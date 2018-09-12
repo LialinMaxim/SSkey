@@ -45,15 +45,21 @@ def log(message, answer):
 
 @bot.message_handler(commands=['help'])
 def handle_help_command(message):
-    if not cookies:
-        user_markup = telebot.types.ReplyKeyboardMarkup()
-        user_markup.row('/login', '/help')
-        bot.send_message(message.from_user.id, 'Please, choose what you\'d like to do', reply_markup=user_markup)
-    if cookies:
-        user_markup = telebot.types.ReplyKeyboardMarkup()
-        user_markup.row('/profile', '/search')
-        user_markup.row('/get_passwords', '/logout')
-        bot.send_message(message.from_user.id, 'Please, choose what you\'d like to do', reply_markup=user_markup)
+    msg = \
+        """
+        🔥 Commands
+Comfortable and secure way of storing your passwords.
+Just remember your main password and SSkey remembers the rest.
+/login — Logging in https://sskey.herokuapp.com/
+/profile — Get yours data from https://sskey.herokuapp.com/
+/get_passwords — Get list of user's passwords
+/logout — Logging out from https://sskey.herokuapp.com/
+/search — Search for passwords by its description
+/edit_pass_info — Update user's password data
+/edit_profile — Update user's personal data
+/delete_password — Delete specific password
+"""
+    bot.send_message(message.from_user.id, msg)
 
 
 @bot.message_handler(commands=['login'])
@@ -92,7 +98,6 @@ def get_pass(message):
         user.password = password
         rv = requests.post(url + 'login', json=dict(email=user.email, password=user.password))
         global cookies
-        # cookies.append(rv.cookies)
         cookies['cookie'] = rv.cookies
         rv = rv.json()
         bot.send_message(message.from_user.id, rv.get('message'))
@@ -105,10 +110,11 @@ def handle_profile_command(message):
     if cookies:
         try:
             rv = requests.get(url + 'user/', cookies=cookies.get('cookie'))
-            bot.send_message(message.from_user.id, rv)
+            rv = rv.json().get('user')
+            bot.send_message(message.from_user.id, f'{rv}')
             user_markup = telebot.types.ReplyKeyboardMarkup()
             user_markup.row('/logout', '/edit_profile')
-            user_markup.row('/delete_profile', '/help')
+            user_markup.row('/delete_profile', '\N{House Building}')
             bot.send_message(message.from_user.id, 'You\'re available to', reply_markup=user_markup)
         except Exception as err:
             bot.reply_to(message, err)
@@ -169,7 +175,7 @@ def handle_get_passwords_command(message):
 
             for pas in passwords.get('passwords'):
                 counter += 1
-                results = results + '/' + str(pas.get('pass_id')) + ' - ' + pas.get('title') + ': ' + pas.get(
+                results = results + '/' + str(pas.get('pass_id')) + ' – ' + pas.get('title') + ': ' + pas.get(
                     'login') + '\n'
             header = f'Results of {counter} \n'
             results = header + results
@@ -247,7 +253,7 @@ def handle_edit_pass_command(message):
             user_markup = telebot.types.ReplyKeyboardMarkup()
             user_markup.row('/change_url', '/change_title')
             user_markup.row('/change_login', '/change_pass')
-            user_markup.row('/change_comment', '/help')
+            user_markup.row('/change_comment', '\N{House Building}')
             bot.send_message(message.from_user.id, 'Choose, what to change', reply_markup=gen_edit_pass_markup())
         except Exception as err:
             bot.reply_to(message, err)
@@ -340,19 +346,33 @@ def handle_get_particular_pass_command(message):
         try:
             # removed / after passwords because message.text will be smth like /digit
             rv = requests.get(url + 'user/passwords' + message.text, cookies=cookies.get('cookie'))
-            bot.send_message(message.from_user.id, rv)
+            rv = rv.json().get('password')
+            bot.send_message(message.from_user.id, f'{rv}')
             chat_id = message.chat.id
             pass_id = message.text
             user_pass = PasswordCredentials(pass_id)
             pass_dict[chat_id] = user_pass
             user_markup = telebot.types.ReplyKeyboardMarkup()
             user_markup.row('/edit_pass_info', '/delete_password')
-            user_markup.row('/help')
+            user_markup.row('\N{House Building}')
             bot.send_message(message.from_user.id, 'Also, you are able to', reply_markup=user_markup)
         except Exception as err:
             bot.reply_to(message, err)
     else:
         bot.send_message(message.from_user.id, 'You have to be logged in.')
+
+
+@bot.message_handler(func=lambda message: re.match('\N{House Building}', message.text))
+def handle_home(message):
+    if not cookies:
+        user_markup = telebot.types.ReplyKeyboardMarkup()
+        user_markup.row('/login', '/help')
+        bot.send_message(message.from_user.id, 'Please, choose what you\'d like to do', reply_markup=user_markup)
+    if cookies:
+        user_markup = telebot.types.ReplyKeyboardMarkup()
+        user_markup.row('/profile', '/search')
+        user_markup.row('/get_passwords', '/logout')
+        bot.send_message(message.from_user.id, 'Please, choose what you\'d like to do', reply_markup=user_markup)
 
 
 @bot.message_handler(commands=['delete_password'])
