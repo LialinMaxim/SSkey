@@ -9,7 +9,7 @@ from . import app, api
 from .base import Session
 from .marshmallow_schemes import (UserSchema, UserPutSchema, UserLoginSchema, PasswordSchema, SearchSchema,
                                   PasswordPutSchema, UserIdsListSchema, AdminUsersSearchData)
-from .models import UserModel, SessionObject
+from .models import UserModel
 from .services.admin import AdminService
 from .services.auth import AuthService
 from .services.password import PasswordService
@@ -28,6 +28,22 @@ def handle_sqlalchemy_error(error):
     tb = traceback.format_exc()
     app.logger.error(f'5xx INTERNAL SERVER ERROR\n{tb}')
     return error
+
+
+@app.after_request
+def response_logger(response):
+    if response.status_code == 400:
+        app.logger.error(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 400 '
+                         f'BAD REQUEST - {response.get_data(True)}')
+        return response
+    elif response.status_code == 403:
+        app.logger.error(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 403 '
+                         f'FORBIDDEN - {response.get_data(True)}')
+        return response
+    elif response.status_code == 422:
+        app.logger.error(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 422 '
+                         f'UNPROCESSABLE ENTITY - {response.get_data(True)}')
+        return response
 
 
 @app.before_request
