@@ -135,15 +135,11 @@ class Login(Resource):
         # Check if a new user is not exist in data base
         session = Session
         try:
-            user = UserModel.filter_by_email(data['email'], session)
-            if user and user.compare_hash(data['password']):
-                user_session = SessionObject(user.id)
-                session.add(user_session)
-                session.commit()
-                app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
-                                f'User "{user.username}" logged in as {"[ADMIN]" if user.is_admin else "[USER]"}')
-                return {'message': f'You are LOGGED IN as {user.email}'}, 200, \
-                       {'Set-Cookie': f'token="{user_session.token}"'}
+            token = AuthService.login(data, session)
+            session.commit()
+            if token:
+                return {'message': f'You are LOGGED IN as {data["email"]}'}, 200, \
+                       {'Set-Cookie': f'token="{token}"'}
         except SQLAlchemyError as err:
             return {'error': str(err)}, 500
         finally:
@@ -163,7 +159,7 @@ class Logout(Resource):
         token = request.cookies.get('token')
         session = Session()
         try:
-            session.query(SessionObject).filter(SessionObject.token == token).delete()
+            AuthService.logout(token, session)
             session.commit()
         except SQLAlchemyError as err:
             return {'error': str(err)}, 500
@@ -200,7 +196,7 @@ class Register(Resource):
         else:
             # create a new user
             try:
-                session.add(UserModel(data))
+                AuthService.register(data, session)
                 session.commit()
             except SQLAlchemyError as err:
                 return {'error': str(err)}, 500  # Internal Server Error

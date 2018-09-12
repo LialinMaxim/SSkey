@@ -23,3 +23,23 @@ class AuthService:
     @staticmethod
     def delete_token(token, session):
         session.query(SessionObject).filter(SessionObject.token == token).delete()
+
+    @staticmethod
+    def login(data, session):
+        user = UserModel.filter_by_email(data['email'], session)
+        if user and user.compare_hash(data['password']):
+            user_session = SessionObject(user.id)
+            session.add(user_session)
+            app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                            f'User "{user.username}" logged in as {"[ADMIN]" if user.is_admin else "[USER]"}')
+            return user_session.token
+        else:
+            return False
+
+    @staticmethod
+    def logout(token, session):
+        session.query(SessionObject).filter(SessionObject.token == token).delete()
+
+    @staticmethod
+    def register(data, session):
+        session.add(UserModel(data))
