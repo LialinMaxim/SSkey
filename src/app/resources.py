@@ -260,7 +260,7 @@ class User(Resource):
         session = Session()
         try:
             current_user = AuthService.get_user_by_token(session)
-            username = UserService.update_user(data, current_user, session)
+            UserService.update_user(data, current_user, session)
             session.commit()
             app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
                             f'User "{current_user.username}" updated his own data')
@@ -268,7 +268,7 @@ class User(Resource):
             return {'error': str(err)}, 500  # Internal Server Error
         finally:
             session.close()
-        return {'message': f'User {username} UPDATED'}, 200
+        return {'message': f'User {current_user.username} UPDATED'}, 200
 
     def delete(self):
         """Remove user with all his data."""
@@ -276,7 +276,7 @@ class User(Resource):
         session = Session()
         try:
             current_user = AuthService.get_user_by_token(session)
-            username = UserService.delete_user(token, current_user, session)
+            UserService.delete_user(token, current_user, session)
             session.commit()
         except SQLAlchemyError as err:
             session.rollback()
@@ -285,7 +285,7 @@ class User(Resource):
             session.close()
         app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
                         f'User "{current_user.username}" deleted himself')
-        return {'message': f'User {username} DELETED'}, 200
+        return {'message': f'User {current_user.username} DELETED'}, 200
 
 
 class UserPasswords(Resource):
