@@ -185,7 +185,7 @@ def handle_edit_profile_command(message):
 @bot.message_handler(commands=['delete_profile'])
 def handle_delete_profile_command(message):
     try:
-        rv = requests.delete(url + 'user/', cookies=cookies.get('cookie'))
+        rv = requests.delete(url + 'user/', cookies=user_dict.get(message.chat.id).token)
         bot.send_message(message.from_user.id, rv)
     except Exception as err:
         bot.reply_to(message, err)
