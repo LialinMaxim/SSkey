@@ -9,6 +9,7 @@ load_dotenv(os.path.join(basedir, '.env'))
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY')
     HANDLER_LEVEL = os.environ.get('HANDLER_LEVEL')
+    HANDLER_FORMAT = '%(asctime)s - %(levelname)s: %(message)s'
 
 
 class DevelopmentConfig(Config):
