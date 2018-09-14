@@ -2,6 +2,7 @@ import os
 from contextlib import contextmanager
 
 from sqlalchemy import create_engine
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, scoped_session
 
@@ -28,7 +29,7 @@ def session_scope():
     try:
         yield session
         session.commit()
-    except:
+    except SQLAlchemyError:
         session.rollback()
         raise
     finally:
