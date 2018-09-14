@@ -204,6 +204,9 @@ def handle_get_passwords_command(message):
                 counter += 1
                 results = results + '/' + str(pas.get('pass_id')) + ' – ' + pas.get('title') + ': ' + pas.get(
                     'login') + '\n'
+            # TODO MAX
+            # six = get_six_passwords(results)
+            # bot.send_message(message.from_user.id, six)
             header = f'Results of {counter} \n'
             results = header + results
             bot.send_message(message.from_user.id, results)
@@ -211,6 +214,38 @@ def handle_get_passwords_command(message):
             bot.reply_to(message, err)
     else:
         bot.send_message(message.from_user.id, 'You have to be logged in.')
+
+#
+# def get_six_passwords(results):
+#     all_passwords = results.split('\n')
+#     list_six_pass = list()
+#     six_pass = ''
+#     i = 1
+#
+#     page = 1000
+#     pass
+#     #TODO pagination - for maxim
+#     # incomt
+#     elements = 6
+#     start = page*elements
+#     end = (page+1)*elements
+#     length = len(all_passwords)
+#
+#     if page < length//elements:
+#         data = all_passwords[start:end]
+#     elif start*elements < length:
+#         data = all_passwords[start:]
+#
+#     print(page, "---", '\n'.join(data))
+
+    # for pas in all_passwords:
+    #     six_pass = six_pass + pas + '\n'
+    #     i += 1
+    #     if i % 6 == 0:
+    #         list_six_pass.append(six_pass)
+    #         six_pass = ''
+    # print(list_six_pass)
+    # return list_six_pass
 
 
 @bot.message_handler(commands=['logout'])
