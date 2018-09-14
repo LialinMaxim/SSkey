@@ -1,4 +1,5 @@
 import os
+from contextlib import contextmanager
 
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
@@ -18,3 +19,17 @@ engine = create_engine('postgresql://%s:%s@%s/%s' % (POSTGRES_USER,
 session_factory = sessionmaker(bind=engine)
 Session = scoped_session(session_factory)
 Base = declarative_base()
+
+
+@contextmanager
+def session_scope():
+    """Provide a transactional scope around a series of operations."""
+    session = Session()
+    try:
+        yield session
+        session.commit()
+    except:
+        session.rollback()
+        raise
+    finally:
+        session.close()
