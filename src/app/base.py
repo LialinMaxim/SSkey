@@ -29,7 +29,7 @@ def session_scope():
     try:
         yield session
         session.commit()
-    except SQLAlchemyError:
+    except:
         session.rollback()
         raise
     finally:
