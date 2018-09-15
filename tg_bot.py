@@ -132,9 +132,7 @@ def get_pass(message):
 def handle_profile_command(message):
     if user_dict.get(message.chat.id):
         try:
-            rv = requests.get(url + 'user/', cookies=user_dict.get(message.chat.id).token)
-            rv = rv.json().get('user')
-
+            rv = requests.get(url + 'user/', cookies=user_dict.get(message.chat.id).token).json().get('user')
             chat_id = message.chat.id
 
             profile_data = UserProfile()
@@ -213,7 +211,7 @@ def callback_query(call):
     elif call.data == 'change_comment':
         bot.answer_callback_query(call.id, 'Enter a new description')
         bot.register_next_step_handler(chat_id, upd_description)
-        # view_part_markup
+     # view_part_markup
     elif call.data == 'move_left':
         page -= 1
         print('-1-')
@@ -508,8 +506,8 @@ def handle_get_particular_pass_command(message):
     if user_dict.get(message.chat.id):
         try:
             # removed / after passwords because message.text will be smth like /digit
-            rv = requests.get(url + 'user/passwords' + message.text, cookies=user_dict.get(message.chat.id).token)
-            rv = rv.json().get('password')
+            rv = requests.get(url + 'user/passwords' + message.text,
+                              cookies=user_dict.get(message.chat.id).token).json().get('password')
 
             chat_id = message.chat.id
             pass_id = message.text
