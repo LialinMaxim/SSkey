@@ -1,3 +1,5 @@
+import random
+import re
 from sqlalchemy import or_, func
 
 from ..models import PasswordModel
@@ -25,9 +27,9 @@ class PasswordService:
 
     @staticmethod
     def get_password_by_id(current_user_id, pass_id, session):
-        password = session.query(PasswordModel)\
-            .filter(PasswordModel.user_id == current_user_id)\
-            .filter(PasswordModel.pass_id == pass_id)\
+        password = session.query(PasswordModel) \
+            .filter(PasswordModel.user_id == current_user_id) \
+            .filter(PasswordModel.pass_id == pass_id) \
             .first()
         return password
 
@@ -35,6 +37,40 @@ class PasswordService:
     def add_password(data, current_user, session):
         session.add(PasswordModel(current_user.id, data))
         return data['title']
+
+    @staticmethod
+    def generate_password(length=8):
+        password = ''
+        chars = "abcdefghijklmnopqrstuvwxyz01234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()?"
+
+        if length <= 5:
+            length = 5
+        if length >= 30:
+            length = 30
+
+        for i in range(length):
+            password += random.choice(chars)
+        return password
+
+    @staticmethod
+    def check_password(password):
+        """
+        Verify the strength of 'password'
+        Returns the number of satisfied conditions:
+            8 characters length or more
+            1 digit or more
+            1 symbol or more
+            1 uppercase letter or more
+            1 lowercase letter or more
+        """
+
+        return {
+            'length': len(password) >= 8,
+            'digit': re.search(r"\d", password) is not None,
+            'uppercase': re.search(r"[A-Z]", password) is not None,
+            'lowercase': re.search(r"[a-z]", password) is not None,
+            'symbol': re.search(r"[ !#$%&'()*+,-./[\\\]^_`{|}~" + r'"]', password) is not None,
+        }
 
     @staticmethod
     def update_password(password, data, session):
