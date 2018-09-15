@@ -11,10 +11,10 @@ You can open an issue here to contact me regarding bugs.
 
 ## Commands
 🔥 Commands
-* /login — Logging in <sskey.herokuapp.com/>
-* /profile — Get yours data from <skey.herokuapp.com/>
+* /login — Logging in [http://sskey.herokuapp.com/](http://sskey.herokuapp.com.com/)
+* /profile — Get yours data from [http://sskey.herokuapp.com/](http://sskey.herokuapp.com.com/)
 * /get_passwords — Get list of user's passwords
-* /logout — Logging out from <sskey.herokuapp.com/>
+* /logout — Logging out from [http://sskey.herokuapp.com/](http://sskey.herokuapp.com.com/)
 * /search — Search for passwords by its description
 * /edit_pass_info — Update user's password data
 * /edit_profile — Update user's personal data
@@ -24,7 +24,7 @@ You can open an issue here to contact me regarding bugs.
 Comfortable and secure way of storing your passwords.
 Just remember your main password and SSkey remembers the rest.
 
-But, first of all, you have to register on <sskey.herokuapp.com>
+But, first of all, you have to register on [http://sskey.herokuapp.com/](http://sskey.herokuapp.com.com/)
 
 Start your bot with
 ```bash
