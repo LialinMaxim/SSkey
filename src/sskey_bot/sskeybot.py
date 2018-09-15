@@ -168,8 +168,8 @@ def gen_edit_markup():
 def view_part_markup():
     markup = InlineKeyboardMarkup()
     markup.row_width = 2
-    markup.add(InlineKeyboardButton('←', callback_data=f'move_left'),
-               InlineKeyboardButton('→', callback_data=f'move_right'))
+    markup.add(InlineKeyboardButton('⬅️', callback_data=f'move_left'),
+               InlineKeyboardButton('➡️', callback_data=f'move_right'))
     return markup
 
 
@@ -211,7 +211,7 @@ def callback_query(call):
     elif call.data == 'change_comment':
         bot.answer_callback_query(call.id, 'Enter a new description')
         bot.register_next_step_handler(chat_id, upd_description)
-     # view_part_markup
+    # view_part_markup
     elif call.data == 'move_left':
         page -= 1
         print('-1-')
