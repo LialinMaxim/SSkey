@@ -11,7 +11,7 @@ load_dotenv(os.path.join(basedir, 'src/app/.env'))
 
 token = os.environ.get('TOKEN')
 bot = telebot.TeleBot(token)
-url = os.environ.get('URL')
+url = 'http://127.0.0.1:5000/'
 # url = 'http://sskey.herokuapp.com/'
 
 print(bot.get_me())
@@ -353,7 +353,7 @@ def upd_description(message):
 
 
 def update_password_data(chat_id):
-    rv = requests.post(url + 'user/passwords', json=dict(
+    rv = requests.put(url + 'user/passwords' + pass_dict.get(chat_id).id, json=dict(
         url=pass_dict.get(chat_id).url,
         title=pass_dict.get(chat_id).title,
         login=pass_dict.get(chat_id).login,
@@ -505,8 +505,16 @@ def handle_get_particular_pass_command(message):
             bot.send_message(message.from_user.id, f'{rv}')
             chat_id = message.chat.id
             pass_id = message.text
-            pass_dict = PasswordCredentials(pass_id)
-            pass_dict[chat_id] = pass_dict
+
+            password_data = PasswordCredentials(pass_id)
+            pass_dict[chat_id] = password_data
+
+            password_data.url = rv.get('url')
+            password_data.title = rv.get('title')
+            password_data.login = rv.get('login')
+            password_data.password = rv.get('password')
+            password_data.comment = rv.get('comment')
+
             user_markup = telebot.types.ReplyKeyboardMarkup()
             user_markup.row('/edit_pass_info', '/delete_password')
             user_markup.row('\N{House Building}')
