@@ -7,11 +7,11 @@ from dotenv import load_dotenv
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 basedir = os.path.abspath(os.path.dirname(__file__))
-load_dotenv(os.path.join(basedir, 'src/app/.env'))
-
+load_dotenv(os.path.join(basedir, '.env'))
 token = os.environ.get('TOKEN')
+
 bot = telebot.TeleBot(token)
-url = 'http://127.0.0.1:5000/'
+url = os.environ.get('URL')
 # url = 'http://sskey.herokuapp.com/'
 
 print(bot.get_me())
