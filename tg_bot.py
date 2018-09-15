@@ -204,6 +204,20 @@ def callback_query(call):
     elif call.data == 'change_comment':
         bot.answer_callback_query(call.id, 'Enter a new description')
         bot.register_next_step_handler(chat_id, upd_description)
+        # view_part_markup
+    elif call.data == 'move_left':
+        page -= 1
+        print('-1-')
+        # bot.edit_message_text(chat_id=call.message.chat.id,
+        #                       message_id=call.message.message_id,
+        #                       reply_markup=view_part_markup(),
+        #                       text=f"Пыщь {page}")
+        # bot.answer_callback_query(call.id, '<<<')
+
+    elif call.data == 'move_right':
+        page += 1
+        print('-2-')
+        # bot.answer_callback_query(call.id, '>>>')
 
 
 def upd_f_name(message):
@@ -348,21 +362,6 @@ def update_password_data(chat_id):
     ), cookies=user_dict.get(chat_id).token).json()
 
     return rv
-
-    # view_part_markup
-    elif call.data == 'move_left':
-        page -= 1
-        print('-1-')
-        # bot.edit_message_text(chat_id=call.message.chat.id,
-        #                       message_id=call.message.message_id,
-        #                       reply_markup=view_part_markup(),
-        #                       text=f"Пыщь {page}")
-        # bot.answer_callback_query(call.id, '<<<')
-
-    elif call.data == 'move_right':
-        page += 1
-        print('-2-')
-        # bot.answer_callback_query(call.id, '>>>')
 
 
 @bot.message_handler(commands=['edit_profile'])
