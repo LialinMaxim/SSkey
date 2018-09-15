@@ -53,6 +53,15 @@ class PasswordCredentials:
         self.password = None
         self.comment = None
 
+    def print_pass_info(self):
+        formatted_string = 'ID — ' + self.id + '\n' + \
+                           'URL — ' + self.url + '\n' + \
+                           'Title — ' + self.title + '\n' + \
+                           'Login — ' + self.login + '\n' + \
+                           'Password — ' + self.password + '\n' + \
+                           'Description — ' + self.comment
+        return formatted_string
+
 
 def log(message, answer):
     from datetime import datetime
@@ -421,7 +430,6 @@ def handle_get_passwords_command(message):
     if user_dict.get(message.chat.id):
         rv = requests.get(url + 'user/passwords', cookies=user_dict.get(message.chat.id).token)
         user_passwords = rv.json()['passwords']
-
         try:
             bot.send_message(message.chat.id, view_part(user_passwords), reply_markup=view_part_markup())
         except Exception as err:
@@ -502,7 +510,7 @@ def handle_get_particular_pass_command(message):
             # removed / after passwords because message.text will be smth like /digit
             rv = requests.get(url + 'user/passwords' + message.text, cookies=user_dict.get(message.chat.id).token)
             rv = rv.json().get('password')
-            bot.send_message(message.from_user.id, f'{rv}')
+
             chat_id = message.chat.id
             pass_id = message.text
 
@@ -515,6 +523,7 @@ def handle_get_particular_pass_command(message):
             password_data.password = rv.get('password')
             password_data.comment = rv.get('comment')
 
+            bot.send_message(message.from_user.id, pass_dict.get(chat_id).print_pass_info())
             user_markup = telebot.types.ReplyKeyboardMarkup()
             user_markup.row('/edit_pass_info', '/delete_password')
             user_markup.row('\N{House Building}')
