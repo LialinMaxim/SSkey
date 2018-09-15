@@ -11,7 +11,7 @@ load_dotenv(os.path.join(basedir, 'src/app/.env'))
 
 token = os.environ.get('TOKEN')
 bot = telebot.TeleBot(token)
-url = 'http://127.0.0.1:5000/'
+url = os.environ.get('URL')
 # url = 'http://sskey.herokuapp.com/'
 
 print(bot.get_me())
@@ -63,30 +63,27 @@ def log(message, answer):
 
 @bot.message_handler(commands=['help'])
 def handle_help_command(message):
-    msg = \
-        """
-        🔥 Commands
-Comfortable and secure way of storing your passwords.
-Just remember your main password and SSkey remembers the rest.
-/login — Logging in https://sskey.herokuapp.com/
-/profile — Get yours data from https://sskey.herokuapp.com/
-/get_passwords — Get list of user's passwords
-/logout — Logging out from https://sskey.herokuapp.com/
-/search — Search for passwords by its description
-/edit_pass_info — Update user's password data
-/edit_profile — Update user's personal data
-/delete_password — Delete specific password
-"""
+    msg = ["Commands 🔥 🔥 🔥",
+           "Comfortable and secure way of storing your passwords. ",
+           "Just remember your main password and SSkey remembers the rest.",
+           "",
+           "/login — Log in sskey.herokuapp.com",
+           "/profile — Get yours data from sskey.herokuapp.com",
+           "/get_passwords — Get list of user's passwords",
+           "/logout — Log out sskey.herokuapp.com",
+           "/search — Search for passwords by its description",
+           "/edit_pass_info — Update user's password data",
+           "/edit_profile — Update user's personal data",
+           "/delete_password — Delete specific password",
+           ]
+    msg = "\n".join(msg)
     bot.send_message(message.from_user.id, msg)
 
 
 @bot.message_handler(commands=['login'])
 def handle_login_command(message):
     try:
-        msg = bot.reply_to(message, """\
-        Hi there, I am SSkey bot.
-        Please, enter your email in order to login
-        """)
+        msg = bot.reply_to(message, "Hi there, I am SSkey bot. \nPlease, enter your email in order to login.")
         bot.register_next_step_handler(msg, get_email)
     except Exception as err:
         bot.reply_to(message, err)
@@ -161,9 +158,22 @@ def gen_edit_markup():
     return markup
 
 
+def view_part_markup():
+    markup = InlineKeyboardMarkup()
+    markup.row_width = 2
+    markup.add(InlineKeyboardButton('←', callback_data=f'move_left'),
+               InlineKeyboardButton('→', callback_data=f'move_right'))
+    return markup
+
+
+# @bot.callback_query_handler(func=lambda call: True)
+# def callback_query2(call):
+#
+
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):
     chat_id = call.message
+    page = 0
     if call.data == 'change_f_name':
         bot.answer_callback_query(call.id, 'Enter a new first name')
         bot.register_next_step_handler(chat_id, upd_f_name)
@@ -264,7 +274,7 @@ def update_user_data(chat_id):
         last_name=user_data.get(chat_id).last_name,
         phone=user_data.get(chat_id).phone
     ), cookies=user_dict.get(chat_id).token).json()
-    
+
     return rv
 
 
@@ -336,8 +346,23 @@ def update_password_data(chat_id):
         password=pass_dict.get(chat_id).password,
         comment=pass_dict.get(chat_id).comment
     ), cookies=user_dict.get(chat_id).token).json()
-    
+
     return rv
+
+    # view_part_markup
+    elif call.data == 'move_left':
+        page -= 1
+        print('-1-')
+        # bot.edit_message_text(chat_id=call.message.chat.id,
+        #                       message_id=call.message.message_id,
+        #                       reply_markup=view_part_markup(),
+        #                       text=f"Пыщь {page}")
+        # bot.answer_callback_query(call.id, '<<<')
+
+    elif call.data == 'move_right':
+        page += 1
+        print('-2-')
+        # bot.answer_callback_query(call.id, '>>>')
 
 
 @bot.message_handler(commands=['edit_profile'])
@@ -363,62 +388,47 @@ def handle_delete_profile_command(message):
         bot.reply_to(message, err)
 
 
+def view_part(pass_list, page=0, elements=6):
+    """Splits the list into separate pages.
+    As a page can be any integer"""
+    length = len(pass_list)
+    if length % elements:
+        pages = length // elements + 1
+    else:
+        pages = length // elements
+    page = abs(pages + page) % pages
+
+    start = page * elements
+    if start == length:
+        start = 0
+    end = start + elements
+
+    if end > length:
+        passwords = pass_list[start:]
+    else:
+        passwords = pass_list[start:end]
+
+    view = ''
+    for p in passwords:
+        id = p.get('pass_id')
+        title = p.get('title')
+        login = p.get('login')
+        view += f'/{id} - {title} : {login}\n'
+    return view
+
+
 @bot.message_handler(commands=['get_passwords'])
 def handle_get_passwords_command(message):
     if user_dict.get(message.chat.id):
-        try:
-            rv = requests.get(url + 'user/passwords', cookies=user_dict.get(message.chat.id).token)
-            passwords = rv.json()
-            counter = 0
-            results = ''
+        rv = requests.get(url + 'user/passwords', cookies=user_dict.get(message.chat.id).token)
+        user_passwords = rv.json()['passwords']
 
-            for pas in passwords.get('passwords'):
-                counter += 1
-                results = results + '/' + str(pas.get('pass_id')) + ' – ' + pas.get('title') + ': ' + pas.get(
-                    'login') + '\n'
-            # TODO MAX
-            # six = get_six_passwords(results)
-            # bot.send_message(message.from_user.id, six)
-            header = f'Results of {counter} \n'
-            results = header + results
-            bot.send_message(message.from_user.id, results)
+        try:
+            bot.send_message(message.chat.id, view_part(user_passwords), reply_markup=view_part_markup())
         except Exception as err:
             bot.reply_to(message, err)
     else:
         bot.send_message(message.from_user.id, 'You have to be logged in.')
-
-
-#
-# def get_six_passwords(results):
-#     all_passwords = results.split('\n')
-#     list_six_pass = list()
-#     six_pass = ''
-#     i = 1
-#
-#     page = 1000
-#     pass
-#     #TODO pagination - for maxim
-#     # incomt
-#     elements = 6
-#     start = page*elements
-#     end = (page+1)*elements
-#     length = len(all_passwords)
-#
-#     if page < length//elements:
-#         data = all_passwords[start:end]
-#     elif start*elements < length:
-#         data = all_passwords[start:]
-#
-#     print(page, "---", '\n'.join(data))
-
-# for pas in all_passwords:
-#     six_pass = six_pass + pas + '\n'
-#     i += 1
-#     if i % 6 == 0:
-#         list_six_pass.append(six_pass)
-#         six_pass = ''
-# print(list_six_pass)
-# return list_six_pass
 
 
 @bot.message_handler(commands=['logout'])

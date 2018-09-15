@@ -320,11 +320,24 @@ class UserPasswords(Resource):
         Create a new user's password.
 
         Create a new password for current logged in user, without specifying any parameters.
+        The password will be created if it is not specified.
+        If password is an integer instead of the string, the password for the specified length will be created.
+
         :return: 200 OK or 500 SQLAlchemyError
         """
         json_data = request.get_json()
         if not json_data or not isinstance(json_data, dict):
             return {'message': 'No input data provided'}, 400  # Bad Request
+
+        # password generation if password does not exist
+        if 'password' not in json_data:
+            json_data['password'] = PasswordService.generate_password()
+        else:
+            if isinstance(json_data['password'], int):
+                length = json_data['password']
+                json_data['password'] = PasswordService.generate_password(length)
+            if not json_data['password']:
+                json_data['password'] = PasswordService.generate_password()
 
         # Validate and deserialize input
         try:
