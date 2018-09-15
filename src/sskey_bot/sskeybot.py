@@ -66,7 +66,7 @@ class PasswordCredentials:
 def log(message, answer):
     from datetime import datetime
     print(datetime.now())
-    print(f'Message from {message.from_user.first_name} {message.from_user.last_name}. \ '
+    print(f'Message from {message.from_user.first_name} {message.from_user.last_name}.'
           f'id={str(message.from_user.id)}, message: {message.text}')
 
 
