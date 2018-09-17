@@ -143,6 +143,8 @@ class Login(Resource):
         with session_scope() as session:
             token = AuthService.login(data, session)
         if token:
+            app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                            f'User with email "{data["email"]}" was assigned a token "{token}"')
             return {'message': f'You are LOGGED IN as {data["email"]}'}, 200, \
                    {'Set-Cookie': f'token="{token}"'}
         app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 401 '
