@@ -420,9 +420,10 @@ def view_part(pass_list, page=0, elements=6):
 @bot.message_handler(commands=['get_passwords'])
 def handle_get_passwords_command(message):
     if user_dict.get(message.chat.id):
-        rv = requests.get(url + 'user/passwords', cookies=user_dict.get(message.chat.id).token)
+        rv = requests.get(url + 'user/passwords', cookies=user_dict.get(message.chat.id).token).json()
         global user_passwords
-        user_passwords = rv.json()['passwords']
+        key, value = rv.popitem()
+        user_passwords = value
         try:
             bot.send_message(message.chat.id, view_part(user_passwords), reply_markup=view_part_markup())
         except Exception as err:
