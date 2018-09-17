@@ -63,6 +63,6 @@ config = {
     'development': DevelopmentConfig,
     'testing': TestingConfig,
     'production': ProductionConfig,
-
+    # 'RESTPLUS_VALIDATE': True,
     'default': DevelopmentConfig
 }
