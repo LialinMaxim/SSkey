@@ -26,6 +26,10 @@ class PasswordService:
         return passwords_serialized
 
     @staticmethod
+    def count_passwords(user_id, session):
+        return len(session.query(PasswordModel).filter(PasswordModel.user_id == user_id).all())
+
+    @staticmethod
     def get_password_by_id(current_user_id, pass_id, session):
         password = session.query(PasswordModel) \
             .filter(PasswordModel.user_id == current_user_id) \
@@ -39,18 +43,23 @@ class PasswordService:
         return data['title']
 
     @staticmethod
-    def generate_password(length=8):
-        password = ''
-        chars = "abcdefghijklmnopqrstuvwxyz01234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()?"
-
+    def generate_password(args):
+        length = args['length']
         if length <= 5:
             length = 5
-        if length >= 30:
-            length = 30
+        elif length >= 64:
+            length = 64
 
-        for i in range(length):
-            password += random.choice(chars)
-        return password
+        chars = 'abcdefghijklmnopqrstuvwxyz'
+        source_chars = {
+            'digit': '0123456789',
+            'uppercase': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+            'symbol': "<>*=-+@#$%^&()_?,.!"
+        }
+        for i in args:
+            if args[i] == 'YES':
+                chars += source_chars[i]
+        return ''.join([random.choice(chars) for _ in range(length)])
 
     @staticmethod
     def check_password(password):
