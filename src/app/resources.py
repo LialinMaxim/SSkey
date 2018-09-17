@@ -209,7 +209,8 @@ class User(Resource):
         with session_scope() as session:
             current_user = AuthService.get_user_by_token(session)
             app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
-                            f'User "{current_user.username}" requested his own data')
+                            f'User "{current_user.username}" as {"[ADMIN]" if current_user.is_admin else "[USER]"} '
+                            f'requested his own data')
             return {'user': UserSchema().dump(current_user)}, 200
 
     @api.expect(user_put)
@@ -227,7 +228,8 @@ class User(Resource):
             current_user = AuthService.get_user_by_token(session)
             UserService.update_user(data, current_user, session)
             app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
-                            f'User "{current_user.username}" updated his own data')
+                            f'User "{current_user.username}" as {"[ADMIN]" if current_user.is_admin else "[USER]"} '
+                            f'updated his own data')
             return {'message': f'User {current_user.username} UPDATED'}, 200
 
     def delete(self):
@@ -237,7 +239,8 @@ class User(Resource):
             current_user = AuthService.get_user_by_token(session)
             UserService.delete_user(token, current_user, session)
         app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
-                        f'User "{current_user.username}" deleted himself')
+                        f'User "{current_user.username}" as {"[ADMIN]" if current_user.is_admin else "[USER]"} '
+                        f'deleted himself')
         return {'message': f'User {current_user.username} DELETED'}, 200
 
 
@@ -259,7 +262,8 @@ class UserPasswords(Resource):
             current_user = AuthService.get_user_by_token(session)
             passwords_serialized = PasswordService.get_password_list(current_user, session)
             app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
-                            f'User "{current_user.username}" requested his own passwords')
+                            f'User "{current_user.username}" as {"[ADMIN]" if current_user.is_admin else "[USER]"} '
+                            f'requested his own passwords')
         return {'passwords': passwords_serialized}, 200  # OK
 
     @api.expect(password_api_model)
@@ -316,11 +320,13 @@ class UserPasswordsSearch(Resource):
             passwords_by_condition = PasswordService.search_password_by_condition(current_user.id, condition, session)
             if passwords_by_condition:
                 app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
-                                f'User "{current_user.username}" searched password by condition "{condition}"')
+                                f'User "{current_user.username}" as {"[ADMIN]" if current_user.is_admin else "[USER]"} '
+                                f'searched password by condition "{condition}"')
                 return {'passwords': passwords_by_condition}, 200
             else:
                 app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 404 '
-                                f'User "{current_user.username}" tried to search password by condition "{condition}"')
+                                f'User "{current_user.username}" as {"[ADMIN]" if current_user.is_admin else "[USER]"} '
+                                f'tried to search password by condition "{condition}"')
                 return {'message': f'No matches found for {condition}'}, 404
 
 
@@ -344,10 +350,12 @@ class UserPasswordsNumber(Resource):
             password = PasswordService.get_password_by_id(current_user.id, pass_id, session)
             if not password:
                 app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 404 '
-                                f'User "{current_user.username}" tried to search password by id "{pass_id}"')
+                                f'User "{current_user.username}" as {"[ADMIN]" if current_user.is_admin else "[USER]"} '
+                                f'tried to search password by id "{pass_id}"')
                 return {'message': 'Password Not Found'}, 404  # Not Found
             app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
-                            f'User "{current_user.username}" searched password by id "{pass_id}"')
+                            f'User "{current_user.username}" as {"[ADMIN]" if current_user.is_admin else "[USER]"} '
+                            f'searched password by id "{pass_id}"')
             return {'password': password.serialize}, 200  # OK
 
     @api.expect(password_api_model)
@@ -386,11 +394,13 @@ class UserPasswordsNumber(Resource):
                 PasswordService.delete_password(pass_id, current_user, session)
                 session.commit()
                 app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
-                                f'User "{current_user.username}" deleted password by id "{pass_id}"')
+                                f'User "{current_user.username}" as {"[ADMIN]" if current_user.is_admin else "[USER]"} '
+                                f'deleted password by id "{pass_id}"')
                 return {'message': f'Password ID {pass_id} DELETED'}, 200  # OK
             else:
                 app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 404 '
-                                f'User "{current_user.username}" tried to deleted password by id "{pass_id}"')
+                                f'User "{current_user.username}" as {"[ADMIN]" if current_user.is_admin else "[USER]"} '
+                                f'tried to deleted password by id "{pass_id}"')
                 return {'message': 'Password Not Found'}, 404  # Not Found
 
 
