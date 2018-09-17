@@ -7,9 +7,9 @@ from dotenv import load_dotenv
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 basedir = os.path.abspath(os.path.dirname(__file__))
-load_dotenv(os.path.join(basedir, 'src/app/.env'))
-
+load_dotenv(os.path.join(basedir, '.env'))
 token = os.environ.get('TOKEN')
+
 bot = telebot.TeleBot(token)
 url = os.environ.get('URL')
 # url = 'http://sskey.herokuapp.com/'
@@ -17,6 +17,7 @@ url = os.environ.get('URL')
 print(bot.get_me())
 user_dict = dict()
 pass_dict = dict()
+user_data = dict()
 
 
 class UserCredentials:
@@ -52,11 +53,20 @@ class PasswordCredentials:
         self.password = None
         self.comment = None
 
+    def print_pass_info(self):
+        formatted_string = 'ID — ' + self.id + '\n' + \
+                           'URL — ' + self.url + '\n' + \
+                           'Title — ' + self.title + '\n' + \
+                           'Login — ' + self.login + '\n' + \
+                           'Password — ' + self.password + '\n' + \
+                           'Description — ' + self.comment
+        return formatted_string
+
 
 def log(message, answer):
     from datetime import datetime
     print(datetime.now())
-    print(f'Message from {message.from_user.first_name} {message.from_user.last_name}. \ '
+    print(f'Message from {message.from_user.first_name} {message.from_user.last_name}.'
           f'id={str(message.from_user.id)}, message: {message.text}')
 
 
@@ -122,17 +132,18 @@ def get_pass(message):
 def handle_profile_command(message):
     if user_dict.get(message.chat.id):
         try:
-            rv = requests.get(url + 'user/', cookies=user_dict.get(message.chat.id).token)
-            rv = rv.json().get('user')
+            rv = requests.get(url + 'user/', cookies=user_dict.get(message.chat.id).token).json().get('user')
+            chat_id = message.chat.id
 
-            user_data = UserProfile()
-            user_data.cur_email = rv.get('email')
-            user_data.username = rv.get('username')
-            user_data.first_name = rv.get('first_name')
-            user_data.last_name = rv.get('last_name')
-            user_data.phone = rv.get('phone')
+            profile_data = UserProfile()
+            user_data[chat_id] = profile_data
+            profile_data.cur_email = rv.get('email')
+            profile_data.username = rv.get('username')
+            profile_data.first_name = rv.get('first_name')
+            profile_data.last_name = rv.get('last_name')
+            profile_data.phone = rv.get('phone')
 
-            bot.send_message(message.from_user.id, user_data.print_user_profile())
+            bot.send_message(message.from_user.id, user_data.get(chat_id).print_user_profile())
             user_markup = telebot.types.ReplyKeyboardMarkup()
             user_markup.row('/logout', '/edit_profile')
             user_markup.row('/delete_profile', '\N{House Building}')
@@ -157,52 +168,213 @@ def gen_edit_markup():
 def view_part_markup():
     markup = InlineKeyboardMarkup()
     markup.row_width = 2
-    markup.add(InlineKeyboardButton('←', callback_data=f'move_left'),
-               InlineKeyboardButton('→', callback_data=f'move_right'))
+    markup.add(InlineKeyboardButton('⬅️', callback_data=f'move left'),
+               InlineKeyboardButton('➡️', callback_data=f'move right'))
     return markup
 
 
-# @bot.callback_query_handler(func=lambda call: True)
-# def callback_query2(call):
-#
-
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):
+    chat_id = call.message
     page = 0
     if call.data == 'change_f_name':
-        bot.answer_callback_query(call.id, 'Enter a new name')
+        bot.answer_callback_query(call.id, 'Enter a new first name')
+        bot.register_next_step_handler(chat_id, upd_f_name)
     elif call.data == 'change_l_name':
         bot.answer_callback_query(call.id, 'Enter a new last name')
+        bot.register_next_step_handler(chat_id, upd_l_name)
     elif call.data == 'change_email':
         bot.answer_callback_query(call.id, 'Enter a new email address')
+        bot.register_next_step_handler(chat_id, upd_email)
     elif call.data == 'change_phone':
         bot.answer_callback_query(call.id, 'Enter a new phone')
+        bot.register_next_step_handler(chat_id, upd_phone)
     elif call.data == 'change_username':
         bot.answer_callback_query(call.id, 'Enter a new username')
-
+        bot.register_next_step_handler(chat_id, upd_username)
+    elif call.data == 'change_url':
+        bot.answer_callback_query(call.id, 'Enter a new url')
+        bot.register_next_step_handler(chat_id, upd_url)
+    elif call.data == 'change_title':
+        bot.answer_callback_query(call.id, 'Enter a new title')
+        bot.register_next_step_handler(chat_id, upd_title)
+    elif call.data == 'change_login':
+        bot.answer_callback_query(call.id, 'Enter a new login')
+        bot.register_next_step_handler(chat_id, upd_login)
+    elif call.data == 'change_pass':
+        bot.answer_callback_query(call.id, 'Enter a new password')
+        bot.register_next_step_handler(chat_id, upd_pass)
+    elif call.data == 'change_comment':
+        bot.answer_callback_query(call.id, 'Enter a new description')
+        bot.register_next_step_handler(chat_id, upd_description)
     # view_part_markup
-    elif call.data == 'move_left':
-        page -= 1
-        print('-1-')
-        # bot.edit_message_text(chat_id=call.message.chat.id,
-        #                       message_id=call.message.message_id,
-        #                       reply_markup=view_part_markup(),
-        #                       text=f"Пыщь {page}")
-        # bot.answer_callback_query(call.id, '<<<')
+    elif call.message:
+        if call.data == 'move left':
+            page -= 1
+            bot.edit_message_text(chat_id=call.message.chat.id,
+                                  message_id=call.message.message_id,
+                                  text=view_part(user_passwords, page), reply_markup=view_part_markup())
+        elif call.data == 'move right':
+            page += 1
+            bot.edit_message_text(chat_id=call.message.chat.id,
+                                  message_id=call.message.message_id,
+                                  text=view_part(user_passwords, page), reply_markup=view_part_markup())
 
-    elif call.data == 'move_right':
-        page += 1
-        print('-2-')
-        # bot.answer_callback_query(call.id, '>>>')
+
+def upd_f_name(message):
+    try:
+        chat_id = message.chat.id
+        first_name = message.text
+        user_data.get(chat_id).first_name = first_name
+
+        rv = update_user_data(chat_id)
+        bot.send_message(message.from_user.id, rv.get('message'))
+    except Exception as err:
+        bot.reply_to(message, err)
+
+
+def upd_l_name(message):
+    try:
+        chat_id = message.chat.id
+        last_name = message.text
+        user_data.get(chat_id).last_name = last_name
+
+        rv = update_user_data(chat_id)
+        bot.send_message(message.from_user.id, rv.get('message'))
+    except Exception as err:
+        bot.reply_to(message, err)
+
+
+def upd_phone(message):
+    try:
+        chat_id = message.chat.id
+        phone = message.text
+        user_data.get(chat_id).phone = phone
+
+        rv = update_user_data(chat_id)
+        bot.send_message(message.from_user.id, rv.get('message'))
+    except Exception as err:
+        bot.reply_to(message, err)
+
+
+def upd_email(message):
+    try:
+        chat_id = message.chat.id
+        email = message.text
+        user_data.get(chat_id).cur_email = email
+
+        rv = update_user_data(chat_id)
+        bot.send_message(message.from_user.id, rv.get('message'))
+    except Exception as err:
+        bot.reply_to(message, err)
+
+
+def upd_username(message):
+    try:
+        chat_id = message.chat.id
+        username = message.text
+        user_data.get(chat_id).username = username
+
+        rv = update_user_data(chat_id)
+        bot.send_message(message.from_user.id, rv.get('message'))
+    except Exception as err:
+        bot.reply_to(message, err)
+
+
+def update_user_data(chat_id):
+    rv = requests.put(url + 'user/', json=dict(
+        email=user_data.get(chat_id).cur_email,
+        username=user_data.get(chat_id).username,
+        first_name=user_data.get(chat_id).first_name,
+        last_name=user_data.get(chat_id).last_name,
+        phone=user_data.get(chat_id).phone
+    ), cookies=user_dict.get(chat_id).token).json()
+
+    return rv
+
+
+def upd_url(message):
+    try:
+        chat_id = message.chat.id
+        url = message.text
+        pass_dict.get(chat_id).url = url
+
+        rv = update_password_data(chat_id)
+        bot.send_message(message.from_user.id, rv.get('message'))
+    except Exception as err:
+        bot.reply_to(message, err)
+
+
+def upd_title(message):
+    try:
+        chat_id = message.chat.id
+        title = message.text
+        pass_dict.get(chat_id).title = title
+
+        rv = update_password_data(chat_id)
+        bot.send_message(message.from_user.id, rv.get('message'))
+    except Exception as err:
+        bot.reply_to(message, err)
+
+
+def upd_login(message):
+    try:
+        chat_id = message.chat.id
+        login = message.text
+        pass_dict.get(chat_id).login = login
+
+        rv = update_password_data(chat_id)
+        bot.send_message(message.from_user.id, rv.get('message'))
+    except Exception as err:
+        bot.reply_to(message, err)
+
+
+def upd_pass(message):
+    try:
+        chat_id = message.chat.id
+        password = message.text
+        pass_dict.get(chat_id).password = password
+
+        rv = update_password_data(chat_id)
+        bot.send_message(message.from_user.id, rv.get('message'))
+    except Exception as err:
+        bot.reply_to(message, err)
+
+
+def upd_description(message):
+    try:
+        chat_id = message.chat.id
+        comment = message.text
+        pass_dict.get(chat_id).comment = comment
+
+        rv = update_password_data(chat_id)
+        bot.send_message(message.from_user.id, rv.get('message'))
+    except Exception as err:
+        bot.reply_to(message, err)
+
+
+def update_password_data(chat_id):
+    rv = requests.put(url + 'user/passwords' + pass_dict.get(chat_id).id, json=dict(
+        url=pass_dict.get(chat_id).url,
+        title=pass_dict.get(chat_id).title,
+        login=pass_dict.get(chat_id).login,
+        password=pass_dict.get(chat_id).password,
+        comment=pass_dict.get(chat_id).comment
+    ), cookies=user_dict.get(chat_id).token).json()
+
+    return rv
 
 
 @bot.message_handler(commands=['edit_profile'])
 def handle_edit_profile_command(message):
     if user_dict.get(message.chat.id):
-        try:
-            bot.send_message(message.chat.id, 'Choose what you wanna change', reply_markup=gen_edit_markup())
-        except Exception as err:
-            bot.reply_to(message, err)
+        if user_data.get(message.chat.id):
+            try:
+                bot.send_message(message.chat.id, 'Choose what you wanna change', reply_markup=gen_edit_markup())
+            except Exception as err:
+                bot.reply_to(message, err)
+        else:
+            bot.send_message(message.from_user.id, 'Please, firstly visit /profile')
     else:
         bot.send_message(message.from_user.id, 'You have to be logged in.')
 
@@ -248,9 +420,10 @@ def view_part(pass_list, page=0, elements=6):
 @bot.message_handler(commands=['get_passwords'])
 def handle_get_passwords_command(message):
     if user_dict.get(message.chat.id):
-        rv = requests.get(url + 'user/passwords', cookies=user_dict.get(message.chat.id).token)
-        user_passwords = rv.json()['passwords']
-
+        rv = requests.get(url + 'user/passwords', cookies=user_dict.get(message.chat.id).token).json()
+        global user_passwords
+        key, value = rv.popitem()
+        user_passwords = value
         try:
             bot.send_message(message.chat.id, view_part(user_passwords), reply_markup=view_part_markup())
         except Exception as err:
@@ -309,20 +482,6 @@ def gen_edit_pass_markup():
     return markup
 
 
-@bot.callback_query_handler(func=lambda call: True)
-def callback_query(call):
-    if call.data == 'change_url':
-        bot.answer_callback_query(call.id, "Answer is Yes")
-    elif call.data == 'change_title':
-        bot.answer_callback_query(call.id, "Answer is No")
-    elif call.data == 'change_login':
-        pass
-    elif call.data == 'change_pass':
-        pass
-    elif call.data == 'change_comment':
-        pass
-
-
 @bot.message_handler(commands=['edit_pass_info'])
 def handle_edit_pass_command(message):
     if user_dict.get(message.chat.id):
@@ -338,97 +497,27 @@ def handle_edit_pass_command(message):
         bot.send_message(message.from_user.id, 'You have to be logged in.')
 
 
-def get_url(message):
-    try:
-        chat_id = message.chat.id
-        n_url = message.text
-        user_pass = PasswordCredentials(n_url)
-        pass_dict[chat_id] = user_pass
-        msg = bot.reply_to(message, 'Almost there. Please, enter a title of the service')
-        bot.register_next_step_handler(msg, get_title)
-    except Exception as err:
-        bot.reply_to(message, err)
-
-
-def get_title(message):
-    try:
-        chat_id = message.chat.id
-        title = message.text
-        if not title:
-            msg = bot.reply_to(message, 'Cannot be empty.')
-            bot.register_next_step_handler(msg, get_title)
-            return
-        user_pass = pass_dict[chat_id]
-        user_pass.title = title
-        msg = bot.reply_to(message, 'A few more steps. Please, enter your login of the service')
-        bot.register_next_step_handler(msg, get_login)
-    except Exception as err:
-        bot.reply_to(message, err)
-
-
-def get_login(message):
-    try:
-        chat_id = message.chat.id
-        login = message.text
-        user_pass = pass_dict[chat_id]
-        user_pass.login = login
-        msg = bot.reply_to(message, 'Almost there. Please, enter your password')
-        bot.register_next_step_handler(msg, get_my_pass)
-    except Exception as err:
-        bot.reply_to(message, err)
-
-
-def get_my_pass(message):
-    try:
-        chat_id = message.chat.id
-        password = message.text
-        if not password:
-            msg = bot.reply_to(message, 'Cannot be empty. Please, enter your password')
-            bot.register_next_step_handler(msg, get_pass)
-            return
-        user_pass = pass_dict[chat_id]
-        user_pass.password = password
-        msg = bot.reply_to(message, 'Last, but not least. Please, enter your description for your service')
-        bot.register_next_step_handler(msg, get_description)
-    except Exception as err:
-        bot.reply_to(message, err)
-
-
-def get_description(message):
-    try:
-        chat_id = message.chat.id
-        comment = message.text
-        if not comment:
-            msg = bot.reply_to(message, 'Cannot be empty.')
-            bot.register_next_step_handler(msg, get_description)
-            return
-        user_pass = pass_dict[chat_id]
-        user_pass.comment = comment
-
-        rv = requests.post(url + 'user/passwords', json=dict(
-            url=user_pass.url,
-            title=user_pass.title,
-            login=user_pass.login,
-            password=user_pass.password,
-            comment=user_pass.comment
-        ), cookies=user_dict.get(message.chat.id).token)
-        bot.send_message(message.from_user.id, rv)
-    except Exception as err:
-        bot.reply_to(message, err)
-
-
 @bot.message_handler(func=lambda message: re.match(r'/\d+', message.text))
 def handle_get_particular_pass_command(message):
     if user_dict.get(message.chat.id):
         try:
             # removed / after passwords because message.text will be smth like /digit
-            rv = requests.get(url + 'user/passwords' + message.text, cookies=user_dict.get(message.chat.id).token)
-            rv = rv.json().get('password')
-            bot.send_message(message.from_user.id, f'{rv}')
+            rv = requests.get(url + 'user/passwords' + message.text,
+                              cookies=user_dict.get(message.chat.id).token).json().get('password')
+
             chat_id = message.chat.id
             pass_id = message.text
-            user_pass = PasswordCredentials(pass_id)
-            pass_dict[chat_id] = user_pass
+
+            password_data = PasswordCredentials(pass_id)
+            pass_dict[chat_id] = password_data
+
+            password_data.url = rv.get('url')
+            password_data.title = rv.get('title')
+            password_data.login = rv.get('login')
+            password_data.password = rv.get('password')
+            password_data.comment = rv.get('comment')
+
+            bot.send_message(message.from_user.id, pass_dict.get(chat_id).print_pass_info())
             user_markup = telebot.types.ReplyKeyboardMarkup()
             user_markup.row('/edit_pass_info', '/delete_password')
             user_markup.row('\N{House Building}')

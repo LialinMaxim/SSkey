@@ -2,6 +2,8 @@
 user_passwords = [{'pass_id': i,
                    'title': f'title_{i}',
                    'login': f'login_{i}'} for i in range(1, 2)]
+
+
 # print('--pass_list--', user_passwords)
 
 
@@ -12,7 +14,6 @@ def view_part(pass_list, page=0, elements=6):
     else:
         pages = length // elements
     page = abs(pages + page) % pages
-
 
     start = page * elements
     if start == length:
