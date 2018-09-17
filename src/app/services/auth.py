@@ -6,6 +6,19 @@ from ..models import UserModel, SessionObject
 
 class AuthService:
     @staticmethod
+    def is_expiry_time(user_session):
+        if user_session:
+            token = request.cookies.get('token')
+            out_of_time = user_session.update_login_time() <= user_session.expiration_time
+            if not out_of_time:
+                AuthService.delete_token(token, user_session)
+            else:
+                return True
+            app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                            f'User token "{token}" was deleted by expired time')
+        return False
+
+    @staticmethod
     def get_user_session(session):
         token = request.cookies.get('token')
         user_session = session.query(SessionObject).filter(SessionObject.token == token).first()
