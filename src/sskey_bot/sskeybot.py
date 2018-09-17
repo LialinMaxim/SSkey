@@ -168,14 +168,10 @@ def gen_edit_markup():
 def view_part_markup():
     markup = InlineKeyboardMarkup()
     markup.row_width = 2
-    markup.add(InlineKeyboardButton('⬅️', callback_data=f'move_left'),
-               InlineKeyboardButton('➡️', callback_data=f'move_right'))
+    markup.add(InlineKeyboardButton('⬅️', callback_data=f'move left'),
+               InlineKeyboardButton('➡️', callback_data=f'move right'))
     return markup
 
-
-# @bot.callback_query_handler(func=lambda call: True)
-# def callback_query2(call):
-#
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):
@@ -212,19 +208,17 @@ def callback_query(call):
         bot.answer_callback_query(call.id, 'Enter a new description')
         bot.register_next_step_handler(chat_id, upd_description)
     # view_part_markup
-    elif call.data == 'move_left':
-        page -= 1
-        print('-1-')
-        # bot.edit_message_text(chat_id=call.message.chat.id,
-        #                       message_id=call.message.message_id,
-        #                       reply_markup=view_part_markup(),
-        #                       text=f"Пыщь {page}")
-        # bot.answer_callback_query(call.id, '<<<')
-
-    elif call.data == 'move_right':
-        page += 1
-        print('-2-')
-        # bot.answer_callback_query(call.id, '>>>')
+    elif call.message:
+        if call.data == 'move left':
+            page -= 1
+            bot.edit_message_text(chat_id=call.message.chat.id,
+                                  message_id=call.message.message_id,
+                                  text=view_part(user_passwords, page), reply_markup=view_part_markup())
+        elif call.data == 'move right':
+            page += 1
+            bot.edit_message_text(chat_id=call.message.chat.id,
+                                  message_id=call.message.message_id,
+                                  text=view_part(user_passwords, page), reply_markup=view_part_markup())
 
 
 def upd_f_name(message):
@@ -427,6 +421,7 @@ def view_part(pass_list, page=0, elements=6):
 def handle_get_passwords_command(message):
     if user_dict.get(message.chat.id):
         rv = requests.get(url + 'user/passwords', cookies=user_dict.get(message.chat.id).token)
+        global user_passwords
         user_passwords = rv.json()['passwords']
         try:
             bot.send_message(message.chat.id, view_part(user_passwords), reply_markup=view_part_markup())
