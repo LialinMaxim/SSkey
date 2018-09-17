@@ -15,10 +15,14 @@ class AuthService:
     def get_user_by_token(session):
         token = request.cookies.get('token')
         user_session = AuthService.get_user_session(session)
-        user = UserModel.filter_by_id(user_session.user_id, session)
-        app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
-                        f'User "{user.username}" requested by token "{token}"')
-        return user
+        if user_session is not None:
+            user = UserModel.filter_by_id(user_session.user_id, session)
+            app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                            f'User "{user.username}" as {"[ADMIN]" if user.is_admin else "[USER]"} '
+                            f'requested by token "{token}"')
+            return user
+        else:
+            return None
 
     @staticmethod
     def delete_token(token, session):

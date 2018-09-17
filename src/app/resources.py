@@ -1,12 +1,13 @@
 import traceback
 
-from flask import make_response, request
+from flask import request
 from flask_restplus import Resource
 from marshmallow import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 
 from . import app, api
-from .base import Session, session_scope
+from .base import session_scope
+from .errors import InputDataError, AuthorizationError, AccessError, SearchError, ProcessingError
 from .marshmallow_schemes import (UserSchema, UserPutSchema, UserLoginSchema, PasswordSchema, SearchSchema,
                                   PasswordPutSchema, UserIdsListSchema, AdminUsersSearchData)
 from .models import UserModel
@@ -18,34 +19,82 @@ from .swagger_models import (user_post, user_login, password_api_model, user_put
                              admin_users_search)
 
 
-@app.errorhandler(SQLAlchemyError)
+@api.errorhandler(SQLAlchemyError)
 def handle_sqlalchemy_error(error):
-    """Database exception logger
+    """SQLAlchemyError exception handler
 
     :param error: Response with error
-    :return: error
+    :return: error message, status code
     """
     tb = traceback.format_exc()
-    app.logger.error(f'5xx INTERNAL SERVER ERROR\n{tb}')
-    return error
+    app.logger.error(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 500 '
+                     f'INTERNAL SERVER ERROR\n{tb}')
+    return {'message': 'Internal Server Error'}, 500
 
 
-@app.after_request
-def response_logger(response):
-    if response.status_code == 400:
-        app.logger.error(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 400 '
-                         f'BAD REQUEST - {response.get_data(True)}')
-        return response
-    elif response.status_code == 403:
-        app.logger.error(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 403 '
-                         f'FORBIDDEN - {response.get_data(True)}')
-        return response
-    elif response.status_code == 422:
-        app.logger.error(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 422 '
-                         f'UNPROCESSABLE ENTITY - {response.get_data(True)}')
-        return response
-    else:
-        return response
+@api.errorhandler(InputDataError)
+def handle_input_data_error(error):
+    """InputDataError exception handler
+
+    :param error: Response with error
+    :return: error message, status code
+    """
+    tb = traceback.format_exc()
+    app.logger.error(f'{request.scheme} {request.remote_addr} {request.method} {request.path} {error.status_code} '
+                     f'BAD REQUEST\n{tb}')
+    return {'message': error.message}, error.status_code
+
+
+@api.errorhandler(AuthorizationError)
+def handle_authorized_error(error):
+    """AuthorizationError exception handler
+
+    :param error: Response with error
+    :return: error message, status code
+    """
+    tb = traceback.format_exc()
+    app.logger.error(f'{request.scheme} {request.remote_addr} {request.method} {request.path} {error.status_code} '
+                     f'UNAUTHORIZED\n{tb}')
+    return {'message': error.message}, error.status_code, {"WWW-Authenticate": 'Basic realm="Login Required"'}
+
+
+@api.errorhandler(AccessError)
+def handle_access_error(error):
+    """AccessError exception handler
+
+    :param error: Response with error
+    :return: error message, status code
+    """
+    tb = traceback.format_exc()
+    app.logger.error(f'{request.scheme} {request.remote_addr} {request.method} {request.path} {error.status_code} '
+                     f'FORBIDDEN\n{tb}')
+    return {'message': error.message}, error.status_code
+
+
+@api.errorhandler(SearchError)
+def handle_search_error(error):
+    """NotFoundError exception handler
+
+    :param error: Response with error
+    :return: error message, status code
+    """
+    tb = traceback.format_exc()
+    app.logger.error(f'{request.scheme} {request.remote_addr} {request.method} {request.path} {error.status_code} '
+                     f'NOT FOUND\n{tb}')
+    return {'message': error.message}, error.status_code
+
+
+@api.errorhandler(ProcessingError)
+def handle_processing_error(error):
+    """ValidationError exception handler
+
+    :param error: Response with error
+    :return: error message, status code
+    """
+    tb = traceback.format_exc()
+    app.logger.error(f'{request.scheme} {request.remote_addr} {request.method} {request.path} {error.status_code} '
+                     f'UNPROCESSABLE ENTITY\n{tb}')
+    return {'message': error.message}, error.status_code
 
 
 @app.before_request
@@ -53,23 +102,22 @@ def require_login():
     """
     Require login function will be run before each request.
     The function will be called without any arguments. This function checks whether requested route is allowed to
-    unregistered user or not in allowed routes. Also, checks if session isn't empty. Otherwise, it will return 403 error
+    unregistered user or not in allowed routes. Also, checks if session isn't empty. Otherwise, it will raise
+    AccessError.
     """
 
     admin_endpoints = ['admin_admin_users', 'admin_admin_users_search_list', 'admin_admin_users_number',
                        'admin_admin_users_search']
     if request.endpoint in admin_endpoints:
-        session = Session()
-        try:
+        with session_scope() as session:
             current_user = AuthService.get_user_by_token(session)
-        except AttributeError:
-            return make_response('You are not allowed to use this resource without logging in!', 403)
-        finally:
-            session.close()
-        if not current_user.is_admin:
-            app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 403 '
-                            f'User "{current_user.username}" requested allow to the administration functional')
-            return make_response('You are not allowed to use admin functional', 403)
+            if current_user is None:
+                raise AccessError('You are not allowed to use this resource without logging in!')
+            if not current_user.is_admin:
+                app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 403 '
+                                f'User "{current_user.username}" as {"[ADMIN]" if current_user.is_admin else "[USER]"} '
+                                f'requested allow to the administration functional')
+                raise AccessError('You are not allowed to use admin functional!')
 
     if request.endpoint != 'login':
         allowed_routes = ['login', 'register', 'home', 'doc', 'restplus_doc.static', 'specs']
@@ -79,7 +127,7 @@ def require_login():
         if not expiration_time:
             del user_session
         if request.endpoint not in allowed_routes and not expiration_time:
-            return make_response('You are not allowed to use this resource without logging in!', 403)
+            raise AccessError('You are not allowed to use this resource without logging in!')
 
 
 def is_expiry_time(user_session):
@@ -127,17 +175,17 @@ class Login(Resource):
         Login resource.
 
         Checks whether entered data is in DB. Create user session based on its id and then sets session lifetime.
-        Otherwise, it will return 401 error.
+        Otherwise, it will raise UnauthorizedError.
         """
         json_data = request.get_json()
         if not json_data or not isinstance(json_data, dict):
-            return {'message': 'No input data provided'}, 400  # Bad Request
+            raise InputDataError('No input data provided')  # Bad Request
 
         # Validate and deserialize input
         try:
             data = UserLoginSchema().load(json_data)
         except ValidationError as err:
-            return {'error': err.messages}, 422  # Unprocessable Entity
+            raise ProcessingError(err.messages)
 
         # Check if a new user is not exist in data base
         with session_scope() as session:
@@ -149,7 +197,7 @@ class Login(Resource):
                    {'Set-Cookie': f'token="{token}"'}
         app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 401 '
                         f'User with email "{data["email"]}" tried to log in')
-        return {'message': 'Could not verify your login!'}, 401, {"WWW-Authenticate": 'Basic realm="Login Required"'}
+        raise AuthorizationError('Could not verify your login!')
 
 
 class Logout(Resource):
@@ -178,12 +226,12 @@ class Register(Resource):
         """
         json_data = request.get_json()
         if not json_data or not isinstance(json_data, dict):
-            return {'message': 'No input data provided'}, 400  # Bad Request
+            raise InputDataError('No input data provided')  # Bad Request
         # Validate and deserialize input
         try:
             data = UserSchema().load(json_data)
         except ValidationError as err:
-            return {'error': err.messages}, 422  # Unprocessable Entity
+            raise ProcessingError(err.messages)
         # Check if a new user is not exist in data base
         with session_scope() as session:
             if UserModel.filter_by_username(data['username'], session):
@@ -220,12 +268,12 @@ class User(Resource):
         """Update user's data."""
         json_data = request.get_json()
         if not json_data or not isinstance(json_data, dict):
-            return {'message': 'No input data provided'}, 400  # Bad Request
+            raise InputDataError('No input data provided')  # Bad Request
         # Validate and deserialize input
         try:
             data = UserPutSchema().load(json_data)
         except ValidationError as err:
-            return {'error': err.messages}, 422  # Unprocessable Entity
+            raise ProcessingError(err.messages)
         with session_scope() as session:
             current_user = AuthService.get_user_by_token(session)
             UserService.update_user(data, current_user, session)
@@ -278,13 +326,13 @@ class UserPasswords(Resource):
         """
         json_data = request.get_json()
         if not json_data or not isinstance(json_data, dict):
-            return {'message': 'No input data provided'}, 400  # Bad Request
+            raise InputDataError('No input data provided')  # Bad Request
 
         # Validate and deserialize input
         try:
             data = PasswordSchema().load(json_data)
         except ValidationError as err:
-            return {'error': err.messages}, 422  # Unprocessable Entity
+            raise ProcessingError(err.messages)
 
         # create a new password
         with session_scope() as session:
@@ -304,17 +352,17 @@ class UserPasswordsSearch(Resource):
         Search for passwords by its description.
 
         Get json data, tries to find any matches in current logged in user list of passwords by its title and comment.
-        :return: list with passwords that fit or 404 Error or 400 if no data provided or 422 ValidationError
+        :return: list with passwords that fit or 404 Error or 400 if no data provided or 422 UnprocessableEntityError
         """
         json_data = request.get_json()
         if not json_data or not isinstance(json_data, dict):
-            return {'message': 'No input data provided'}, 400  # Bad Request
+            raise InputDataError('No input data provided')  # Bad Request
 
         # Validate and deserialize input
         try:
             data = SearchSchema().load(json_data)
         except ValidationError as err:
-            return {'error': err.messages}, 422  # Unprocessable Entity
+            raise ProcessingError(err.messages)
 
         condition = data.get('condition')
         with session_scope() as session:
@@ -329,7 +377,7 @@ class UserPasswordsSearch(Resource):
                 app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 404 '
                                 f'User "{current_user.username}" as {"[ADMIN]" if current_user.is_admin else "[USER]"} '
                                 f'tried to search password by condition "{condition}"')
-                return {'message': f'No matches found for {condition}'}, 404
+                raise SearchError(f'No matches found for {condition}')
 
 
 class UserPasswordsNumber(Resource):
@@ -354,7 +402,7 @@ class UserPasswordsNumber(Resource):
                 app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 404 '
                                 f'User "{current_user.username}" as {"[ADMIN]" if current_user.is_admin else "[USER]"} '
                                 f'tried to search password by id "{pass_id}"')
-                return {'message': 'Password Not Found'}, 404  # Not Found
+                raise SearchError('Password Not Found')  # Not Found
             app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
                             f'User "{current_user.username}" as {"[ADMIN]" if current_user.is_admin else "[USER]"} '
                             f'searched password by id "{pass_id}"')
@@ -373,10 +421,10 @@ class UserPasswordsNumber(Resource):
         try:
             data = PasswordPutSchema().load(json_data)
         except ValidationError as err:
-            return {'error': err.messages}, 422  # Unprocessable Entity
+            raise ProcessingError(err.messages)
         with session_scope() as session:
             if not PasswordService.is_password_exists(pass_id, session):
-                return {'message': 'Password Not Found'}, 404
+                raise SearchError('Password Not Found')
             password = PasswordService.filter_password_by_id(pass_id, session)
             updated_password = PasswordService.update_password(password, data, session)
             return {'message': f'Data for {updated_password.title} has been updated successfully'}, 200
@@ -403,7 +451,7 @@ class UserPasswordsNumber(Resource):
                 app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 404 '
                                 f'User "{current_user.username}" as {"[ADMIN]" if current_user.is_admin else "[USER]"} '
                                 f'tried to deleted password by id "{pass_id}"')
-                return {'message': 'Password Not Found'}, 404  # Not Found
+                raise SearchError('Password Not Found')  # Not Found
 
 
 # RESOURCES FOR ADMIN:
@@ -432,13 +480,13 @@ class AdminUsers(Resource):
         """
         json_data = request.get_json()
         if not json_data or not isinstance(json_data, dict):
-            return {'message': 'No input data provided'}, 400  # Bad Request
+            raise InputDataError('No input data provided')  # Bad Request
 
         # Validate and deserialize input
         try:
             users_ids = (UserIdsListSchema().load(json_data))['users_ids']
         except ValidationError as err:
-            return {'error': err.messages}, 422  # Unprocessable Entity
+            raise ProcessingError(err.messages)
         with session_scope() as session:
             AdminService.delete_user_list(users_ids, session)
         app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
@@ -458,7 +506,7 @@ class AdminUsersNumber(Resource):
         else:
             app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 404 '
                             f'Admin tried to find user by id "{user_id}"')
-            return {'message': f'User ID {user_id} - Not Found'}, 404  # Not Found
+            raise SearchError(f'User ID {user_id} - Not Found')  # Not Found
 
     def delete(self, user_id):
         """Delete user by user_id."""
@@ -471,7 +519,7 @@ class AdminUsersNumber(Resource):
         else:
             app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 404 '
                             f'Admin tried to delete user by id "{user_id}"')
-            return {'message': f'User ID {user_id} - Not Found'}, 404  # Not Found
+            raise SearchError(f'User ID {user_id} - Not Found')  # Not Found
 
 
 class AdminUsersSearch(Resource):
@@ -486,7 +534,7 @@ class AdminUsersSearch(Resource):
             else:
                 app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 404 '
                                 f'Admin tried to find user by username "{username}"')
-                return {'message': 'User not found'}, 404  # Not Found
+                raise SearchError('User not found')  # Not Found
 
 
 class AdminUsersSearchList(Resource):
@@ -500,12 +548,12 @@ class AdminUsersSearchList(Resource):
         """
         json_data = request.get_json()
         if not json_data or not isinstance(json_data, dict):
-            return {'message': 'No input data provided'}, 400  # Bad Request
+            raise InputDataError('No input data provided')  # Bad Request
         # Validate and deserialize input
         try:
             user_data = (AdminUsersSearchData().load(json_data))['user_data']
         except ValidationError as err:
-            return {'error': err.messages}, 422  # Unprocessable Entity
+            raise ProcessingError(err.messages)
         # Search users
         with session_scope() as session:
             users = AdminService.search_user_list(user_data, session)
@@ -516,4 +564,4 @@ class AdminUsersSearchList(Resource):
             else:
                 app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 404 '
                                 f'Admin tried to find user by data "{user_data}"')
-                return {'message': 'User not found'}, 404  # Not Found
+                raise SearchError('User not found')  # Not Found
