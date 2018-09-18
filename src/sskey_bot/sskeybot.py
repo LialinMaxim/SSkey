@@ -4,6 +4,7 @@ import re
 import requests
 
 from dotenv import load_dotenv
+from operator import itemgetter
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -165,12 +166,12 @@ def gen_edit_markup():
     return markup
 
 
-def view_part_markup():
-    markup = InlineKeyboardMarkup()
-    markup.row_width = 2
-    markup.add(InlineKeyboardButton('⬅️', callback_data=f'move left'),
-               InlineKeyboardButton('➡️', callback_data=f'move right'))
-    return markup
+# def view_part_markup():
+#     markup = InlineKeyboardMarkup()
+#     markup.row_width = 2
+#     markup.add(InlineKeyboardButton('⬅️', callback_data=f'move left'),
+#                InlineKeyboardButton('➡️', callback_data=f'move right'))
+#     return markup
 
 
 @bot.callback_query_handler(func=lambda call: True)
@@ -208,17 +209,17 @@ def callback_query(call):
         bot.answer_callback_query(call.id, 'Enter a new description')
         bot.register_next_step_handler(chat_id, upd_description)
     # view_part_markup
-    elif call.message:
-        if call.data == 'move left':
-            page -= 1
-            bot.edit_message_text(chat_id=call.message.chat.id,
-                                  message_id=call.message.message_id,
-                                  text=view_part(user_passwords, page), reply_markup=view_part_markup())
-        elif call.data == 'move right':
-            page += 1
-            bot.edit_message_text(chat_id=call.message.chat.id,
-                                  message_id=call.message.message_id,
-                                  text=view_part(user_passwords, page), reply_markup=view_part_markup())
+    # elif call.message:
+    #     if call.data == 'move left':
+    #         page -= 1
+    #         bot.edit_message_text(chat_id=call.message.chat.id,
+    #                               message_id=call.message.message_id,
+    #                               text=view_part(user_passwords, page), reply_markup=view_part_markup())
+    #     elif call.data == 'move right':
+    #         page += 1
+    #         bot.edit_message_text(chat_id=call.message.chat.id,
+    #                               message_id=call.message.message_id,
+    #                               text=view_part(user_passwords, page), reply_markup=view_part_markup())
 
 
 def upd_f_name(message):
@@ -388,44 +389,23 @@ def handle_delete_profile_command(message):
         bot.reply_to(message, err)
 
 
-def view_part(pass_list, page=0, elements=6):
-    """Splits the list into separate pages.
-    As a page can be any integer"""
-    length = len(pass_list)
-    if length % elements:
-        pages = length // elements + 1
-    else:
-        pages = length // elements
-    page = abs(pages + page) % pages
-
-    start = page * elements
-    if start == length:
-        start = 0
-    end = start + elements
-
-    if end > length:
-        passwords = pass_list[start:]
-    else:
-        passwords = pass_list[start:end]
-
-    view = ''
-    for p in passwords:
-        id = p.get('pass_id')
-        title = p.get('title')
-        login = p.get('login')
-        view += f'/{id} - {title} : {login}\n'
-    return view
-
-
 @bot.message_handler(commands=['get_passwords'])
 def handle_get_passwords_command(message):
     if user_dict.get(message.chat.id):
-        rv = requests.get(url + 'user/passwords', cookies=user_dict.get(message.chat.id).token).json()
-        global user_passwords
+        rv = requests.get(url + 'user/passwords?page=1&elements=100',
+                          cookies=user_dict.get(message.chat.id).token).json()
         key, value = rv.popitem()
         user_passwords = value
+        sorted_passwords = sorted(user_passwords, key=itemgetter('pass_id'))
+        view = ''
+        for p in sorted_passwords:
+            id = p.get('pass_id')
+            title = p.get('title')
+            login = p.get('login')
+            view += f'/{id} - {title} : {login}\n'
+
         try:
-            bot.send_message(message.chat.id, view_part(user_passwords), reply_markup=view_part_markup())
+            bot.send_message(message.chat.id, view)
         except Exception as err:
             bot.reply_to(message, err)
     else:
@@ -463,10 +443,18 @@ def search_pass(message):
         condition = message.text
         rv = requests.post(url + 'user/passwords/search', json=dict(condition=condition),
                            cookies=user_dict.get(message.chat.id).token)
-        passwords = rv.json()
+        passwords = rv.json().get('passwords')
 
-        for pas in passwords.get('passwords'):
-            bot.send_message(message.from_user.id, f'{pas}')
+        sorted_passwords = sorted(passwords, key=itemgetter('pass_id'))
+
+        view = ''
+
+        for p in sorted_passwords:
+            id = p.get('pass_id')
+            title = p.get('title')
+            login = p.get('login')
+            view += f'/{id} - {title} : {login}\n'
+        bot.send_message(message.chat.id, view)
     except Exception as err:
         bot.reply_to(message, err)
 
