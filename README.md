@@ -16,7 +16,7 @@ SSkey project main features:
 
 Here is how it looks at [http://sskey.pythonanywhere.com/](http://sskey.pythonanywhere.com/):
 
-![sskey](https://raw.githubusercontent.com/LialinMaxim/SSkey/sandbox/src/app/static/swagger_sskey.png)
+![sskey](https://raw.githubusercontent.com/LialinMaxim/SSkey/sandbox/src/app/static/sskey_1.3.png)
 
 
 ## Getting started
