@@ -123,7 +123,7 @@ def require_login():
         allowed_routes = ['login', 'register', 'home', 'doc', 'restplus_doc.static', 'specs']
         with session_scope() as session:
             user_session = AuthService.get_user_session(session)
-        expiration_time = AuthService.is_expiry_time(user_session)
+            expiration_time = AuthService.is_expiry_time(user_session, session)
         if not expiration_time:
             del user_session
         if request.endpoint not in allowed_routes and not expiration_time:

@@ -6,12 +6,12 @@ from ..models import UserModel, SessionObject
 
 class AuthService:
     @staticmethod
-    def is_expiry_time(user_session):
-        if user_session:
+    def is_expiry_time(user_session, session):
+        if user_session is not None:
             token = request.cookies.get('token')
-            out_of_time = user_session.update_login_time() <= user_session.expiration_time
+            out_of_time = user_session.expiration_time >= user_session.update_login_time()
             if not out_of_time:
-                AuthService.delete_token(token, user_session)
+                AuthService.delete_token(token, session)
             else:
                 return True
             app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
