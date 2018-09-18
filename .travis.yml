@@ -18,4 +18,4 @@ before_script:
 script:
   - coverage run --source="src/app" -m pytest
   - coverage report --fail-under=50
-  - pycodestyle src/ --ignore=E501,E402
+  - pycodestyle src/ --ignore=E722,E501,E402

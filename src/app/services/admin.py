@@ -12,8 +12,8 @@ class AdminService:
     @staticmethod
     def delete_user_list(users_ids, session):
         for user_id in users_ids:
-            user = UserModel.filter_by_id(user_id, session)
-            if bool(user):
+            user = AdminService.get_user_by_id(user_id, session)
+            if user:
                 passwords = session.query(PasswordModel).filter(PasswordModel.user_id == user_id).all()
                 for password in passwords:
                     session.delete(password)
