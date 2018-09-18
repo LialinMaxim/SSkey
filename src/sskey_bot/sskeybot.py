@@ -388,35 +388,6 @@ def handle_delete_profile_command(message):
         bot.reply_to(message, err)
 
 
-def view_part(pass_list, page=0, elements=6):
-    """Splits the list into separate pages.
-    As a page can be any integer"""
-    length = len(pass_list)
-    if length % elements:
-        pages = length // elements + 1
-    else:
-        pages = length // elements
-    page = abs(pages + page) % pages
-
-    start = page * elements
-    if start == length:
-        start = 0
-    end = start + elements
-
-    if end > length:
-        passwords = pass_list[start:]
-    else:
-        passwords = pass_list[start:end]
-
-    view = ''
-    for p in passwords:
-        id = p.get('pass_id')
-        title = p.get('title')
-        login = p.get('login')
-        view += f'/{id} - {title} : {login}\n'
-    return view
-
-
 @bot.message_handler(commands=['get_passwords'])
 def handle_get_passwords_command(message):
     if user_dict.get(message.chat.id):
