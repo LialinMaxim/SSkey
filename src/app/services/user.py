@@ -8,10 +8,8 @@ class UserService:
             if key != 'password':
                 current_user.__setattr__(key, data[key])
         session.add(current_user)
-        return current_user.username
 
     @staticmethod
     def delete_user(token, current_user, session):
         session.query(SessionObject).filter(SessionObject.token == token).delete()
         session.delete(current_user)
-        return current_user.username

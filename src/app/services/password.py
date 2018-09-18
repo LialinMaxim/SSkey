@@ -97,7 +97,6 @@ class PasswordService:
             .filter(PasswordModel.user_id == current_user.id) \
             .filter(PasswordModel.pass_id == pass_id) \
             .delete()
-        return pass_id
 
     @staticmethod
     def search_password_by_condition(user_id, condition, session):
