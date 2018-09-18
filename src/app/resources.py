@@ -15,8 +15,9 @@ from .services.admin import AdminService
 from .services.auth import AuthService
 from .services.password import PasswordService
 from .services.user import UserService
+from .services.pagination import Pagination
 from .swagger_models import (user_post, user_login, password_api_model, user_put, search_password, users_ids_list,
-                             admin_users_search)
+                             admin_users_search, generate_parser, admin_users_parser, user_passwords_parser)
 
 
 @api.errorhandler(SQLAlchemyError)
@@ -130,12 +131,9 @@ def require_login():
             raise AccessError('You are not allowed to use this resource without logging in!')
 
 
-# GENERAL RESOURCES:
-# Home,
-# Smoke,
-# Login,
-# Logout,
-# Register
+"""
+GENERAL RESOURCES
+"""
 
 
 class Home(Resource):
@@ -201,6 +199,16 @@ class Logout(Resource):
         return {'message': 'Dropped!'}, 200  # OK
 
 
+class Generate(Resource):
+    @api.expect(generate_parser)
+    def get(self):
+        """
+        Generate a new password as a string with the specified parameters.
+        """
+        args = generate_parser.parse_args(request)
+        return {'Generate password': PasswordService.generate_password(args)}, 200  # OK
+
+
 class Register(Resource):
     @api.expect(user_post)
     def post(self):
@@ -232,11 +240,9 @@ class Register(Resource):
             return {'message': f"USER {data['username']} ADDED"}, 200  # OK
 
 
-# RESOURCES FOR USER:
-# User,
-# UserPasswords,
-# UserPasswordsSearch,
-# UserPasswordsNumber
+"""
+RESOURCES FOR USER
+"""
 
 
 class User(Resource):
@@ -287,6 +293,7 @@ class UserPasswords(Resource):
     User gets his all passwords and may create a new one.
     """
 
+    @api.expect(user_passwords_parser)
     def get(self):
         """
         Get list of user's passwords.
@@ -294,13 +301,24 @@ class UserPasswords(Resource):
         User defines by sess email, returns a list of passwords for current logged in user.
         :return: list of passwords or 500 SQLAlchemyError
         """
+        args = admin_users_parser.parse_args(request)
+        elements = args['elements']
         with session_scope() as session:
             current_user = AuthService.get_user_by_token(session)
             passwords_serialized = PasswordService.get_password_list(current_user, session)
             app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
                             f'User "{current_user.username}" as {"[ADMIN]" if current_user.is_admin else "[USER]"} '
                             f'requested his own passwords')
-        return {'passwords': passwords_serialized}, 200  # OK
+
+        data = Pagination.get_page(passwords_serialized, page=args['page'], step=elements)
+        data_list = data['data_list']
+        page = data['page']
+        pages = data['pages']
+        length = data['length']
+        if length < elements:
+            elements = length
+
+        return {f'user passwords {elements} of {length}, page {page} of {pages}': data_list}, 200  # OK
 
     @api.expect(password_api_model)
     def post(self):
@@ -308,11 +326,22 @@ class UserPasswords(Resource):
         Create a new user's password.
 
         Create a new password for current logged in user, without specifying any parameters.
+
         :return: 200 OK or 500 SQLAlchemyError
         """
         json_data = request.get_json()
         if not json_data or not isinstance(json_data, dict):
             raise InputDataError('No input data provided')  # Bad Request
+
+        # # password generation if password does not exist
+        # if 'password' not in json_data:
+        #     json_data['password'] = PasswordService.generate_password()
+        # else:
+        #     if isinstance(json_data['password'], int):
+        #         length = json_data['password']
+        #         json_data['password'] = PasswordService.generate_password(length)
+        #     if not json_data['password']:
+        #         json_data['password'] = PasswordService.generate_password()
 
         # Validate and deserialize input
         try:
@@ -440,21 +469,37 @@ class UserPasswordsNumber(Resource):
                 raise SearchError('Password Not Found')  # Not Found
 
 
-# RESOURCES FOR ADMIN:
-# AdminUsers,
-# AdminUsersNumber,
-# AdminUsersSearch,
-# AdminUsersSearchList
+"""
+RESOURCES FOR ADMIN
+"""
 
 
 class AdminUsers(Resource):
+    @api.expect(admin_users_parser)
     def get(self):
         """Get all users by list."""
+        args = admin_users_parser.parse_args(request)
+        elements = args['elements']
+        page = args['page']
         with session_scope() as session:
             users = AdminService.get_user_list(session)
+
+        users_list = UserSchema(many=True).dump(users)
+        data = Pagination.get_page(users_list, page=page, step=elements)
+        data_list = data['data_list']
+        page = data['page']
+        pages = data['pages']
+        length = data['length']
+
+        if length < elements:
+            elements = length
+        if args['password_counter'] == 'YES':
+            for i in range(elements):
+                count = PasswordService.count_passwords(data_list[i]['id'], session)
+                data_list[i].update({'passwords': str(count)})
         app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
                         f'Admin requested user list')
-        return {'users': UserSchema(many=True).dump(users)}, 200  # OK
+        return {f'users {elements} of {length}, page {page} of {pages}': data_list}, 200  # OK
 
     @api.expect(users_ids_list)
     def delete(self):
