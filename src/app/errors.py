@@ -25,12 +25,6 @@ class AccessError(BaseError):
         super(AccessError, self).__init__(reason, 403)
 
 
-class SearchError(BaseError):
-    """404 Not Found"""
-    def __init__(self, reason):
-        super(SearchError, self).__init__(reason, 404)
-
-
 class ProcessingError(BaseError):
     """422 Unprocessable Entity"""
     def __init__(self, reason):

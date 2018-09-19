@@ -7,15 +7,15 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from . import app, api
 from .base import session_scope
-from .errors import InputDataError, AuthorizationError, AccessError, SearchError, ProcessingError
+from .errors import InputDataError, AuthorizationError, AccessError, ProcessingError
 from .marshmallow_schemes import (UserSchema, UserPutSchema, UserLoginSchema, PasswordSchema, SearchSchema,
                                   PasswordPutSchema, UserIdsListSchema, AdminUsersSearchData)
 from .models import UserModel
 from .services.admin import AdminService
 from .services.auth import AuthService
+from .services.pagination import Pagination
 from .services.password import PasswordService
 from .services.user import UserService
-from .services.pagination import Pagination
 from .swagger_models import (user_post, user_login, password_api_model, user_put, search_password, users_ids_list,
                              admin_users_search, generate_parser, admin_users_parser, user_passwords_parser)
 
@@ -69,19 +69,6 @@ def handle_access_error(error):
     tb = traceback.format_exc()
     app.logger.error(f'{request.scheme} {request.remote_addr} {request.method} {request.path} {error.status_code} '
                      f'FORBIDDEN\n{tb}')
-    return {'message': error.message}, error.status_code
-
-
-@api.errorhandler(SearchError)
-def handle_search_error(error):
-    """NotFoundError exception handler
-
-    :param error: Response with error
-    :return: error message, status code
-    """
-    tb = traceback.format_exc()
-    app.logger.error(f'{request.scheme} {request.remote_addr} {request.method} {request.path} {error.status_code} '
-                     f'NOT FOUND\n{tb}')
     return {'message': error.message}, error.status_code
 
 
@@ -367,7 +354,7 @@ class UserPasswordsSearch(Resource):
         Search for passwords by its description.
 
         Get json data, tries to find any matches in current logged in user list of passwords by its title and comment.
-        :return: list with passwords that fit or 404 Error or 400 if no data provided or 422 UnprocessableEntityError
+        :return: list with passwords that fit or 200 No matches found or 400 if no data provided or 422 ProcessingError
         """
         json_data = request.get_json()
         if not json_data or not isinstance(json_data, dict):
@@ -389,10 +376,10 @@ class UserPasswordsSearch(Resource):
                                 f'searched password by condition "{condition}"')
                 return {'passwords': passwords_by_condition}, 200
             else:
-                app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 404 '
+                app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
                                 f'User "{current_user.username}" as {"[ADMIN]" if current_user.is_admin else "[USER]"} '
                                 f'tried to search password by condition "{condition}"')
-                raise SearchError(f'No matches found for {condition}')
+                return {'message': f'No matches found for {condition}'}, 200
 
 
 class UserPasswordsNumber(Resource):
@@ -414,10 +401,10 @@ class UserPasswordsNumber(Resource):
             current_user = AuthService.get_user_by_token(session)
             password = PasswordService.get_password_by_id(current_user.id, pass_id, session)
             if not password:
-                app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 404 '
+                app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
                                 f'User "{current_user.username}" as {"[ADMIN]" if current_user.is_admin else "[USER]"} '
                                 f'tried to search password by id "{pass_id}"')
-                raise SearchError('Password Not Found')  # Not Found
+                return {'message': 'Password Not Found'}, 200
             app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
                             f'User "{current_user.username}" as {"[ADMIN]" if current_user.is_admin else "[USER]"} '
                             f'searched password by id "{pass_id}"')
@@ -439,7 +426,7 @@ class UserPasswordsNumber(Resource):
             raise ProcessingError(err.messages)
         with session_scope() as session:
             if not PasswordService.is_password_exists(pass_id, session):
-                raise SearchError('Password Not Found')
+                return {'message': 'Password Not Found'}, 200
             password = PasswordService.filter_password_by_id(pass_id, session)
             updated_password = PasswordService.update_password(password, data, session)
             return {'message': f'Data for {updated_password.title} has been updated successfully'}, 200
@@ -450,7 +437,7 @@ class UserPasswordsNumber(Resource):
 
         Delete password from current logged in user by pass_id.
         :param pass_id: id of specific user's password
-        :return: 200 OK or 404 Password Not Found or 500 SQLAlchemyError
+        :return: 200 OK or 200 Password Not Found or 500 SQLAlchemyError
         """
         with session_scope() as session:
             current_user = AuthService.get_user_by_token(session)
@@ -463,10 +450,10 @@ class UserPasswordsNumber(Resource):
                                 f'deleted password by id "{pass_id}"')
                 return {'message': f'Password ID {pass_id} DELETED'}, 200  # OK
             else:
-                app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 404 '
+                app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
                                 f'User "{current_user.username}" as {"[ADMIN]" if current_user.is_admin else "[USER]"} '
                                 f'tried to deleted password by id "{pass_id}"')
-                raise SearchError('Password Not Found')  # Not Found
+                return {'message': 'Password Not Found'}, 200
 
 
 """
@@ -483,8 +470,8 @@ class AdminUsers(Resource):
         page = args['page']
         with session_scope() as session:
             users = AdminService.get_user_list(session)
+            users_list = UserSchema(many=True).dump(users)
 
-        users_list = UserSchema(many=True).dump(users)
         data = Pagination.get_page(users_list, page=page, step=elements)
         data_list = data['data_list']
         page = data['page']
@@ -530,14 +517,14 @@ class AdminUsersNumber(Resource):
         """Get user by user_id."""
         with session_scope() as session:
             user = AdminService.get_user_by_id(user_id, session)
-        if user:
-            app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
-                            f'Admin requested user by id "{user_id}"')
-            return {'user': UserSchema().dump(user)}, 200  # OK
-        else:
-            app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 404 '
-                            f'Admin tried to find user by id "{user_id}"')
-            raise SearchError(f'User ID {user_id} - Not Found')  # Not Found
+            if user:
+                app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                                f'Admin requested user by id "{user_id}"')
+                return {'user': UserSchema().dump(user)}, 200  # OK
+            else:
+                app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                                f'Admin tried to find user by id "{user_id}"')
+                return {'message': f'User ID {user_id} - Not Found'}, 200
 
     def delete(self, user_id):
         """Delete user by user_id."""
@@ -548,9 +535,9 @@ class AdminUsersNumber(Resource):
                             f'Admin deleted user by id "{user_id}"')
             return {'message': f'User ID:{user_id} has been DELETED.'}, 200  # OK
         else:
-            app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 404 '
+            app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
                             f'Admin tried to delete user by id "{user_id}"')
-            raise SearchError(f'User ID {user_id} - Not Found')  # Not Found
+            return {'message': f'User ID {user_id} - Not Found'}, 200
 
 
 class AdminUsersSearch(Resource):
@@ -563,9 +550,9 @@ class AdminUsersSearch(Resource):
                                 f'Admin searched user by username "{username}"')
                 return {'user': UserSchema().dump(user)}, 200  # OK
             else:
-                app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 404 '
+                app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
                                 f'Admin tried to find user by username "{username}"')
-                raise SearchError('User not found')  # Not Found
+                return {'message': 'User not found'}, 200
 
 
 class AdminUsersSearchList(Resource):
@@ -593,6 +580,6 @@ class AdminUsersSearchList(Resource):
                                 f'Admin searched user by data "{user_data}"')
                 return {'users': UserSchema(many=True).dump(users)}, 200  # OK
             else:
-                app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 404 '
+                app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
                                 f'Admin tried to find user by data "{user_data}"')
-                raise SearchError('User not found')  # Not Found
+                return {'message': 'User not found'}, 200
