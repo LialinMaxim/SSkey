@@ -6,8 +6,8 @@ from . import api
 # imported and use in resources
 
 user_post = api.model('Create New User', {
-    'length': fields.String(example='admin@gmail.com'),
-    'number': fields.String(example='admin'),
+    'email': fields.String(example='admin@gmail.com'),
+    'username': fields.String(example='admin'),
     'password': fields.String(example='admin'),
     'first_name': fields.String(example='Nicola'),
     'last_name': fields.String(example='Tesla'),
