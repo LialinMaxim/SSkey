@@ -483,8 +483,8 @@ class AdminUsers(Resource):
         page = args['page']
         with session_scope() as session:
             users = AdminService.get_user_list(session)
+            users_list = UserSchema(many=True).dump(users)
 
-        users_list = UserSchema(many=True).dump(users)
         data = Pagination.get_page(users_list, page=page, step=elements)
         data_list = data['data_list']
         page = data['page']
@@ -530,14 +530,14 @@ class AdminUsersNumber(Resource):
         """Get user by user_id."""
         with session_scope() as session:
             user = AdminService.get_user_by_id(user_id, session)
-        if user:
-            app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
-                            f'Admin requested user by id "{user_id}"')
-            return {'user': UserSchema().dump(user)}, 200  # OK
-        else:
-            app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 404 '
-                            f'Admin tried to find user by id "{user_id}"')
-            raise SearchError(f'User ID {user_id} - Not Found')  # Not Found
+            if user:
+                app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                                f'Admin requested user by id "{user_id}"')
+                return {'user': UserSchema().dump(user)}, 200  # OK
+            else:
+                app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 404 '
+                                f'Admin tried to find user by id "{user_id}"')
+                raise SearchError(f'User ID {user_id} - Not Found')  # Not Found
 
     def delete(self, user_id):
         """Delete user by user_id."""
