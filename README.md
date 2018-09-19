@@ -1,22 +1,24 @@
 # SSkey
-[![Build Status](https://travis-ci.org/LialinMaxim/SSkey.svg?branch=Development)](https://travis-ci.org/LialinMaxim/SSkey)
+[![Build Status](https://travis-ci.org/frol/flask-restplus-server-example.svg)](https://travis-ci.org/frol/flask-restplus-server-example)
+[![Heroku](https://heroku-badge.herokuapp.com/?app=sskey)](https://sskey.herokuapp.com/)
 
 This is REST application for storing user's passwords for Internet resources. In the application built-in Swagger UI for working with the application. Project is based on Flask framework.
 
 
 SSkey project main features:
 
-* built-in swagger ui
+* built-in swagger ui with parameters
 * authentication and authorization with session
-* creating passwords
+* creating passwords and password generator
 * password encryption
 * user’s passwords list
 * search password by its description
 * admin resource for managing users
+* telegram bot
 
-Here is how it looks at [http://sskey.pythonanywhere.com/](http://sskey.pythonanywhere.com/):
+Here is how it looks at [https://sskey.herokuapp.com/](https://sskey.herokuapp.com/):
 
-![sskey](https://raw.githubusercontent.com/LialinMaxim/SSkey/sandbox/src/app/static/sskey_1.3.png)
+![sskey_image](https://raw.githubusercontent.com/LialinMaxim/SSkey/sandbox/src/app/static/sskey_1.3.png)
 
 
 ## Getting started
