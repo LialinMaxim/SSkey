@@ -1,4 +1,4 @@
-from flask_restplus import fields
+from flask_restplus import fields, reqparse
 
 from . import api
 
@@ -13,6 +13,27 @@ user_post = api.model('Create New User', {
     'last_name': fields.String(example='Tesla'),
     'phone': fields.String(example='068-409-69-36'),
 })
+
+# for password generator
+generate_parser = reqparse.RequestParser()
+generate_parser.add_argument('length', type=int, required=True, default=8, help='length')
+generate_parser.add_argument('uppercase', type=str, default='NO', choices=['YES', 'NO'], help='Upper Case')
+generate_parser.add_argument('digit', type=str, default='YES', choices=['YES', 'NO'], help='Digits')
+generate_parser.add_argument('symbol', type=str, default='NO', choices=['YES', 'NO'], help='Symbols')
+
+# for admin route with all user
+admin_users_parser = reqparse.RequestParser()
+admin_users_parser.add_argument('page', type=int, default=1, help='Page')
+admin_users_parser.add_argument('elements', type=int, default=10,
+                                choices=[1, 5, 10, 20, 50, 100], help='Elements on page')
+admin_users_parser.add_argument('password_counter', type=str, default='NO',
+                                choices=['YES', 'NO'], help='Count passwords')
+
+# for user passwords list
+user_passwords_parser = reqparse.RequestParser()
+user_passwords_parser.add_argument('page', type=int, default=1, help='Page')
+user_passwords_parser.add_argument('elements', type=int, default=10,
+                                   choices=[1, 5, 10, 20, 50, 100], help='Elements on page')
 
 password_api_model = api.model('Create New Password', {
     'url': fields.Url(example='https://www.youtube.com'),
