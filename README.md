@@ -1,7 +1,25 @@
 # SSkey
-REST application 
+[![Build Status](https://travis-ci.org/frol/flask-restplus-server-example.svg)](https://travis-ci.org/frol/flask-restplus-server-example)
+[![Heroku](https://heroku-badge.herokuapp.com/?app=sskey)](https://sskey.herokuapp.com/)
 
-[![Build Status](https://travis-ci.org/LialinMaxim/SSkey.svg?branch=Development)](https://travis-ci.org/LialinMaxim/SSkey)
+This is REST application for storing user's passwords for Internet resources. In the application built-in Swagger UI for working with the application. Project is based on Flask framework.
+
+
+SSkey project main features:
+
+* built-in swagger ui with parameters
+* authentication and authorization with session
+* creating passwords and password generator
+* password encryption
+* user’s passwords list
+* search password by its description
+* admin resource for managing users
+* telegram bot
+
+Here is how it looks at [https://sskey.herokuapp.com/](https://sskey.herokuapp.com/):
+
+![sskey_image](https://raw.githubusercontent.com/LialinMaxim/SSkey/sandbox/src/app/static/sskey_1.3.png)
+
 
 ## Getting started
 
@@ -45,45 +63,87 @@ If you need to make some changes to the project without affecting the server and
 docker-app.sh
 ```
 
-##
+## Local launch
 
-Otherwise, for the standalone web service:
+1. Create `.env` file in `src/app` folder and write the environment variables into it.
 
-```shell
-pip install -r requirements.txt
-python src/manage.py runserver
-```
+2. Environment variables for application:
 
-Visit [http://localhost:5000](http://localhost:5000)
+    ```shell
+    SECRET_KEY=yor_secret_key
+    ``` 
+    
+    Environment variables for your PostgreSQL database:
+    
+    ```shell
+    POSTGRES_USER=your_postgres_user
+    POSTGRES_PASS=your_postgres_password
+    POSTGRES_NAME=your_postgres_db_name
+    POSTGRES_HOST=localhost
+    ``` 
+
+3. Install dependencies:
+
+    ```shell
+    pip install -r src/app/requirements.txt
+    ```
+
+4. Run the application:
+
+    ```shell
+    python src/manage.py runserver
+    ```
+    
+5. Initialise Data Base:
+
+    ```shell
+    python src/manage.py db init
+    ```
+    
+6. Visit [http://localhost:5000](http://localhost:5000)
 
 ## Flask Application Structure 
 
 ```
 
 .
-├── app
-│   ├── base.py
-│   ├── Dockerfile
-│   ├── errors
-│   │   ├── handlers.py
-│   │   ├── __init__.py
-│   ├── __init__.py
-│   ├── migrate.py
-│   ├── models.py
-│   ├── requirements.txt
-│   ├── resources.py
-│   ├── routes.py
-│   └── swagger.yaml
-├── boot.sh
-├── config.py
+├── docker-app.sh
 ├── docker-compose.yml
-├── environment.yaml
-├── manage.py
+├── docker-deploy.sh
 ├── README.md
-└── tests
-    ├── __init__.py
-    ├── load_tests.py
-    └── test_basic.py
+├── src
+│   ├── app
+│   │   ├── api.py
+│   │   ├── base.py
+│   │   ├── config.py
+│   │   ├── database.py
+│   │   ├── __init__.py
+│   │   ├── models.py
+│   │   ├── requirements.txt
+│   │   ├── resources.py
+│   │   ├── routes.py
+│   │   ├── scheme.py
+│   │   ├── swagger_models.py
+│   │   └── swagger.yaml
+│   ├── boot.sh
+│   ├── Dockerfile
+│   ├── __init__.py
+│   ├── manage.py
+│   └── tests
+│       ├── __init__.py
+│       ├── requests
+│       │   ├── admin_requests.py
+│       │   ├── basic_requests.py
+│       │   ├── __init__.py
+│       │   ├── login_requests.py
+│       │   └── user_requests.py
+│       ├── test_admin_routes.py
+│       ├── test_basic_routes.py
+│       ├── test_login_routes.py
+│       ├── test_user_passwords.py
+│       ├── test_user_routes.py
+│       └── user_passwords_requests.py
+└── sskey.env
 
 ```
 
@@ -103,13 +163,46 @@ docker-compose run -p 5000:5000 web python manage.py
 Standalone unit tests run with:
 
 ```shell
-pytest
+python -m pytest src/tests
 ```
 
-## Postgresql
+## Standalone installation of Database PostgreSQL
 
-Install [postgresql](https://www.postgresql.org/download/) and run:
-```shell
-python base.py # database config
-python migrate.py # in order to create database
-```
+1. Install [postgresql](https://www.postgresql.org/download/)
+
+2. Create environment file .env and put into /src/app directory with content:
+
+    ```shell
+    SECRET_KEY=wizard380684096936
+    POSTGRES_USER=postgres
+    POSTGRES_PASS=postgres
+    POSTGRES_HOST=localhost
+    POSTGRES_NAME=db_sskey
+    ```
+3. Change database config if you need in file:
+
+    ```shell
+    src/app/base.py
+    ```
+
+4. Run the database initialization using one of this commands:
+- drop old and create new database, insert tables from SQLAlchemy models:
+    ```shell
+    python manage.py db init 
+    ```
+- create database if not exist and insert tables from SQLAlchemy models:
+    ```shell
+    python manage.py db create
+    ```
+- drop tables from database:
+    ```shell
+    python manage.py db drop
+    ```
+- drop old tables and create new tables in database from SQLAlchemy models:
+    ```shell
+    python manage.py db update
+    ```
+- standalone manual creation of database
+    ```shell
+    python migrate.py
+    ```

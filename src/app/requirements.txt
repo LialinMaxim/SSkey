@@ -2,7 +2,6 @@
 
 Flask==1.0.2
 flask-restplus==0.11.0
-
 Flask-Script==2.0.6
 Flask-Cors==3.0.4
 
@@ -12,17 +11,23 @@ psycopg2==2.7.5
 SQLAlchemy==1.2.7
 
 # Validation
+
 marshmallow==3.0.0b9
 
+# tests
+
+pytest==3.6.3
+coverage==4.5.1
+
+# requests
+
+requests==2.19.1
 
 # Other
 
-pytest==3.6.3
 click==6.7
 MarkupSafe==1.0
 Werkzeug==0.14.1
 cryptography==2.3
-
-# requests
-requests==2.19.1
-
+python-dotenv==0.9.0
+python-simplexml==0.1.5

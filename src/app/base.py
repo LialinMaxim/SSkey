@@ -1,8 +1,9 @@
 import os
+from contextlib import contextmanager
 
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, scoped_session
 
 POSTGRES_USER = os.environ.get('POSTGRES_USER')
 POSTGRES_PASS = os.environ.get('POSTGRES_PASS')
@@ -14,6 +15,21 @@ engine = create_engine('postgresql://%s:%s@%s/%s' % (POSTGRES_USER,
                                                      POSTGRES_NAME
                                                      ))
 
-Session = sessionmaker(bind=engine)
-
+"""scoped_session provides scoped management of Session objects."""
+session_factory = sessionmaker(bind=engine)
+Session = scoped_session(session_factory)
 Base = declarative_base()
+
+
+@contextmanager
+def session_scope():
+    """Provide a transactional scope around a series of operations."""
+    session = Session()
+    try:
+        yield session
+        session.commit()
+    except:
+        session.rollback()
+        raise
+    finally:
+        session.close()

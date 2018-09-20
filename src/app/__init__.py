@@ -1,17 +1,20 @@
-from flask import Flask, Blueprint
-from flask_restplus import Api, fields
+from flask import Flask
 
+from .api import RepresentationApi
 from .config import config
+from .logger import make_logger
 
 app = Flask(__name__)
 app.config.from_object(config['default'])
-api = Api(app, version='0.1.1', title='SSkey', description='A simple application to safe yours passwords',)
+make_logger(app)
 
-# app.config["SECRET_KEY"] = "5791628bb0b13ce0c676dfde280ba245"
-# db = ...
-
-# from src.app.errors import errors
-
-# app.register_blueprint(errors)
+api = RepresentationApi(app,
+                        version='0.1.2',
+                        title='SSkey',
+                        description='A simple application to safe yours passwords',
+                        default='general',
+                        default_label='Base requests')
+admin_api = api.namespace('admin', description='Requests for admin')
+user_api = api.namespace('user', description='Requests for user')
 
 from . import routes

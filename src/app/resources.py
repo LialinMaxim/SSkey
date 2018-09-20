@@ -1,191 +1,585 @@
-from abc import ABCMeta, abstractmethod
+import traceback
 
-from flask import jsonify, request
-from flask_restplus import Resource, reqparse, fields	
+from flask import request
+from flask_restplus import Resource
 from marshmallow import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 
-from . import api
-from .base import Session
-from .models import User, Password, SessionObject
+from . import app, api
+from .base import session_scope
+from .errors import InputDataError, AuthorizationError, AccessError, ProcessingError
+from .marshmallow_schemes import (UserSchema, UserPutSchema, UserLoginSchema, PasswordSchema, SearchSchema,
+                                  PasswordPutSchema, UserIdsListSchema, AdminUsersSearchData)
+from .models import UserModel
+from .services.admin import AdminService
+from .services.auth import AuthService
+from .services.pagination import Pagination
+from .services.password import PasswordService
+from .services.user import UserService
+from .swagger_models import (user_post, user_login, password_api_model, user_put, search_password, users_ids_list,
+                             admin_users_search, generate_parser, admin_users_parser, user_passwords_parser)
 
-session = Session()
+
+@api.errorhandler(SQLAlchemyError)
+def handle_sqlalchemy_error(error):
+    """SQLAlchemyError exception handler
+
+    :param error: Response with error
+    :return: error message, status code
+    """
+    tb = traceback.format_exc()
+    app.logger.error(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 500 '
+                     f'INTERNAL SERVER ERROR\n{tb}')
+    return {'message': 'Internal Server Error'}, 500
+
+
+@api.errorhandler(InputDataError)
+def handle_input_data_error(error):
+    """InputDataError exception handler
+
+    :param error: Response with error
+    :return: error message, status code
+    """
+    tb = traceback.format_exc()
+    app.logger.error(f'{request.scheme} {request.remote_addr} {request.method} {request.path} {error.status_code} '
+                     f'BAD REQUEST\n{tb}')
+    return {'message': error.message}, error.status_code
+
+
+@api.errorhandler(AuthorizationError)
+def handle_authorized_error(error):
+    """AuthorizationError exception handler
+
+    :param error: Response with error
+    :return: error message, status code
+    """
+    tb = traceback.format_exc()
+    app.logger.error(f'{request.scheme} {request.remote_addr} {request.method} {request.path} {error.status_code} '
+                     f'UNAUTHORIZED\n{tb}')
+    return {'message': error.message}, error.status_code, {"WWW-Authenticate": 'Basic realm="Login Required"'}
+
+
+@api.errorhandler(AccessError)
+def handle_access_error(error):
+    """AccessError exception handler
+
+    :param error: Response with error
+    :return: error message, status code
+    """
+    tb = traceback.format_exc()
+    app.logger.error(f'{request.scheme} {request.remote_addr} {request.method} {request.path} {error.status_code} '
+                     f'FORBIDDEN\n{tb}')
+    return {'message': error.message}, error.status_code
+
+
+@api.errorhandler(ProcessingError)
+def handle_processing_error(error):
+    """ValidationError exception handler
+
+    :param error: Response with error
+    :return: error message, status code
+    """
+    tb = traceback.format_exc()
+    app.logger.error(f'{request.scheme} {request.remote_addr} {request.method} {request.path} {error.status_code} '
+                     f'UNPROCESSABLE ENTITY\n{tb}')
+    return {'message': error.message}, error.status_code
+
+
+@app.before_request
+def require_login():
+    """
+    Require login function will be run before each request.
+    The function will be called without any arguments. This function checks whether requested route is allowed to
+    unregistered user or not in allowed routes. Also, checks if session isn't empty. Otherwise, it will raise
+    AccessError.
+    """
+
+    admin_endpoints = ['admin_admin_users', 'admin_admin_users_search_list', 'admin_admin_users_number',
+                       'admin_admin_users_search']
+    if request.endpoint in admin_endpoints:
+        with session_scope() as session:
+            current_user = AuthService.get_user_by_token(session)
+            if current_user is None:
+                raise AccessError('You are not allowed to use this resource without logging in!')
+            if not current_user.is_admin:
+                app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 403 '
+                                f'User "{current_user.username}" as {"[ADMIN]" if current_user.is_admin else "[USER]"} '
+                                f'requested allow to the administration functional')
+                raise AccessError('You are not allowed to use admin functional!')
+
+    if request.endpoint != 'login':
+        allowed_routes = ['login', 'register', 'home', 'doc', 'restplus_doc.static', 'specs']
+        with session_scope() as session:
+            user_session = AuthService.get_user_session(session)
+            expiration_time = AuthService.is_expiry_time(user_session, session)
+        if not expiration_time:
+            del user_session
+        if request.endpoint not in allowed_routes and not expiration_time:
+            raise AccessError('You are not allowed to use this resource without logging in!')
+
+
+"""
+GENERAL RESOURCES
+"""
 
 
 class Home(Resource):
     def get(self):
-        return {'message': 'Home Page'}, 200, {
-            'Access-Control-Allow-Origin': '*'}
+        """Simple test that works without authorization."""
+        app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                        f'Requested Home Page')
+        return {'message': 'This is a Home Page'}, 200  # OK
 
 
 class Smoke(Resource):
     def get(self):
-        return {'message': 'OK'}, 200, {'Access-Control-Allow-Origin': '*'}
+        """Simple test that requires authorization."""
+        app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                        f'Requested Smoke Page')
+        return {'message': 'OK'}, 200  # OK
 
 
-class EntityListResource(Resource):
-    """
-    Abstract class of Entity list contain method POST and GET work with routs type /entities
-    """
-    __metaclass__ = ABCMeta
-
-    @abstractmethod
-    def get(self):
-        raise NotImplementedError
-
-    @abstractmethod
+class Login(Resource):
+    @api.expect(user_login)
     def post(self):
-        raise NotImplementedError
+        """
+        Login resource.
 
-
-class EntityResource(Resource):
-    """
-    Abstract class of Entity contain method  GET PUT delete work with routs type /entities/<int:entity_id>
-    """
-    __metaclass__ = ABCMeta
-
-    @abstractmethod
-    def get(self, *args, **kwargs):
-        raise NotImplementedError
-
-    @abstractmethod
-    def put(self, *args, **kwargs):
-        raise NotImplementedError
-
-    @abstractmethod
-    def delete(self, *args, **kwargs):
-        raise NotImplementedError
-
-
-user_post = api.model('Crate New User', {
-    'email': fields.String,
-    'username': fields.String,
-    'userpass': fields.String,
-    'first_name': fields.String,
-    'last_name': fields.String,
-    'phone': fields.Integer,
-})
-
-
-class UserListResource(Resource):
-    def get(self):
-        try:
-            users = session.query(User).all()
-        except SQLAlchemyError:
-            return {'msg': SQLAlchemyError}, 500,  # headers
-        users_serialized = []
-        for user in users:
-            users_serialized.append(user.serialize)
-        return {'users': users_serialized}, 200,  # headers
-
-    @api.expect(user_post)
-    def post(self):
+        Checks whether entered data is in DB. Create user session based on its id and then sets session lifetime.
+        Otherwise, it will raise UnauthorizedError.
+        """
         json_data = request.get_json()
         if not json_data or not isinstance(json_data, dict):
-            return {'message': 'No input data provided'}, 400  # Bad Request
+            raise InputDataError('No input data provided')  # Bad Request
 
+        # Validate and deserialize input
+        try:
+            data = UserLoginSchema().load(json_data)
+        except ValidationError as err:
+            raise ProcessingError(err.messages)
+
+        # Check if a new user is not exist in data base
+        with session_scope() as session:
+            token = AuthService.login(data, session)
+        if token:
+            app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                            f'User with email "{data["email"]}" was assigned a token "{token}"')
+            return {'message': f'You are LOGGED IN as {data["email"]}'}, 200, \
+                   {'Set-Cookie': f'token="{token}"'}
+        app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 401 '
+                        f'User with email "{data["email"]}" tried to log in')
+        raise AuthorizationError('Could not verify your login!')
+
+
+class Logout(Resource):
+    def get(self):
+        """
+        Logout resource.
+
+        Remove the username from the session.
+        """
+        token = request.cookies.get('token')
+        with session_scope() as session:
+            AuthService.logout(token, session)
+        app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                        f'User token "{token}" was deleted by logout')
+        return {'message': 'Dropped!'}, 200  # OK
+
+
+class Generate(Resource):
+    @api.expect(generate_parser)
+    def get(self):
+        """
+        Generate a new password as a string with the specified parameters.
+        """
+        args = generate_parser.parse_args(request)
+        return {'Generate password': PasswordService.generate_password(args)}, 200  # OK
+
+
+class Register(Resource):
+    @api.expect(user_post)
+    def post(self):
+        """
+        Register resource.
+
+        Parsing requested data, checks if username or email doesn't exit in DB, then create user in DB. 200 OK
+        Otherwise, return 500 or 400 error.
+        """
+        json_data = request.get_json()
+        if not json_data or not isinstance(json_data, dict):
+            raise InputDataError('No input data provided')  # Bad Request
         # Validate and deserialize input
         try:
             data = UserSchema().load(json_data)
         except ValidationError as err:
-            return {'message': str(err)}, 422  # Unprocessable Entity
-
+            raise ProcessingError(err.messages)
         # Check if a new user is not exist in data base
-        if session.query(User).filter(User.username == data['username']).first():
-            msg = "User with username: '{0}' is ALREADY EXISTS.".format(data['username'])
-            return {'message': msg}, 200  # OK
-        elif session.query(User).filter(User.email == data['email']).first():
-            msg = "User with email: '{0}' is ALREADY EXISTS".format(data['email'])
-            return {'message': msg}, 200  # OK
-        else:
-            # TODO optimization USER CLASS
-            # user = User(data)
-            user = User(data['username'], data['email'], data['userpass'],
-                        data['first_name'], data['last_name'], data['phone'])
-
-            # crate a new user
-            try:
-                session.add(user)
-                session.commit()
-                msg = "New user: '{0}' is SUCCESSFUL ADDED".format(user.username)
-                return {'message': msg}, 200  # OK
-            except SQLAlchemyError:
-                return {'message': SQLAlchemyError}, 500  # Internal Server Error
-
-
-class UserResource(EntityResource):
-    def get(self, user_id):
-        try:
-            user_data = session.query(User).filter(User.id == user_id).first()
-        except SQLAlchemyError:
-            return {'message': SQLAlchemyError}, 500  # Internal Server Error
-        if user_data:
-            return {'user': UserSchema().dump(user_data)}, 200  # OK
-        else:
-            return {'message': 'User not found'}, 404  # Not Found
-
-    def put(self, user_id):
-        pass
-
-    def delete(self, user_id):
-        try:
-            if session.query(User).filter(User.id == user_id).first():
-                session.query(User).filter(User.id == user_id).delete()
-                session.commit()
-                msg = 'User ID:{0} has been DELETED.'.format(user_id)
-                return {'message': msg}, 200  # OK
+        with session_scope() as session:
+            if UserModel.filter_by_username(data['username'], session):
+                return {'message': f'User with username: {data["username"]} is ALREADY EXISTS.'}, 200  # OK
+            elif UserModel.filter_by_email(data['email'], session):
+                return {'message': f'User with email: {data["email"]} is ALREADY EXISTS.'}, 200  # OK
             else:
-                msg = 'User ID:{0} NOT EXISTS!'.format(user_id)
-                return {'message': msg}, 404  # Not Found
-        except SQLAlchemyError:
-            return {'message': SQLAlchemyError}, 500  # Internal Server Error
+                # create a new user
+                AuthService.register(data, session)
+            app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                            f'User "{data["username"]}" registered with email {data["email"]}')
+            return {'message': f"USER {data['username']} ADDED"}, 200  # OK
 
 
-class PasswordResource(EntityResource):
-    def get(self, user_id, pass_id):
-        headers = {'Access-Control-Allow-Origin': '*'}
-        try:
-            user = session.query(User).filter(User.id == user_id).first()
-            if not user:
-                return {'msg': 'User not found'}, 404, headers
-            passwords = session.query(Password).filter(Password.user_id == user_id).all()
-            passwords_serialized = []
-            for password in passwords:
-                passwords_serialized.append(password.serialize)
-        except SQLAlchemyError as e:
-            return {'msg': e}, 500, headers
-        return {'passwords': passwords_serialized}, 200, headers
-
-    def put(self, user_id):
-        pass
-
-    def delete(self, user_id):
-        pass
+"""
+RESOURCES FOR USER
+"""
 
 
-class PasswordListResource(EntityListResource):
+class User(Resource):
     def get(self):
-        pass
+        """Get user's data."""
+        with session_scope() as session:
+            current_user = AuthService.get_user_by_token(session)
+            app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                            f'User "{current_user.username}" as {"[ADMIN]" if current_user.is_admin else "[USER]"} '
+                            f'requested his own data')
+            return {'user': UserSchema().dump(current_user)}, 200
 
-    def post(self):
-        pass
+    @api.expect(user_put)
+    def put(self):
+        """Update user's data."""
+        json_data = request.get_json()
+        if not json_data or not isinstance(json_data, dict):
+            raise InputDataError('No input data provided')  # Bad Request
+        # Validate and deserialize input
+        try:
+            data = UserPutSchema().load(json_data)
+        except ValidationError as err:
+            raise ProcessingError(err.messages)
+        with session_scope() as session:
+            current_user = AuthService.get_user_by_token(session)
+            UserService.update_user(data, current_user, session)
+            app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                            f'User "{current_user.username}" as {"[ADMIN]" if current_user.is_admin else "[USER]"} '
+                            f'updated his own data')
+            return {'message': f'User {current_user.username} UPDATED'}, 200
 
     def delete(self):
-        parser = reqparse.RequestParser()
-        parser.add_argument('username', type=str, help='')
-        args = parser.parse_args()
-        if args['username']:
-            try:
-                session.query(User).filter(
-                    User.username == args['username']).delete()
+        """Remove user with all his data."""
+        token = request.cookies.get('token')
+        with session_scope() as session:
+            current_user = AuthService.get_user_by_token(session)
+            UserService.delete_user(token, current_user, session)
+        app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                        f'User "{current_user.username}" as {"[ADMIN]" if current_user.is_admin else "[USER]"} '
+                        f'deleted himself')
+        return {'message': f'User {current_user.username} DELETED'}, 200
+
+
+class UserPasswords(Resource):
+    """
+    User password resource.
+
+    User gets his all passwords and may create a new one.
+    """
+
+    @api.expect(user_passwords_parser)
+    def get(self):
+        """
+        Get list of user's passwords.
+
+        User defines by sess email, returns a list of passwords for current logged in user.
+        :return: list of passwords or 500 SQLAlchemyError
+        """
+        args = admin_users_parser.parse_args(request)
+        elements = args['elements']
+        with session_scope() as session:
+            current_user = AuthService.get_user_by_token(session)
+            passwords_serialized = PasswordService.get_password_list(current_user, session)
+            app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                            f'User "{current_user.username}" as {"[ADMIN]" if current_user.is_admin else "[USER]"} '
+                            f'requested his own passwords')
+
+        data = Pagination.get_page(passwords_serialized, page=args['page'], step=elements)
+        data_list = data['data_list']
+        page = data['page']
+        pages = data['pages']
+        length = data['length']
+        if length < elements:
+            elements = length
+
+        return {f'user passwords {elements} of {length}, page {page} of {pages}': data_list}, 200  # OK
+
+    @api.expect(password_api_model)
+    def post(self):
+        """
+        Create a new user's password.
+
+        Create a new password for current logged in user, without specifying any parameters.
+
+        :return: 200 OK or 500 SQLAlchemyError
+        """
+        json_data = request.get_json()
+        if not json_data or not isinstance(json_data, dict):
+            raise InputDataError('No input data provided')  # Bad Request
+
+        # # password generation if password does not exist
+        # if 'password' not in json_data:
+        #     json_data['password'] = PasswordService.generate_password()
+        # else:
+        #     if isinstance(json_data['password'], int):
+        #         length = json_data['password']
+        #         json_data['password'] = PasswordService.generate_password(length)
+        #     if not json_data['password']:
+        #         json_data['password'] = PasswordService.generate_password()
+
+        # Validate and deserialize input
+        try:
+            data = PasswordSchema().load(json_data)
+        except ValidationError as err:
+            raise ProcessingError(err.messages)
+
+        # create a new password
+        with session_scope() as session:
+            current_user = AuthService.get_user_by_token(session)
+            password_title = PasswordService.add_password(data, current_user, session)
+        return {'message': f'PASSWORD with title {password_title} ADDED'}, 200  # OK
+
+
+class UserPasswordsSearch(Resource):
+    """
+    Search for particular passwords using password's description.
+    """
+
+    @api.expect(search_password)
+    def post(self):
+        """
+        Search for passwords by its description.
+
+        Get json data, tries to find any matches in current logged in user list of passwords by its title and comment.
+        :return: list with passwords that fit or 200 No matches found or 400 if no data provided or 422 ProcessingError
+        """
+        json_data = request.get_json()
+        if not json_data or not isinstance(json_data, dict):
+            raise InputDataError('No input data provided')  # Bad Request
+
+        # Validate and deserialize input
+        try:
+            data = SearchSchema().load(json_data)
+        except ValidationError as err:
+            raise ProcessingError(err.messages)
+
+        condition = data.get('condition')
+        with session_scope() as session:
+            current_user = AuthService.get_user_by_token(session)
+            passwords_by_condition = PasswordService.search_password_by_condition(current_user.id, condition, session)
+            if passwords_by_condition:
+                app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                                f'User "{current_user.username}" as {"[ADMIN]" if current_user.is_admin else "[USER]"} '
+                                f'searched password by condition "{condition}"')
+                return {'passwords': passwords_by_condition}, 200
+            else:
+                app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                                f'User "{current_user.username}" as {"[ADMIN]" if current_user.is_admin else "[USER]"} '
+                                f'tried to search password by condition "{condition}"')
+                return {'message': f'No matches found for {condition}'}, 200
+
+
+class UserPasswordsNumber(Resource):
+    """
+    Class for dealing with user's passwords.
+
+    User can get a password by id, update password by id and delete password by id.
+    """
+
+    def get(self, pass_id):
+        """
+        Get particular password by pass_id.
+
+        Get password from current logged in user by pass_id.
+        :param pass_id: id of specific user's password
+        :return: password or 500 SQLAlchemyError
+        """
+        with session_scope() as session:
+            current_user = AuthService.get_user_by_token(session)
+            password = PasswordService.get_password_by_id(current_user.id, pass_id, session)
+            if not password:
+                app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                                f'User "{current_user.username}" as {"[ADMIN]" if current_user.is_admin else "[USER]"} '
+                                f'tried to search password by id "{pass_id}"')
+                return {'message': 'Password Not Found'}, 200
+            app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                            f'User "{current_user.username}" as {"[ADMIN]" if current_user.is_admin else "[USER]"} '
+                            f'searched password by id "{pass_id}"')
+            return {'password': password.serialize}, 200  # OK
+
+    @api.expect(password_api_model)
+    def put(self, pass_id):
+        """
+        Update password data.
+
+        You can update all data of password or just a part of it.
+        :param pass_id: id of password data you'd like to update of
+        :return: 200 OK or 500 SQLAlchemyError
+        """
+        json_data = request.get_json()
+        try:
+            data = PasswordPutSchema().load(json_data)
+        except ValidationError as err:
+            raise ProcessingError(err.messages)
+        with session_scope() as session:
+            if not PasswordService.is_password_exists(pass_id, session):
+                return {'message': 'Password Not Found'}, 200
+            password = PasswordService.filter_password_by_id(pass_id, session)
+            updated_password = PasswordService.update_password(password, data, session)
+            return {'message': f'Data for {updated_password.title} has been updated successfully'}, 200
+
+    def delete(self, pass_id):
+        """
+        Delete specific password.
+
+        Delete password from current logged in user by pass_id.
+        :param pass_id: id of specific user's password
+        :return: 200 OK or 200 Password Not Found or 500 SQLAlchemyError
+        """
+        with session_scope() as session:
+            current_user = AuthService.get_user_by_token(session)
+            password = PasswordService.get_password_by_id(current_user.id, pass_id, session)
+            if password:
+                PasswordService.delete_password(pass_id, current_user, session)
                 session.commit()
-                status = 200
-                msg = 'User {0} has been deleted successfully'.format(
-                    args['username'])
-            except Exception as e:
-                msg = str(e)
-                status = 500
+                app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                                f'User "{current_user.username}" as {"[ADMIN]" if current_user.is_admin else "[USER]"} '
+                                f'deleted password by id "{pass_id}"')
+                return {'message': f'Password ID {pass_id} DELETED'}, 200  # OK
+            else:
+                app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                                f'User "{current_user.username}" as {"[ADMIN]" if current_user.is_admin else "[USER]"} '
+                                f'tried to deleted password by id "{pass_id}"')
+                return {'message': 'Password Not Found'}, 200
+
+
+"""
+RESOURCES FOR ADMIN
+"""
+
+
+class AdminUsers(Resource):
+    @api.expect(admin_users_parser)
+    def get(self):
+        """Get all users by list."""
+        args = admin_users_parser.parse_args(request)
+        elements = args['elements']
+        page = args['page']
+        with session_scope() as session:
+            users = AdminService.get_user_list(session)
+            users_list = UserSchema(many=True).dump(users)
+
+        data = Pagination.get_page(users_list, page=page, step=elements)
+        data_list = data['data_list']
+        page = data['page']
+        pages = data['pages']
+        length = data['length']
+
+        if length < elements:
+            elements = length
+        if args['password_counter'] == 'YES':
+            for i in range(elements):
+                count = PasswordService.count_passwords(data_list[i]['id'], session)
+                data_list[i].update({'passwords': str(count)})
+        app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                        f'Admin requested user list')
+        return {f'users {elements} of {length}, page {page} of {pages}': data_list}, 200  # OK
+
+    @api.expect(users_ids_list)
+    def delete(self):
+        """
+        Batch Users removal.
+
+        Remove users by list. Get list of users ids. If delete successfull, return 200 OK
+        Otherwise, return 500 or 400 error.
+        """
+        json_data = request.get_json()
+        if not json_data or not isinstance(json_data, dict):
+            raise InputDataError('No input data provided')  # Bad Request
+
+        # Validate and deserialize input
+        try:
+            users_ids = (UserIdsListSchema().load(json_data))['users_ids']
+        except ValidationError as err:
+            raise ProcessingError(err.messages)
+        with session_scope() as session:
+            AdminService.delete_user_list(users_ids, session)
+        app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                        f'Admin deleted users by ids {users_ids}')
+        return {'message': 'Users has been deleted successfully'}, 200
+
+
+class AdminUsersNumber(Resource):
+    def get(self, user_id):
+        """Get user by user_id."""
+        with session_scope() as session:
+            user = AdminService.get_user_by_id(user_id, session)
+            if user:
+                app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                                f'Admin requested user by id "{user_id}"')
+                return {'user': UserSchema().dump(user)}, 200  # OK
+            else:
+                app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                                f'Admin tried to find user by id "{user_id}"')
+                return {'message': f'User ID {user_id} - Not Found'}, 200
+
+    def delete(self, user_id):
+        """Delete user by user_id."""
+        with session_scope() as session:
+            delete_status = AdminService.delete_user_by_id(user_id, session)
+        if delete_status:
+            app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                            f'Admin deleted user by id "{user_id}"')
+            return {'message': f'User ID:{user_id} has been DELETED.'}, 200  # OK
         else:
-            msg = "USERNAME not given!"
-            status = 400
-        return {'message': msg}, status, {'Access-Control-Allow-Origin': '*'}
+            app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                            f'Admin tried to delete user by id "{user_id}"')
+            return {'message': f'User ID {user_id} - Not Found'}, 200
+
+
+class AdminUsersSearch(Resource):
+    def get(self, username):
+        """Get user by user name"""
+        with session_scope() as session:
+            user = AdminService.search_user_by_username(username, session)
+            if user:
+                app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                                f'Admin searched user by username "{username}"')
+                return {'user': UserSchema().dump(user)}, 200  # OK
+            else:
+                app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                                f'Admin tried to find user by username "{username}"')
+                return {'message': 'User not found'}, 200
+
+
+class AdminUsersSearchList(Resource):
+
+    @api.expect(admin_users_search)
+    def post(self):
+        """
+        Search user by any data.
+
+        Search user by - username, email, first_name, last_name or phone.
+        """
+        json_data = request.get_json()
+        if not json_data or not isinstance(json_data, dict):
+            raise InputDataError('No input data provided')  # Bad Request
+        # Validate and deserialize input
+        try:
+            user_data = (AdminUsersSearchData().load(json_data))['user_data']
+        except ValidationError as err:
+            raise ProcessingError(err.messages)
+        # Search users
+        with session_scope() as session:
+            users = AdminService.search_user_list(user_data, session)
+            if users:
+                app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                                f'Admin searched user by data "{user_data}"')
+                return {'users': UserSchema(many=True).dump(users)}, 200  # OK
+            else:
+                app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
+                                f'Admin tried to find user by data "{user_data}"')
+                return {'message': 'User not found'}, 200
