@@ -16,7 +16,7 @@ marshmallow==3.0.0b9
 
 # tests
 
-pytest==3.6.3
+pytest==3.8.0
 coverage==4.5.1
 
 # requests
