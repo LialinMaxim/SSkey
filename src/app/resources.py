@@ -28,8 +28,8 @@ def handle_sqlalchemy_error(error):
     :return: error message, status code
     """
     tb = traceback.format_exc()
-    app.logger.error(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 500 '
-                     f'INTERNAL SERVER ERROR\n{tb}')
+    app.logger.error('%s %s %s %s 500 INTERNAL SERVER ERROR\n%s' %
+                     (request.scheme, request.remote_addr, request.method, request.path, tb))
     return {'message': 'Internal Server Error'}, 500
 
 
@@ -41,8 +41,8 @@ def handle_input_data_error(error):
     :return: error message, status code
     """
     tb = traceback.format_exc()
-    app.logger.error(f'{request.scheme} {request.remote_addr} {request.method} {request.path} {error.status_code} '
-                     f'BAD REQUEST\n{tb}')
+    app.logger.error('%s %s %s %s %s BAD REQUEST\n%s' %
+                     (request.scheme, request.remote_addr, request.method, request.path, error.status_code, tb))
     return {'message': error.message}, error.status_code
 
 
@@ -54,8 +54,8 @@ def handle_authorized_error(error):
     :return: error message, status code
     """
     tb = traceback.format_exc()
-    app.logger.error(f'{request.scheme} {request.remote_addr} {request.method} {request.path} {error.status_code} '
-                     f'UNAUTHORIZED\n{tb}')
+    app.logger.error('%s %s %s %s %s UNAUTHORIZED\n%s' %
+                     (request.scheme, request.remote_addr, request.method, request.path, error.status_code, tb))
     return {'message': error.message}, error.status_code, {"WWW-Authenticate": 'Basic realm="Login Required"'}
 
 
@@ -67,8 +67,8 @@ def handle_access_error(error):
     :return: error message, status code
     """
     tb = traceback.format_exc()
-    app.logger.error(f'{request.scheme} {request.remote_addr} {request.method} {request.path} {error.status_code} '
-                     f'FORBIDDEN\n{tb}')
+    app.logger.error('%s %s %s %s %s FORBIDDEN\n%s' %
+                     (request.scheme, request.remote_addr, request.method, request.path, error.status_code, tb))
     return {'message': error.message}, error.status_code
 
 
@@ -80,8 +80,8 @@ def handle_processing_error(error):
     :return: error message, status code
     """
     tb = traceback.format_exc()
-    app.logger.error(f'{request.scheme} {request.remote_addr} {request.method} {request.path} {error.status_code} '
-                     f'UNPROCESSABLE ENTITY\n{tb}')
+    app.logger.error('%s %s %s %s %s UNPROCESSABLE ENTITY\n%s' %
+                     (request.scheme, request.remote_addr, request.method, request.path, error.status_code, tb))
     return {'message': error.message}, error.status_code
 
 
@@ -102,9 +102,9 @@ def require_login():
             if current_user is None:
                 raise AccessError('You are not allowed to use this resource without logging in!')
             if not current_user.is_admin:
-                app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 403 '
-                                f'User "{current_user.username}" as {"[ADMIN]" if current_user.is_admin else "[USER]"} '
-                                f'requested allow to the administration functional')
+                app.logger.info('%s %s %s %s 403 User "%s" as %s requested allow to the administration functional' %
+                                (request.scheme, request.remote_addr, request.method, request.path,
+                                 current_user.username, UserService.get_access_status(current_user)))
                 raise AccessError('You are not allowed to use admin functional!')
 
     if request.endpoint != 'login':
@@ -126,16 +126,16 @@ GENERAL RESOURCES
 class Home(Resource):
     def get(self):
         """Simple test that works without authorization."""
-        app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
-                        f'Requested Home Page')
+        app.logger.info('%s %s %s %s 200 Requested Home Page' %
+                        (request.scheme, request.remote_addr, request.method, request.path))
         return {'message': 'This is a Home Page'}, 200  # OK
 
 
 class Smoke(Resource):
     def get(self):
         """Simple test that requires authorization."""
-        app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
-                        f'Requested Smoke Page')
+        app.logger.info('%s %s %s %s 200 Requested Smoke Page' %
+                        (request.scheme, request.remote_addr, request.method, request.path))
         return {'message': 'OK'}, 200  # OK
 
 
@@ -162,12 +162,12 @@ class Login(Resource):
         with session_scope() as session:
             token = AuthService.login(data, session)
         if token:
-            app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
-                            f'User with email "{data["email"]}" was assigned a token "{token}"')
+            app.logger.info('%s %s %s %s 200 User with email "%s" was assigned a token "%s"' %
+                            (request.scheme, request.remote_addr, request.method, request.path, data["email"], token))
             return {'message': f'You are LOGGED IN as {data["email"]}'}, 200, \
                    {'Set-Cookie': f'token="{token}"'}
-        app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 401 '
-                        f'User with email "{data["email"]}" tried to log in')
+        app.logger.info('%s %s %s %s 401 User with email "%s" tried to log in' %
+                        (request.scheme, request.remote_addr, request.method, request.path, data["email"]))
         raise AuthorizationError('Could not verify your login!')
 
 
@@ -181,8 +181,8 @@ class Logout(Resource):
         token = request.cookies.get('token')
         with session_scope() as session:
             AuthService.logout(token, session)
-        app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
-                        f'User token "{token}" was deleted by logout')
+        app.logger.info('%s %s %s %s 200 User token "%s" was deleted by logout' %
+                        (request.scheme, request.remote_addr, request.method, request.path, token))
         return {'message': 'Dropped!'}, 200  # OK
 
 
@@ -222,8 +222,9 @@ class Register(Resource):
             else:
                 # create a new user
                 AuthService.register(data, session)
-            app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
-                            f'User "{data["username"]}" registered with email {data["email"]}')
+            app.logger.info('%s %s %s %s 200 User "%s" registered with email %s' %
+                            (request.scheme, request.remote_addr, request.method, request.path, data["username"],
+                             data["email"]))
             return {'message': f"USER {data['username']} ADDED"}, 200  # OK
 
 
@@ -237,9 +238,9 @@ class User(Resource):
         """Get user's data."""
         with session_scope() as session:
             current_user = AuthService.get_user_by_token(session)
-            app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
-                            f'User "{current_user.username}" as {"[ADMIN]" if current_user.is_admin else "[USER]"} '
-                            f'requested his own data')
+            app.logger.info('%s %s %s %s 200 User "%s" as %s requested his own data' %
+                            (request.scheme, request.remote_addr, request.method, request.path, current_user.username,
+                             UserService.get_access_status(current_user)))
             return {'user': UserSchema().dump(current_user)}, 200
 
     @api.expect(user_put)
@@ -256,9 +257,9 @@ class User(Resource):
         with session_scope() as session:
             current_user = AuthService.get_user_by_token(session)
             UserService.update_user(data, current_user, session)
-            app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
-                            f'User "{current_user.username}" as {"[ADMIN]" if current_user.is_admin else "[USER]"} '
-                            f'updated his own data')
+            app.logger.info('%s %s %s %s 200 User "%s" as %s updated his own data' %
+                            (request.scheme, request.remote_addr, request.method, request.path, current_user.username,
+                             UserService.get_access_status(current_user)))
             return {'message': f'User {current_user.username} UPDATED'}, 200
 
     def delete(self):
@@ -267,9 +268,9 @@ class User(Resource):
         with session_scope() as session:
             current_user = AuthService.get_user_by_token(session)
             UserService.delete_user(token, current_user, session)
-        app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
-                        f'User "{current_user.username}" as {"[ADMIN]" if current_user.is_admin else "[USER]"} '
-                        f'deleted himself')
+        app.logger.info('%s %s %s %s 200 User "%s" as %s deleted himself' %
+                        (request.scheme, request.remote_addr, request.method, request.path, current_user.username,
+                         UserService.get_access_status(current_user)))
         return {'message': f'User {current_user.username} DELETED'}, 200
 
 
@@ -293,9 +294,9 @@ class UserPasswords(Resource):
         with session_scope() as session:
             current_user = AuthService.get_user_by_token(session)
             passwords_serialized = PasswordService.get_password_list(current_user, session)
-            app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
-                            f'User "{current_user.username}" as {"[ADMIN]" if current_user.is_admin else "[USER]"} '
-                            f'requested his own passwords')
+            app.logger.info('%s %s %s %s 200 User "%s" as %s requested his own passwords' %
+                            (request.scheme, request.remote_addr, request.method, request.path, current_user.username,
+                             UserService.get_access_status(current_user)))
 
         data = Pagination.get_page(passwords_serialized, page=args['page'], step=elements)
         data_list = data['data_list']
@@ -371,14 +372,14 @@ class UserPasswordsSearch(Resource):
             current_user = AuthService.get_user_by_token(session)
             passwords_by_condition = PasswordService.search_password_by_condition(current_user.id, condition, session)
             if passwords_by_condition:
-                app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
-                                f'User "{current_user.username}" as {"[ADMIN]" if current_user.is_admin else "[USER]"} '
-                                f'searched password by condition "{condition}"')
+                app.logger.info('%s %s %s %s 200 User "%s" as %s searched password by condition "%s"' %
+                                (request.scheme, request.remote_addr, request.method, request.path,
+                                 current_user.username, UserService.get_access_status(current_user), condition))
                 return {'passwords': passwords_by_condition}, 200
             else:
-                app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
-                                f'User "{current_user.username}" as {"[ADMIN]" if current_user.is_admin else "[USER]"} '
-                                f'tried to search password by condition "{condition}"')
+                app.logger.info('%s %s %s %s 200 User "%s" as %s tried to search password by condition "%s"' %
+                                (request.scheme, request.remote_addr, request.method, request.path,
+                                 current_user.username, UserService.get_access_status(current_user), condition))
                 return {'message': f'No matches found for {condition}'}, 200
 
 
@@ -401,13 +402,13 @@ class UserPasswordsNumber(Resource):
             current_user = AuthService.get_user_by_token(session)
             password = PasswordService.get_password_by_id(current_user.id, pass_id, session)
             if not password:
-                app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
-                                f'User "{current_user.username}" as {"[ADMIN]" if current_user.is_admin else "[USER]"} '
-                                f'tried to search password by id "{pass_id}"')
+                app.logger.info('%s %s %s %s 200 User "%s" as %s tried to search password by id "%s"' %
+                                (request.scheme, request.remote_addr, request.method, request.path,
+                                 current_user.username, UserService.get_access_status(current_user), pass_id))
                 return {'message': 'Password Not Found'}, 200
-            app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
-                            f'User "{current_user.username}" as {"[ADMIN]" if current_user.is_admin else "[USER]"} '
-                            f'searched password by id "{pass_id}"')
+            app.logger.info('%s %s %s %s 200 User "%s" as %s searched password by id "%s"' %
+                            (request.scheme, request.remote_addr, request.method, request.path,
+                             current_user.username, UserService.get_access_status(current_user), pass_id))
             return {'password': password.serialize}, 200  # OK
 
     @api.expect(password_api_model)
@@ -445,14 +446,14 @@ class UserPasswordsNumber(Resource):
             if password:
                 PasswordService.delete_password(pass_id, current_user, session)
                 session.commit()
-                app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
-                                f'User "{current_user.username}" as {"[ADMIN]" if current_user.is_admin else "[USER]"} '
-                                f'deleted password by id "{pass_id}"')
+                app.logger.info('%s %s %s %s 200 User "%s" as %s deleted password by id "%s"' %
+                                (request.scheme, request.remote_addr, request.method, request.path,
+                                 current_user.username, UserService.get_access_status(current_user), pass_id))
                 return {'message': f'Password ID {pass_id} DELETED'}, 200  # OK
             else:
-                app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
-                                f'User "{current_user.username}" as {"[ADMIN]" if current_user.is_admin else "[USER]"} '
-                                f'tried to deleted password by id "{pass_id}"')
+                app.logger.info('%s %s %s %s 200 User "%s" as %s tried to deleted password by id "%s"' %
+                                (request.scheme, request.remote_addr, request.method, request.path,
+                                 current_user.username, UserService.get_access_status(current_user), pass_id))
                 return {'message': 'Password Not Found'}, 200
 
 
@@ -484,8 +485,8 @@ class AdminUsers(Resource):
             for i in range(elements):
                 count = PasswordService.count_passwords(data_list[i]['id'], session)
                 data_list[i].update({'passwords': str(count)})
-        app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
-                        f'Admin requested user list')
+        app.logger.info('%s %s %s %s 200 Admin requested user list' %
+                        (request.scheme, request.remote_addr, request.method, request.path))
         return {f'users {elements} of {length}, page {page} of {pages}': data_list}, 200  # OK
 
     @api.expect(users_ids_list)
@@ -507,8 +508,8 @@ class AdminUsers(Resource):
             raise ProcessingError(err.messages)
         with session_scope() as session:
             AdminService.delete_user_list(users_ids, session)
-        app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
-                        f'Admin deleted users by ids {users_ids}')
+        app.logger.info('%s %s %s %s 200 Admin deleted users by ids %s' %
+                        (request.scheme, request.remote_addr, request.method, request.path, users_ids))
         return {'message': 'Users has been deleted successfully'}, 200
 
 
@@ -518,12 +519,12 @@ class AdminUsersNumber(Resource):
         with session_scope() as session:
             user = AdminService.get_user_by_id(user_id, session)
             if user:
-                app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
-                                f'Admin requested user by id "{user_id}"')
+                app.logger.info('%s %s %s %s 200 Admin requested user by id "%s"' %
+                                (request.scheme, request.remote_addr, request.method, request.path, user_id))
                 return {'user': UserSchema().dump(user)}, 200  # OK
             else:
-                app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
-                                f'Admin tried to find user by id "{user_id}"')
+                app.logger.info('%s %s %s %s 200 Admin tried to find user by id "%s"' %
+                                (request.scheme, request.remote_addr, request.method, request.path, user_id))
                 return {'message': f'User ID {user_id} - Not Found'}, 200
 
     def delete(self, user_id):
@@ -531,12 +532,12 @@ class AdminUsersNumber(Resource):
         with session_scope() as session:
             delete_status = AdminService.delete_user_by_id(user_id, session)
         if delete_status:
-            app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
-                            f'Admin deleted user by id "{user_id}"')
+            app.logger.info('%s %s %s %s 200 Admin deleted user by id "%s"' %
+                            (request.scheme, request.remote_addr, request.method, request.path, user_id))
             return {'message': f'User ID:{user_id} has been DELETED.'}, 200  # OK
         else:
-            app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
-                            f'Admin tried to delete user by id "{user_id}"')
+            app.logger.info('%s %s %s %s 200 Admin tried to delete user by id "%s"' %
+                            (request.scheme, request.remote_addr, request.method, request.path, user_id))
             return {'message': f'User ID {user_id} - Not Found'}, 200
 
 
@@ -546,12 +547,12 @@ class AdminUsersSearch(Resource):
         with session_scope() as session:
             user = AdminService.search_user_by_username(username, session)
             if user:
-                app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
-                                f'Admin searched user by username "{username}"')
+                app.logger.info('%s %s %s %s 200 Admin searched user by username "%s"' %
+                                (request.scheme, request.remote_addr, request.method, request.path, username))
                 return {'user': UserSchema().dump(user)}, 200  # OK
             else:
-                app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
-                                f'Admin tried to find user by username "{username}"')
+                app.logger.info('%s %s %s %s 200 tried to find user by username "%s"' %
+                                (request.scheme, request.remote_addr, request.method, request.path, username))
                 return {'message': 'User not found'}, 200
 
 
@@ -576,10 +577,10 @@ class AdminUsersSearchList(Resource):
         with session_scope() as session:
             users = AdminService.search_user_list(user_data, session)
             if users:
-                app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
-                                f'Admin searched user by data "{user_data}"')
+                app.logger.info('%s %s %s %s 200 Admin searched user by data "%s"' %
+                                (request.scheme, request.remote_addr, request.method, request.path, user_data))
                 return {'users': UserSchema(many=True).dump(users)}, 200  # OK
             else:
-                app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
-                                f'Admin tried to find user by data "{user_data}"')
+                app.logger.info('%s %s %s %s 200 Admin tried to find user by data "%s"' %
+                                (request.scheme, request.remote_addr, request.method, request.path, user_data))
                 return {'message': 'User not found'}, 200

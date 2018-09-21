@@ -13,3 +13,12 @@ class UserService:
     def delete_user(token, current_user, session):
         session.query(SessionObject).filter(SessionObject.token == token).delete()
         session.delete(current_user)
+
+    @staticmethod
+    def get_access_status(user):
+        """User access rights
+
+        :param user: Registered user
+        :return: '[ADMIN]' or '[USER]' string
+        """
+        return '[ADMIN]' if user.is_admin else '[USER]'

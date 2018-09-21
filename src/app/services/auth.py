@@ -2,6 +2,7 @@ from flask import request
 
 from .. import app
 from ..models import UserModel, SessionObject
+from ..services.user import UserService
 
 
 class AuthService:
@@ -14,8 +15,8 @@ class AuthService:
                 AuthService.delete_token(token, session)
             else:
                 return True
-            app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
-                            f'User token "{token}" was deleted by expired time')
+            app.logger.info('%s %s %s %s 200 User token "%s" was deleted by expired time' %
+                            (request.scheme, request.remote_addr, request.method, request.path, token))
         return False
 
     @staticmethod
@@ -30,9 +31,9 @@ class AuthService:
         user_session = AuthService.get_user_session(session)
         if user_session is not None:
             user = UserModel.filter_by_id(user_session.user_id, session)
-            app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
-                            f'User "{user.username}" as {"[ADMIN]" if user.is_admin else "[USER]"} '
-                            f'requested by token "{token}"')
+            app.logger.info('%s %s %s %s 200 User "%s" as %s requested by token "%s"' %
+                            (request.scheme, request.remote_addr, request.method, request.path, user.username,
+                             UserService.get_access_status(user), token))
             return user
         else:
             return None
@@ -47,8 +48,8 @@ class AuthService:
         if user and user.compare_hash(data['password']):
             user_session = SessionObject(user.id)
             session.add(user_session)
-            app.logger.info(f'{request.scheme} {request.remote_addr} {request.method} {request.path} 200 '
-                            f'User "{user.username}" logged in as {"[ADMIN]" if user.is_admin else "[USER]"}')
+            app.logger.info('%s %s %s %s 200 User "%s" logged in as %s' % (request.scheme, request.remote_addr,
+                            request.method, request.path, user.username, UserService.get_access_status(user)))
             return user_session.token
         else:
             return False
