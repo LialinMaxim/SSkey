@@ -18,7 +18,7 @@ class UserService:
     def get_access_status(user):
         """User access rights
 
-        :param user:
+        :param user: Registered user
         :return: '[ADMIN]' or '[USER]' string
         """
         return '[ADMIN]' if user.is_admin else '[USER]'
