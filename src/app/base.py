@@ -1,19 +1,17 @@
-import os
 from contextlib import contextmanager
 
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, scoped_session
 
-POSTGRES_USER = os.environ.get('POSTGRES_USER')
-POSTGRES_PASS = os.environ.get('POSTGRES_PASS')
-POSTGRES_HOST = os.environ.get('POSTGRES_HOST')
-POSTGRES_NAME = os.environ.get('POSTGRES_NAME')
-engine = create_engine('postgresql://%s:%s@%s/%s' % (POSTGRES_USER,
-                                                     POSTGRES_PASS,
-                                                     POSTGRES_HOST,
-                                                     POSTGRES_NAME
-                                                     ))
+from . import app
+
+engine = create_engine('%s://%s:%s@%s/%s' % (app.config['DATABASE'],
+                                             app.config['DB_USER'],
+                                             app.config['DB_PASS'],
+                                             app.config['DB_HOST'],
+                                             app.config['DB_NAME']
+                                             ))
 
 """scoped_session provides scoped management of Session objects."""
 session_factory = sessionmaker(bind=engine)
