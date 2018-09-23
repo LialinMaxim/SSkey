@@ -11,6 +11,16 @@ class Config:
     HANDLER_LEVEL = os.environ.get('HANDLER_LEVEL')
     HANDLER_FORMAT = '%(asctime)s - %(levelname)s: %(message)s'
 
+    DATABASE = os.environ.get('DATABASE')
+    DB_USER = os.environ.get('DB_USER')
+    DB_PASS = os.environ.get('DB_PASS')
+    DB_HOST = os.environ.get('DB_HOST')
+    DB_NAME = os.environ.get('DB_NAME')
+
+    ADMIN_NAME = os.environ.get('ADMIN_NAME')
+    ADMIN_PASS = os.environ.get('ADMIN_NAME')
+    ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL')
+
 
 class DevelopmentConfig(Config):
     DEBUG = True
@@ -63,6 +73,6 @@ config = {
     'development': DevelopmentConfig,
     'testing': TestingConfig,
     'production': ProductionConfig,
-    # 'RESTPLUS_VALIDATE': True,
+
     'default': DevelopmentConfig
 }

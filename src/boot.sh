@@ -5,8 +5,8 @@ echo "Wait until the server starts..."
 # 2 - Standard Error (STDERR)
 # > - redirect of the flow
 # Redirects flow of the STDOUT and STDERR to /dev/null (nowhere)
-while ! pg_isready -h ${POSTGRES_HOST} > /dev/null 2> /dev/null; do
-  echo "Connecting to ${POSTGRES_HOST} Failed"
+while ! pg_isready -h ${DB_HOST} > /dev/null 2> /dev/null; do
+  echo "Connecting to ${DB_HOST} Failed"
   sleep 1
 done
 
