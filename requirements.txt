@@ -21,7 +21,7 @@ jsonschema==2.6.0
 MarkupSafe==1.0
 marshmallow==3.0.0b9
 more-itertools==4.3.0
-pipenv==2018.7.1
+pipenv==2018.10.9
 pluggy==0.6.0
 psycopg2==2.7.5
 py==1.6.0
