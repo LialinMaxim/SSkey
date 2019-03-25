@@ -1,6 +1,6 @@
 # SSkey
 [![Build Status](https://travis-ci.org/frol/flask-restplus-server-example.svg)](https://travis-ci.org/frol/flask-restplus-server-example)
-[![Heroku](https://heroku-badge.herokuapp.com/?app=sskey)](https://sskey.herokuapp.com/)
+[![Pythonanywhere](http://sskey.pythonanywhere.com/?app=sskey)](http://sskey.pythonanywhere.com/)
 
 This is REST application for storing user's passwords for Internet resources. In the application built-in Swagger UI for working with the application. Project is based on Flask framework.
 
